@@ -361,7 +361,7 @@ const MARKDOWN_CONVERTER_CONFIGS = {
     textMode: false,
     libs: [
       'https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js',
-      'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.4/dist/html2pdf.bundle.min.js',
+      'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js',
     ],
     converterScript: '/assets/js/converters/md-to-pdf.js',
   },
