@@ -1281,6 +1281,7 @@ function buildPairPage(page, allPages) {
   const sameTo      = allPages.filter(p => p['Page Type'] === 'Pair' && p['Target Format'] === to && p['Source Format'] !== from).slice(0, 6);
   const reverse     = allPages.find(p => p['Page Type'] === 'Pair' && p['Source Format'] === to && p['Target Format'] === from);
 
+  const mdConfig  = MARKDOWN_CONVERTER_CONFIGS[page['URL Slug']] || null;
   const isNoIndex = page['Indexation'] !== 'Index now';
   const robots = isNoIndex ? 'noindex, follow' : 'index, follow';
 
@@ -1335,7 +1336,7 @@ function buildPairPage(page, allPages) {
     </div>
   </section>
 
-  ${converterWidget(from, to, page['URL Slug'])}
+  ${converterWidget(from, to, page['URL Slug'], mdConfig ? mdConfig.textMode : false)}
 
   <!-- Intro & Why -->
   <section class="section-content" aria-labelledby="intro-h2">
@@ -1414,7 +1415,7 @@ function buildPairPage(page, allPages) {
 ` + footer([
     { label: parentLabel, href: parentSlug },
     { label: catHubLabel, href: catHubHref },
-  ]);
+  ], mdConfig ? [...mdConfig.libs, mdConfig.converterScript] : []);
 }
 
 function buildWhyConvert(from, to, fromInfo, toInfo, page) {

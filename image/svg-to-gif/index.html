@@ -80,54 +80,61 @@
     <div class="converter-card">
       <h2 class="visually-hidden" id="converter-heading">Convert SVG to GIF</h2>
 
-      <!-- Drop Zone -->
-      <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Click or drag a SVG file here">
-        <i class="bi bi-cloud-upload drop-zone__icon" aria-hidden="true"></i>
-        <p class="drop-zone__text">Drag &amp; drop your <strong>SVG</strong> file here</p>
-        <p class="drop-zone__sub">or</p>
-        <label class="btn btn-primary px-4" for="fileInput">
-          <i class="bi bi-folder2-open me-2" aria-hidden="true"></i>Browse File
-        </label>
-        <input type="file" id="fileInput" class="visually-hidden" accept=".svg"
-               aria-label="Select SVG file">
-        <p class="drop-zone__limit">Max file size: 50 MB · Your file stays in your browser</p>
-      </div>
+      
 
-      <!-- Selected File + Settings -->
-      <div class="converter-settings mt-3" id="converterSettings" hidden>
-        <div class="d-flex align-items-center gap-3 mb-3 file-selected-row">
-          <i class="bi bi-file-earmark-check-fill text-accent" style="font-size:1.5rem;" aria-hidden="true"></i>
-          <div class="flex-grow-1">
-            <p class="mb-0 fw-600" id="selectedFileName">file.svg</p>
-            <p class="text-muted mb-0" style="font-size:var(--text-sm);" id="selectedFileSize"></p>
-          </div>
-          <button class="btn btn-outline-secondary btn-sm" id="clearFileBtn" aria-label="Remove file">
-            <i class="bi bi-x-lg" aria-hidden="true"></i>
-          </button>
+      <!-- File Upload Panel -->
+      <div id="panelFile" class="converter-panel" role="tabpanel" >
+        <!-- Drop Zone -->
+        <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Click or drag a SVG file here">
+          <i class="bi bi-cloud-upload drop-zone__icon" aria-hidden="true"></i>
+          <p class="drop-zone__text">Drag &amp; drop your <strong>SVG</strong> file here</p>
+          <p class="drop-zone__sub">or</p>
+          <label class="btn btn-primary px-4" for="fileInput">
+            <i class="bi bi-folder2-open me-2" aria-hidden="true"></i>Browse File
+          </label>
+          <input type="file" id="fileInput" class="visually-hidden" accept=".svg"
+                 aria-label="Select SVG file">
+          <p class="drop-zone__limit">Max file size: 50 MB · Your file stays in your browser</p>
         </div>
 
-        <div class="row g-3 align-items-end mb-3">
-          <div class="col-sm-5">
-            <label class="converter-label" for="inputFormat">From</label>
-            <div class="form-control bg-light fw-600">SVG</div>
+        <!-- Selected File + Settings -->
+        <div class="converter-settings mt-3" id="converterSettings" hidden>
+          <div class="d-flex align-items-center gap-3 mb-3 file-selected-row">
+            <i class="bi bi-file-earmark-check-fill text-accent" style="font-size:1.5rem;" aria-hidden="true"></i>
+            <div class="flex-grow-1">
+              <p class="mb-0 fw-600" id="selectedFileName">file.svg</p>
+              <p class="text-muted mb-0" style="font-size:var(--text-sm);" id="selectedFileSize"></p>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" id="clearFileBtn" aria-label="Remove file">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
           </div>
-          <div class="col-sm-2 text-center">
-            <div class="converter-arrow mx-auto" id="swapBtn" role="button" tabindex="0" aria-label="Swap conversion direction" title="Swap A ↔ B">
-              ⇄
+
+          <div class="row g-3 align-items-end mb-3">
+            <div class="col-sm-5">
+              <label class="converter-label" for="inputFormat">From</label>
+              <div class="form-control bg-light fw-600">SVG</div>
+            </div>
+            <div class="col-sm-2 text-center">
+              <div class="converter-arrow mx-auto" id="swapBtn" role="button" tabindex="0" aria-label="Swap conversion direction" title="Swap A ↔ B">
+                ⇄
+              </div>
+            </div>
+            <div class="col-sm-5">
+              <label class="converter-label" for="outputFormat">To</label>
+              <div class="form-control bg-light fw-600">GIF</div>
             </div>
           </div>
-          <div class="col-sm-5">
-            <label class="converter-label" for="outputFormat">To</label>
-            <div class="form-control bg-light fw-600">GIF</div>
-          </div>
-        </div>
 
-        <button class="btn btn-primary btn-lg w-100" id="convertBtn">
-          <i class="bi bi-arrow-right-circle me-2" aria-hidden="true"></i>Convert to GIF
-        </button>
+          <button class="btn btn-primary btn-lg w-100" id="convertBtn">
+            <i class="bi bi-arrow-right-circle me-2" aria-hidden="true"></i>Convert to GIF
+          </button>
+        </div>
       </div>
 
-      <!-- Output -->
+      
+
+      <!-- Output (shared by both modes) -->
       <div class="converter-output mt-3" id="converterOutput" hidden>
         <div class="output-success-row d-flex align-items-center gap-3 mb-3">
           <i class="bi bi-check-circle-fill text-success" style="font-size:1.5rem;" aria-hidden="true"></i>
@@ -385,5 +392,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
 <script src="/assets/js/site.js" defer></script>
+
 </body>
 </html>

@@ -80,54 +80,79 @@
     <div class="converter-card">
       <h2 class="visually-hidden" id="converter-heading">Convert TXT to Markdown</h2>
 
-      <!-- Drop Zone -->
-      <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Click or drag a TXT file here">
-        <i class="bi bi-cloud-upload drop-zone__icon" aria-hidden="true"></i>
-        <p class="drop-zone__text">Drag &amp; drop your <strong>TXT</strong> file here</p>
-        <p class="drop-zone__sub">or</p>
-        <label class="btn btn-primary px-4" for="fileInput">
-          <i class="bi bi-folder2-open me-2" aria-hidden="true"></i>Browse File
-        </label>
-        <input type="file" id="fileInput" class="visually-hidden" accept=".txt"
-               aria-label="Select TXT file">
-        <p class="drop-zone__limit">Max file size: 50 MB · Your file stays in your browser</p>
+      <!-- Mode Tabs -->
+      <div class="converter-mode-tabs" id="converterModeTabs" role="tablist" aria-label="Input method">
+        <button class="converter-mode-tab active" id="tabFile" role="tab" aria-selected="true" aria-controls="panelFile">
+          <i class="bi bi-file-earmark-arrow-up" aria-hidden="true"></i> Upload File
+        </button>
+        <button class="converter-mode-tab" id="tabPaste" role="tab" aria-selected="false" aria-controls="panelPaste">
+          <i class="bi bi-keyboard" aria-hidden="true"></i> Paste Text
+        </button>
       </div>
 
-      <!-- Selected File + Settings -->
-      <div class="converter-settings mt-3" id="converterSettings" hidden>
-        <div class="d-flex align-items-center gap-3 mb-3 file-selected-row">
-          <i class="bi bi-file-earmark-check-fill text-accent" style="font-size:1.5rem;" aria-hidden="true"></i>
-          <div class="flex-grow-1">
-            <p class="mb-0 fw-600" id="selectedFileName">file.txt</p>
-            <p class="text-muted mb-0" style="font-size:var(--text-sm);" id="selectedFileSize"></p>
-          </div>
-          <button class="btn btn-outline-secondary btn-sm" id="clearFileBtn" aria-label="Remove file">
-            <i class="bi bi-x-lg" aria-hidden="true"></i>
-          </button>
+      <!-- File Upload Panel -->
+      <div id="panelFile" class="converter-panel" role="tabpanel" aria-labelledby="tabFile">
+        <!-- Drop Zone -->
+        <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Click or drag a TXT file here">
+          <i class="bi bi-cloud-upload drop-zone__icon" aria-hidden="true"></i>
+          <p class="drop-zone__text">Drag &amp; drop your <strong>TXT</strong> file here</p>
+          <p class="drop-zone__sub">or</p>
+          <label class="btn btn-primary px-4" for="fileInput">
+            <i class="bi bi-folder2-open me-2" aria-hidden="true"></i>Browse File
+          </label>
+          <input type="file" id="fileInput" class="visually-hidden" accept=".txt"
+                 aria-label="Select TXT file">
+          <p class="drop-zone__limit">Max file size: 50 MB · Your file stays in your browser</p>
         </div>
 
-        <div class="row g-3 align-items-end mb-3">
-          <div class="col-sm-5">
-            <label class="converter-label" for="inputFormat">From</label>
-            <div class="form-control bg-light fw-600">TXT</div>
+        <!-- Selected File + Settings -->
+        <div class="converter-settings mt-3" id="converterSettings" hidden>
+          <div class="d-flex align-items-center gap-3 mb-3 file-selected-row">
+            <i class="bi bi-file-earmark-check-fill text-accent" style="font-size:1.5rem;" aria-hidden="true"></i>
+            <div class="flex-grow-1">
+              <p class="mb-0 fw-600" id="selectedFileName">file.txt</p>
+              <p class="text-muted mb-0" style="font-size:var(--text-sm);" id="selectedFileSize"></p>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" id="clearFileBtn" aria-label="Remove file">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
           </div>
-          <div class="col-sm-2 text-center">
-            <div class="converter-arrow mx-auto" id="swapBtn" role="button" tabindex="0" aria-label="Swap conversion direction" title="Swap A ↔ B">
-              ⇄
+
+          <div class="row g-3 align-items-end mb-3">
+            <div class="col-sm-5">
+              <label class="converter-label" for="inputFormat">From</label>
+              <div class="form-control bg-light fw-600">TXT</div>
+            </div>
+            <div class="col-sm-2 text-center">
+              <div class="converter-arrow mx-auto" id="swapBtn" role="button" tabindex="0" aria-label="Swap conversion direction" title="Swap A ↔ B">
+                ⇄
+              </div>
+            </div>
+            <div class="col-sm-5">
+              <label class="converter-label" for="outputFormat">To</label>
+              <div class="form-control bg-light fw-600">Markdown</div>
             </div>
           </div>
-          <div class="col-sm-5">
-            <label class="converter-label" for="outputFormat">To</label>
-            <div class="form-control bg-light fw-600">Markdown</div>
-          </div>
-        </div>
 
-        <button class="btn btn-primary btn-lg w-100" id="convertBtn">
+          <button class="btn btn-primary btn-lg w-100" id="convertBtn">
+            <i class="bi bi-arrow-right-circle me-2" aria-hidden="true"></i>Convert to Markdown
+          </button>
+        </div>
+      </div>
+
+      
+      <!-- Text Paste Panel (shown when "Paste Text" tab is active) -->
+      <div id="panelPaste" class="converter-panel" hidden role="tabpanel" aria-labelledby="tabPaste">
+        <label class="converter-label" for="converterTextArea">Paste your TXT content below</label>
+        <textarea id="converterTextArea" class="form-control text-editor-area"
+          placeholder="Paste your TXT content here…"
+          rows="12" spellcheck="false" aria-label="Paste TXT text"></textarea>
+        <button class="btn btn-primary btn-lg w-100 mt-3" id="convertTextBtn">
           <i class="bi bi-arrow-right-circle me-2" aria-hidden="true"></i>Convert to Markdown
         </button>
       </div>
 
-      <!-- Output -->
+      <!-- Output (shared by both modes) -->
       <div class="converter-output mt-3" id="converterOutput" hidden>
         <div class="output-success-row d-flex align-items-center gap-3 mb-3">
           <i class="bi bi-check-circle-fill text-success" style="font-size:1.5rem;" aria-hidden="true"></i>
@@ -381,5 +406,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
 <script src="/assets/js/site.js" defer></script>
+<script src="/assets/js/converters/txt-to-md.js" defer></script>
 </body>
 </html>

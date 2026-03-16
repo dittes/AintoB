@@ -28,20 +28,30 @@
 
   // ── Converter Widget ──────────────────────────────────────
   function initConverterWidget() {
-    const dropZone         = document.getElementById('dropZone');
-    const fileInput        = document.getElementById('fileInput');
+    const dropZone          = document.getElementById('dropZone');
+    const fileInput         = document.getElementById('fileInput');
     const converterSettings = document.getElementById('converterSettings');
-    const converterOutput  = document.getElementById('converterOutput');
-    const selectedFileName = document.getElementById('selectedFileName');
-    const selectedFileSize = document.getElementById('selectedFileSize');
-    const clearFileBtn     = document.getElementById('clearFileBtn');
-    const convertBtn       = document.getElementById('convertBtn');
-    const downloadBtn      = document.getElementById('downloadBtn');
+    const converterOutput   = document.getElementById('converterOutput');
+    const selectedFileName  = document.getElementById('selectedFileName');
+    const selectedFileSize  = document.getElementById('selectedFileSize');
+    const clearFileBtn      = document.getElementById('clearFileBtn');
+    const convertBtn        = document.getElementById('convertBtn');
+    const downloadBtn       = document.getElementById('downloadBtn');
     const convertAnotherBtn = document.getElementById('convertAnotherBtn');
 
-    if (!dropZone || !fileInput) return;
+    // Text-mode elements (may not exist on file-only pages)
+    const tabFile           = document.getElementById('tabFile');
+    const tabPaste          = document.getElementById('tabPaste');
+    const panelFile         = document.getElementById('panelFile');
+    const panelPaste        = document.getElementById('panelPaste');
+    const converterTextArea = document.getElementById('converterTextArea');
+    const convertTextBtn    = document.getElementById('convertTextBtn');
 
-    let selectedFile = null;
+    if (!dropZone && !converterTextArea) return;
+
+    let selectedFile     = null;
+    let lastResultBlob   = null;
+    let lastResultName   = 'converted';
 
     function formatBytes(bytes) {
       if (bytes < 1024) return bytes + ' B';
@@ -53,76 +63,140 @@
       selectedFile = file;
       if (selectedFileName) selectedFileName.textContent = file.name;
       if (selectedFileSize) selectedFileSize.textContent = formatBytes(file.size);
-      dropZone.hidden = true;
+      if (dropZone) dropZone.hidden = true;
       if (converterSettings) converterSettings.hidden = false;
       if (converterOutput)   converterOutput.hidden = true;
     }
 
     function resetWidget() {
-      selectedFile = null;
-      fileInput.value = '';
-      dropZone.hidden = false;
+      selectedFile   = null;
+      lastResultBlob = null;
+      if (fileInput) fileInput.value = '';
+      if (dropZone) dropZone.hidden = false;
       if (converterSettings) converterSettings.hidden = true;
       if (converterOutput)   converterOutput.hidden = true;
+      if (converterTextArea) converterTextArea.value = '';
     }
 
-    // File input
-    fileInput.addEventListener('change', function () {
-      if (this.files && this.files[0]) showFile(this.files[0]);
-    });
+    // ── Tab switching ────────────────────────────────────────
+    function activateTab(which) {
+      if (!tabFile || !tabPaste) return;
+      if (which === 'file') {
+        tabFile.classList.add('active');
+        tabFile.setAttribute('aria-selected', 'true');
+        tabPaste.classList.remove('active');
+        tabPaste.setAttribute('aria-selected', 'false');
+        if (panelFile)  panelFile.hidden  = false;
+        if (panelPaste) panelPaste.hidden = true;
+      } else {
+        tabPaste.classList.add('active');
+        tabPaste.setAttribute('aria-selected', 'true');
+        tabFile.classList.remove('active');
+        tabFile.setAttribute('aria-selected', 'false');
+        if (panelPaste) panelPaste.hidden = false;
+        if (panelFile)  panelFile.hidden  = true;
+        if (converterSettings) converterSettings.hidden = true;
+        if (converterOutput)   converterOutput.hidden   = true;
+      }
+    }
 
-    // Drag & drop
-    dropZone.addEventListener('dragover', function (e) {
-      e.preventDefault();
-      this.classList.add('dragover');
-    });
-    dropZone.addEventListener('dragleave', function () {
-      this.classList.remove('dragover');
-    });
-    dropZone.addEventListener('drop', function (e) {
-      e.preventDefault();
-      this.classList.remove('dragover');
-      const file = e.dataTransfer.files[0];
-      if (file) showFile(file);
-    });
+    if (tabFile)  tabFile.addEventListener('click',  function () { activateTab('file');  });
+    if (tabPaste) tabPaste.addEventListener('click',  function () { activateTab('paste'); });
 
-    // Click/keyboard on drop zone
-    dropZone.addEventListener('click', function (e) {
-      if (e.target !== fileInput) fileInput.click();
-    });
-    dropZone.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
-    });
+    // ── File input ───────────────────────────────────────────
+    if (fileInput) {
+      fileInput.addEventListener('change', function () {
+        if (this.files && this.files[0]) showFile(this.files[0]);
+      });
+    }
 
-    // Clear
+    // ── Drag & drop ──────────────────────────────────────────
+    if (dropZone) {
+      dropZone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+      });
+      dropZone.addEventListener('dragleave', function () {
+        this.classList.remove('dragover');
+      });
+      dropZone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) showFile(file);
+      });
+      dropZone.addEventListener('click', function (e) {
+        if (fileInput && e.target !== fileInput) fileInput.click();
+      });
+      dropZone.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (fileInput) fileInput.click(); }
+      });
+    }
+
+    // ── Clear ────────────────────────────────────────────────
     if (clearFileBtn) clearFileBtn.addEventListener('click', resetWidget);
 
-    // Convert
+    // ── Shared conversion runner ─────────────────────────────
+    async function runConversion(input, buttonEl) {
+      if (!window.performConversion) {
+        showToast('Converter not available for this format yet.', 'error');
+        return;
+      }
+      const origHtml = buttonEl.innerHTML;
+      buttonEl.disabled = true;
+      buttonEl.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Converting…';
+
+      try {
+        const result = await window.performConversion(input);
+        lastResultBlob = result.blob;
+        lastResultName = result.filename || 'converted';
+
+        if (buttonEl === convertBtn) {
+          if (converterSettings) converterSettings.hidden = true;
+        }
+        if (converterOutput) converterOutput.hidden = false;
+      } catch (err) {
+        showToast('Conversion failed: ' + (err.message || 'Unknown error'), 'error');
+      } finally {
+        buttonEl.disabled = false;
+        buttonEl.innerHTML = origHtml;
+      }
+    }
+
+    // ── File-mode convert button ─────────────────────────────
     if (convertBtn) {
       convertBtn.addEventListener('click', function () {
         if (!selectedFile) return;
-        convertBtn.disabled = true;
-        convertBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Converting…';
-
-        // Simulate conversion (placeholder — real logic would go here)
-        setTimeout(function () {
-          convertBtn.disabled = false;
-          convertBtn.innerHTML = '<i class="bi bi-arrow-right-circle me-2" aria-hidden="true"></i>Convert';
-          if (converterSettings) converterSettings.hidden = true;
-          if (converterOutput)   converterOutput.hidden = false;
-        }, 800);
+        runConversion(selectedFile, convertBtn);
       });
     }
 
-    // Download (placeholder)
+    // ── Text-mode convert button ─────────────────────────────
+    if (convertTextBtn) {
+      convertTextBtn.addEventListener('click', function () {
+        const text = converterTextArea ? converterTextArea.value.trim() : '';
+        if (!text) { showToast('Please paste some text first.', 'info'); return; }
+        runConversion(text, convertTextBtn);
+      });
+    }
+
+    // ── Download ─────────────────────────────────────────────
     if (downloadBtn) {
       downloadBtn.addEventListener('click', function () {
-        // Placeholder: in real implementation, trigger actual download
-        showToast('Conversion complete — file downloaded.', 'success');
+        if (!lastResultBlob) { showToast('Nothing to download yet.', 'info'); return; }
+        const url = URL.createObjectURL(lastResultBlob);
+        const a   = document.createElement('a');
+        a.href     = url;
+        a.download = lastResultName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('File downloaded.', 'success');
       });
     }
 
-    // Convert another
+    // ── Convert another ──────────────────────────────────────
     if (convertAnotherBtn) convertAnotherBtn.addEventListener('click', resetWidget);
   }
 
@@ -131,7 +205,6 @@
     const swapBtn = document.getElementById('swapBtn');
     if (!swapBtn) return;
     swapBtn.addEventListener('click', function () {
-      // Placeholder: real implementation would swap from/to and reload or redirect
       showToast('Use the reverse converter link below to swap directions.', 'info');
     });
     swapBtn.addEventListener('keydown', function (e) {
@@ -146,7 +219,7 @@
 
     const t = document.createElement('div');
     t.id = 'aintob-toast';
-    const icons = { success: 'bi-check-circle-fill', info: 'bi-info-circle-fill', error: 'bi-x-circle-fill' };
+    const icons  = { success: 'bi-check-circle-fill', info: 'bi-info-circle-fill', error: 'bi-x-circle-fill' };
     const colors = { success: '#16a34a', info: 'var(--color-accent)', error: '#dc2626' };
     t.style.cssText = `position:fixed;bottom:5rem;right:1rem;z-index:9999;background:#fff;
       border:1px solid var(--color-border);border-radius:var(--radius-md);padding:.75rem 1rem;
