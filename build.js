@@ -653,10 +653,20 @@ function converterWidget(from, to, pageSlug, textMode) {
         </button>
       </div>` : '';
 
+  // Browser compatibility notice for formats that require Safari (HEIC encoding)
+  const safariOnlyNote = (to || '').toUpperCase() === 'HEIC' ? `
+      <div class="alert alert-info d-flex align-items-start gap-2 mb-3 py-2 px-3" style="font-size:var(--text-sm);border-radius:var(--radius-md);" id="heicCompatNote">
+        <i class="bi bi-info-circle-fill mt-1 flex-shrink-0" aria-hidden="true"></i>
+        <span><strong>Safari only:</strong> HEIC encoding is natively supported in Safari 17+.
+        On Chrome or Firefox, use <strong>PNG or WebP</strong> for lossless quality, or
+        on macOS open the file in Preview → File → Export → HEIC.</span>
+      </div>` : '';
+
   return `<section class="section-converter" id="converter" aria-labelledby="converter-heading" data-from="${esc(from)}" data-to="${esc(to)}">
   <div class="container" style="max-width:800px;">
     <div class="converter-card">
       <h2 class="visually-hidden" id="converter-heading">Convert ${esc(from)} to ${esc(to)}</h2>
+      ${safariOnlyNote}
 
       ${textMode ? `<!-- Mode Tabs -->
       <div class="converter-mode-tabs" id="converterModeTabs" role="tablist" aria-label="Input method">

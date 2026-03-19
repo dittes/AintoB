@@ -126,7 +126,12 @@
         if (file) showFile(file);
       });
       dropZone.addEventListener('click', function (e) {
-        if (fileInput && e.target !== fileInput) fileInput.click();
+        // Don't call fileInput.click() if the click originated from the
+        // <label for="fileInput"> button — the label already opens the picker
+        // natively, and calling .click() a second time cancels the first dialog.
+        if (fileInput && e.target !== fileInput && !e.target.closest('label')) {
+          fileInput.click();
+        }
       });
       dropZone.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (fileInput) fileInput.click(); }
