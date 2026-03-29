@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Editor – Merge, Split, Rotate, Watermark · Free Browser Tool</title>
+  <meta name="description" content="Free browser-based PDF editor. Merge multiple PDFs, split by page range, rotate or delete pages, and add text watermarks — all locally, no upload.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://aintob.com/document/pdf-edit/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="PDF Editor – Merge, Split, Rotate, Watermark · Free Browser Tool">
+  <meta property="og:description" content="Free browser-based PDF editor. Merge, split, rotate, delete pages, and add watermarks — no upload needed.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://aintob.com/document/pdf-edit/">
+  <meta property="og:image" content="https://aintob.com/assets/img/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    /* ── Tool tab nav ──────────────────────────────────────────── */
+    .pdf-tool-nav {
+      display: flex;
+      gap: .375rem;
+      flex-wrap: wrap;
+      border-bottom: 2px solid var(--color-border);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0;
+    }
+    .pdf-tool-tab {
+      padding: .5rem 1.1rem;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      background: transparent;
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--ease-fast), color var(--ease-fast);
+      margin-bottom: -2px;
+    }
+    .pdf-tool-tab:hover { color: var(--color-accent); background: var(--color-accent-light); }
+    .pdf-tool-tab.active {
+      background: var(--color-surface);
+      color: var(--color-accent);
+      border-color: var(--color-border);
+      border-bottom-color: var(--color-surface);
+    }
+
+    /* ── Tool panels ───────────────────────────────────────────── */
+    .tool-panel { animation: fadeUp .2s ease; }
+
+    /* ── File upload rows ─────────────────────────────────────── */
+    .tool-file-label {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: .4rem;
+    }
+
+    /* ── Result / error cards ─────────────────────────────────── */
+    .tool-result {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      margin-top: 1rem;
+    }
+    .tool-result .result-msg { font-weight: 600; margin-bottom: .75rem; }
+    .tool-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-md);
+      padding: .75rem 1rem;
+      font-size: var(--text-sm);
+      color: #991b1b;
+      margin-top: .75rem;
+    }
+
+    /* ── Page thumbnails (rotate/delete tool) ─────────────────── */
+    .page-thumbs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: .75rem;
+      max-height: 480px;
+      overflow-y: auto;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: .75rem;
+      background: var(--color-bg);
+    }
+    .page-thumb {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: .75rem;
+      transition: border-color var(--ease-fast);
+    }
+    .page-thumb:hover { border-color: var(--color-accent); }
+    .page-thumb__num {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      margin-bottom: .5rem;
+      color: var(--color-text);
+    }
+    .page-thumb__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .3rem;
+    }
+    .page-thumb__actions .btn { font-size: .75rem; padding: .2rem .5rem; }
+
+    /* ── Watermark preview ─────────────────────────────────────── */
+    .wm-preview {
+      background: #fff;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    #wmPreviewText {
+      font-size: 2rem;
+      font-weight: 900;
+      transform: rotate(-35deg);
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+    }
+  </style>
+
+  <!-- Schema -->
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "PDF Editor",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Web browser",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "description": "Free browser-based PDF editor. Merge, split, rotate, delete pages, and add watermarks locally with no upload.",
+  "url": "https://aintob.com/document/pdf-edit/"
+}</script>
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<nav class="navbar-aintob" aria-label="Main navigation">
+  <div class="container" style="max-width:var(--max-width); display:flex; align-items:center; justify-content:space-between;">
+    <a href="/" class="navbar-logo" aria-label="AintoB home">🅰️➡️🅱️ <span style="font-size:1rem; font-weight:500; color:var(--color-text-muted);">AintoB</span></a>
+    <nav aria-label="Site navigation" style="display:flex; align-items:center; gap:0.75rem;">
+      <a href="/file-converter/" class="navbar-tools-link"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> All Converters</a>
+    </nav>
+  </div>
+</nav>
+
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Document Converter","item":"https://aintob.com/document-converter/"},{"@type":"ListItem","position":2,"name":"PDF Converter","item":"https://aintob.com/document/pdf-converter/"},{"@type":"ListItem","position":3,"name":"PDF Editor","item":"https://aintob.com/document/pdf-edit/"}]}</script>
+<nav aria-label="Breadcrumb" class="breadcrumb-nav">
+  <div class="container" style="max-width:var(--max-width);">
+    <ol class="breadcrumb mb-0" style="padding: 0.625rem 0; font-size: var(--text-sm);">
+      <li class="breadcrumb-item"><a href="/">Home</a></li>
+      <li class="breadcrumb-item"><a href="/document-converter/">Document Converter</a></li>
+      <li class="breadcrumb-item"><a href="/document/pdf-converter/">PDF Converter</a></li>
+      <li class="breadcrumb-item active" aria-current="page">PDF Editor</li>
+    </ol>
+  </div>
+</nav>
+
+<main id="main-content">
+
+  <!-- Hero -->
+  <section class="section-hero" aria-labelledby="hero-h1">
+    <div class="container" style="max-width:860px; text-align:center;">
+      <h1 class="hero-title" id="hero-h1">PDF Editor</h1>
+      <p class="hero-subtitle mx-auto">Merge, split, rotate, delete pages, and add watermarks — all in your browser. No account, no upload, completely private.</p>
+      <div class="d-flex justify-content-center flex-wrap gap-2 mt-3">
+        <span class="format-badge" style="background:var(--color-border);color:var(--color-text-muted);">Merge</span>
+        <span class="format-badge" style="background:var(--color-border);color:var(--color-text-muted);">Split</span>
+        <span class="format-badge" style="background:var(--color-border);color:var(--color-text-muted);">Rotate</span>
+        <span class="format-badge" style="background:var(--color-border);color:var(--color-text-muted);">Delete pages</span>
+        <span class="format-badge format-badge--to">Watermark</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main tool section -->
+  <section class="section-converter" id="converter" aria-labelledby="tool-heading">
+    <div class="container" style="max-width:900px;">
+      <div class="converter-card">
+        <h2 class="visually-hidden" id="tool-heading">PDF Editor Tools</h2>
+
+        <!-- Tool tab nav -->
+        <div class="pdf-tool-nav" role="tablist" aria-label="PDF editing tools">
+          <button class="pdf-tool-tab active" role="tab" aria-selected="true"
+                  data-pdf-tool-tab="merge" aria-controls="panel-merge">
+            <i class="bi bi-files me-1" aria-hidden="true"></i> Merge
+          </button>
+          <button class="pdf-tool-tab" role="tab" aria-selected="false"
+                  data-pdf-tool-tab="split" aria-controls="panel-split">
+            <i class="bi bi-scissors me-1" aria-hidden="true"></i> Split
+          </button>
+          <button class="pdf-tool-tab" role="tab" aria-selected="false"
+                  data-pdf-tool-tab="rotate" aria-controls="panel-rotate">
+            <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i> Rotate &amp; Delete
+          </button>
+          <button class="pdf-tool-tab" role="tab" aria-selected="false"
+                  data-pdf-tool-tab="watermark" aria-controls="panel-watermark">
+            <i class="bi bi-droplet me-1" aria-hidden="true"></i> Watermark
+          </button>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════
+             PANEL 1: MERGE
+             ════════════════════════════════════════════════════════ -->
+        <div id="panel-merge" role="tabpanel" data-pdf-tool-panel="merge" class="tool-panel">
+          <h3 class="fw-600 mb-1" style="font-size:var(--text-lg);">Merge PDFs</h3>
+          <p class="text-muted mb-3" style="font-size:var(--text-sm);">Combine two or more PDF files into a single document in the order you select them.</p>
+
+          <div class="mb-3">
+            <label class="tool-file-label" for="mergeFiles">Select PDF files <span class="text-muted fw-normal">(select multiple at once or one-by-one)</span></label>
+            <input type="file" id="mergeFiles" class="form-control" accept=".pdf" multiple aria-describedby="mergeFileCount">
+            <p id="mergeFileCount" class="text-muted mt-1 mb-0" style="font-size:var(--text-xs);">No files selected</p>
+          </div>
+
+          <div class="explainer-note mb-3">
+            <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+            Files are merged in the order shown. To change the order, re-select them in the desired sequence.
+          </div>
+
+          <button class="btn btn-primary btn-lg w-100" id="mergePDFBtn">
+            <i class="bi bi-files me-2" aria-hidden="true"></i>Merge PDFs
+          </button>
+
+          <div id="mergeError"  class="tool-error"  hidden></div>
+          <div id="mergeResult" class="tool-result"  hidden>
+            <p class="result-msg"></p>
+            <button class="btn btn-primary result-download-btn" hidden>
+              <i class="bi bi-download me-2" aria-hidden="true"></i>Download Merged PDF
+            </button>
+            <p class="text-muted mt-2 mb-0" style="font-size:var(--text-xs);">File was also downloaded automatically.</p>
+          </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════
+             PANEL 2: SPLIT
+             ════════════════════════════════════════════════════════ -->
+        <div id="panel-split" role="tabpanel" data-pdf-tool-panel="split" class="tool-panel" hidden>
+          <h3 class="fw-600 mb-1" style="font-size:var(--text-lg);">Split PDF</h3>
+          <p class="text-muted mb-3" style="font-size:var(--text-sm);">Extract a specific page range from a PDF into a new file.</p>
+
+          <div class="mb-3">
+            <label class="tool-file-label" for="splitFile">Upload PDF</label>
+            <input type="file" id="splitFile" class="form-control" accept=".pdf">
+          </div>
+
+          <div class="mb-3">
+            <label class="converter-label" for="splitRange">
+              Pages to extract
+              <span id="splitPageCount" class="text-muted fw-normal ms-1" style="font-size:var(--text-xs);"></span>
+            </label>
+            <input type="text" id="splitRange" class="form-control" placeholder="e.g. 1-3, 5, 7-9"
+                   aria-describedby="splitRangeHelp">
+            <p id="splitRangeHelp" class="text-muted mt-1 mb-0" style="font-size:var(--text-xs);">
+              Comma-separated ranges. Examples: <code>1-5</code> · <code>2,4,6</code> · <code>1-3,7-10</code>
+            </p>
+          </div>
+
+          <button class="btn btn-primary btn-lg w-100" id="splitPDFBtn">
+            <i class="bi bi-scissors me-2" aria-hidden="true"></i>Extract Pages
+          </button>
+
+          <div id="splitError"  class="tool-error"  hidden></div>
+          <div id="splitResult" class="tool-result"  hidden>
+            <p class="result-msg"></p>
+            <button class="btn btn-primary result-download-btn" hidden>
+              <i class="bi bi-download me-2" aria-hidden="true"></i>Download Split PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════
+             PANEL 3: ROTATE & DELETE
+             ════════════════════════════════════════════════════════ -->
+        <div id="panel-rotate" role="tabpanel" data-pdf-tool-panel="rotate" class="tool-panel" hidden>
+          <h3 class="fw-600 mb-1" style="font-size:var(--text-lg);">Rotate &amp; Delete Pages</h3>
+          <p class="text-muted mb-3" style="font-size:var(--text-sm);">Rotate individual pages 90° CW or CCW, or remove pages you don't need. Apply all changes at once.</p>
+
+          <div class="mb-3">
+            <label class="tool-file-label" for="rotateFile">Upload PDF</label>
+            <input type="file" id="rotateFile" class="form-control" accept=".pdf">
+          </div>
+
+          <!-- Page list (injected by JS after file loads) -->
+          <div id="rotatePanel" hidden>
+            <p class="converter-label mb-2">Pages — click actions to mark rotations and deletions:</p>
+            <div id="pageThumbs" class="page-thumbs-grid mb-3"></div>
+
+            <button class="btn btn-primary btn-lg w-100" id="rotateApplyBtn">
+              <i class="bi bi-check-circle me-2" aria-hidden="true"></i>Apply &amp; Download
+            </button>
+          </div>
+
+          <div id="rotateError"  class="tool-error"  hidden></div>
+          <div id="rotateResult" class="tool-result"  hidden>
+            <p class="result-msg"></p>
+            <button class="btn btn-primary result-download-btn" hidden>
+              <i class="bi bi-download me-2" aria-hidden="true"></i>Download Edited PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════
+             PANEL 4: WATERMARK
+             ════════════════════════════════════════════════════════ -->
+        <div id="panel-watermark" role="tabpanel" data-pdf-tool-panel="watermark" class="tool-panel" hidden>
+          <h3 class="fw-600 mb-1" style="font-size:var(--text-lg);">Add Text Watermark</h3>
+          <p class="text-muted mb-3" style="font-size:var(--text-sm);">Stamp a diagonal text watermark on every page of a PDF.</p>
+
+          <div class="mb-3">
+            <label class="tool-file-label" for="watermarkFile">Upload PDF</label>
+            <input type="file" id="watermarkFile" class="form-control" accept=".pdf">
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="converter-label" for="watermarkText">Watermark text</label>
+              <input type="text" id="watermarkText" class="form-control" value="CONFIDENTIAL" maxlength="40">
+            </div>
+            <div class="col-sm-3">
+              <label class="converter-label" for="watermarkColor">Colour</label>
+              <input type="color" id="watermarkColor" class="form-control form-control-color w-100" value="#cc0000" title="Watermark colour">
+            </div>
+            <div class="col-sm-3">
+              <label class="converter-label" for="watermarkOpacity">Opacity</label>
+              <input type="range" id="watermarkOpacity" class="form-range" min="0.05" max="0.6" step="0.05" value="0.25">
+              <p class="text-muted text-center mb-0" style="font-size:var(--text-xs);" id="watermarkOpacityLabel">25%</p>
+            </div>
+          </div>
+
+          <!-- Live preview -->
+          <div class="mb-3">
+            <label class="converter-label">Preview</label>
+            <div class="wm-preview" aria-hidden="true">
+              <span id="wmPreviewText" style="color:#cc0000; opacity:0.25;">CONFIDENTIAL</span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-lg w-100" id="watermarkBtn">
+            <i class="bi bi-droplet me-2" aria-hidden="true"></i>Apply Watermark
+          </button>
+
+          <div id="watermarkError"  class="tool-error"  hidden></div>
+          <div id="watermarkResult" class="tool-result"  hidden>
+            <p class="result-msg"></p>
+            <button class="btn btn-primary result-download-btn" hidden>
+              <i class="bi bi-download me-2" aria-hidden="true"></i>Download Watermarked PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- Privacy note -->
+        <p class="mode-desc mt-3">
+          <i class="bi bi-shield-lock-fill text-accent" aria-hidden="true"></i>
+          All processing happens locally in your browser — no files are uploaded anywhere.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- What this tool does -->
+  <section class="section-content" aria-labelledby="about-h2">
+    <div class="container" style="max-width:800px;">
+      <h2 class="section-title" id="about-h2">What the PDF Editor Can Do</h2>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="format-explainer-card">
+            <div class="format-explainer-card__header">
+              <span class="format-explainer-card__icon" aria-hidden="true">📂</span>
+              <h3 class="format-explainer-card__name">Merge</h3>
+            </div>
+            <p>Combine any number of PDFs into one file, in the order you select them. Useful for assembling reports, contracts, or multi-part documents.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="format-explainer-card">
+            <div class="format-explainer-card__header">
+              <span class="format-explainer-card__icon" aria-hidden="true">✂️</span>
+              <h3 class="format-explainer-card__name">Split</h3>
+            </div>
+            <p>Extract a specific page range into its own PDF. Enter any range like <code>1-5</code> or <code>2,4,7-10</code> to get exactly the pages you need.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="format-explainer-card">
+            <div class="format-explainer-card__header">
+              <span class="format-explainer-card__icon" aria-hidden="true">🔄</span>
+              <h3 class="format-explainer-card__name">Rotate &amp; Delete</h3>
+            </div>
+            <p>Fix sideways or upside-down pages by rotating them 90° at a time. Remove unwanted pages before sharing. Changes are applied together in one pass.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="format-explainer-card">
+            <div class="format-explainer-card__header">
+              <span class="format-explainer-card__icon" aria-hidden="true">💧</span>
+              <h3 class="format-explainer-card__name">Watermark</h3>
+            </div>
+            <p>Add a diagonal text stamp — like CONFIDENTIAL, DRAFT, or your company name — across every page. Choose colour and opacity to control visibility.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="section-how-it-works" aria-labelledby="how-h2">
+    <div class="container" style="max-width:800px;">
+      <h2 class="section-title" id="how-h2">How to Edit a PDF</h2>
+      <ol class="how-it-works-list">
+        <li>Choose the editing tool you need: Merge, Split, Rotate &amp; Delete, or Watermark.</li>
+        <li>Upload your PDF file (or multiple files for merging).</li>
+        <li>Configure the options — page ranges, rotation, watermark text, etc.</li>
+        <li>Click the action button and download the resulting PDF immediately.</li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="privacy-block">
+    <div class="privacy-block__inner">
+      <span class="privacy-icon" aria-hidden="true">🔒</span>
+      <div>
+        <strong>100% Private &amp; Browser-Based</strong>
+        <p>Every operation uses pdf-lib running locally in your browser. Your PDFs never leave your device — no uploads, no accounts, no logs.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related -->
+  <section class="related-section" aria-labelledby="related-h2">
+    <div class="container" style="max-width:var(--max-width);">
+      <h2 class="section-title mb-4" id="related-h2">More PDF Tools</h2>
+      <div class="converter-grid">
+        <a href="/document/pdf-to-txt/" class="converter-card-link">
+          <span class="converter-card-link__label">PDF to TXT</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/document/pdf-to-jpg/" class="converter-card-link">
+          <span class="converter-card-link__label">PDF to JPG</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/document/pdf-to-png/" class="converter-card-link">
+          <span class="converter-card-link__label">PDF to PNG</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/document/pdf-to-searchable/" class="converter-card-link">
+          <span class="converter-card-link__label">PDF to Searchable PDF (OCR)</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/document/word-to-pdf/" class="converter-card-link">
+          <span class="converter-card-link__label">Word to PDF</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/document/markdown-to-pdf/" class="converter-card-link">
+          <span class="converter-card-link__label">Markdown to PDF</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Can I merge more than two PDFs?","acceptedAnswer":{"@type":"Answer","text":"Yes — select as many PDF files as you like. They will be merged in the order you selected them."}},{"@type":"Question","name":"Does splitting a PDF modify the original?","acceptedAnswer":{"@type":"Answer","text":"No. A new PDF is created with only the extracted pages. Your original file is never modified."}},{"@type":"Question","name":"Are my PDF files uploaded to a server?","acceptedAnswer":{"@type":"Answer","text":"No. All editing operations use pdf-lib running entirely in your browser. Your files never leave your device."}},{"@type":"Question","name":"Can I remove the watermark from a PDF?","acceptedAnswer":{"@type":"Answer","text":"This tool adds watermarks but does not remove them from existing PDFs. Removing watermarks embedded in PDF content is not supported."}},{"@type":"Question","name":"What is the file size limit?","acceptedAnswer":{"@type":"Answer","text":"There is no hard limit, but very large PDFs (over 100 MB) may be slow or cause memory pressure in the browser. For best results keep files under 50 MB."}}]}</script>
+  <section class="section-faq" aria-labelledby="faq-heading">
+    <div class="container" style="max-width:800px;">
+      <div class="text-center mb-5">
+        <p class="section-label">FAQ</p>
+        <h2 class="section-title" id="faq-heading">Frequently Asked Questions</h2>
+      </div>
+      <div class="accordion" id="faqAccordion">
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq0" aria-expanded="true">
+              Can I merge more than two PDFs?
+            </button>
+          </h3>
+          <div id="faq0" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">Yes — select as many PDF files as you like. They will be merged in the order you selected them.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" aria-expanded="false">
+              Does splitting a PDF modify the original?
+            </button>
+          </h3>
+          <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">No. A new PDF is created with only the extracted pages. Your original file is never modified.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" aria-expanded="false">
+              Are my PDF files uploaded to a server?
+            </button>
+          </h3>
+          <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">No. All editing uses pdf-lib running entirely in your browser. Your files never leave your device.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" aria-expanded="false">
+              Can I remove a watermark from a PDF?
+            </button>
+          </h3>
+          <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">This tool adds watermarks but does not remove them from existing PDFs. Removing watermarks embedded in PDF content is not supported in a browser-only tool.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4" aria-expanded="false">
+              What is the file size limit?
+            </button>
+          </h3>
+          <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">There is no hard limit, but very large PDFs (over 100 MB) may be slow or cause memory pressure in the browser. For best results keep files under 50 MB.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer-main" role="contentinfo">
+  <div class="container" style="max-width:var(--max-width);">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-4">
+      <div>
+        <a href="/" class="footer-logo" aria-label="AintoB home">🅰️➡️🅱️ AintoB</a>
+        <p class="footer-copy">© 2026 AintoB.com – All rights reserved.</p>
+        <p class="footer-gdpr-badge"><i class="bi bi-shield-check" aria-hidden="true"></i> Privacy-first · Browser-only · No uploads</p>
+      </div>
+      <nav aria-label="Footer navigation">
+        <ul class="footer-links">
+          <li><a href="/file-converter/">All Converters</a></li>
+          <li><a href="/document-converter/">Document Converters</a></li>
+          <li><a href="/document/pdf-converter/">PDF Converter</a></li>
+          <li><a href="/document/pdf-to-searchable/">PDF OCR Tool</a></li>
+          <li><a href="/privacy/">Privacy Policy</a></li>
+          <li><a href="/imprint/">Imprint</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<!-- Cookie Banner -->
+<div id="cookie-banner" role="dialog" aria-label="Cookie preferences" aria-live="polite">
+  <div class="container" style="max-width:var(--max-width); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem;">
+    <p class="cookie-text mb-0">We use essential cookies only. No tracking without your consent. <a href="/privacy/">Privacy Policy</a></p>
+    <div style="display:flex; gap:.5rem;">
+      <button class="btn btn-primary btn-sm" onclick="acceptCookies('all')">Accept All</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="acceptCookies('essential')">Essential Only</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+<script src="/assets/js/site.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js" defer></script>
+<script src="/assets/js/converters/pdf-edit.js" defer></script>
+
+<!-- Live watermark preview script (lightweight, no library needed) -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var textInput    = document.getElementById('watermarkText');
+  var colorInput   = document.getElementById('watermarkColor');
+  var opacityInput = document.getElementById('watermarkOpacity');
+  var previewText  = document.getElementById('wmPreviewText');
+  var opacityLabel = document.getElementById('watermarkOpacityLabel');
+
+  function updatePreview() {
+    if (!previewText) return;
+    if (textInput)    previewText.textContent    = textInput.value || 'WATERMARK';
+    if (colorInput)   previewText.style.color    = colorInput.value;
+    if (opacityInput) {
+      previewText.style.opacity = opacityInput.value;
+      if (opacityLabel) opacityLabel.textContent = Math.round(opacityInput.value * 100) + '%';
+    }
+  }
+
+  if (textInput)    textInput.addEventListener('input',  updatePreview);
+  if (colorInput)   colorInput.addEventListener('input', updatePreview);
+  if (opacityInput) opacityInput.addEventListener('input', updatePreview);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF to Searchable PDF – Free OCR, Browser-Only</title>
+  <meta name="description" content="Make scanned PDFs searchable with free browser-based OCR. No upload, no server. Tesseract OCR runs entirely in your browser to add a text layer to image-based PDFs.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://aintob.com/document/pdf-to-searchable/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="PDF to Searchable PDF – Free OCR, Browser-Only">
+  <meta property="og:description" content="Make scanned PDFs searchable with free browser-based OCR. No upload, no server.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://aintob.com/document/pdf-to-searchable/">
+  <meta property="og:image" content="https://aintob.com/assets/img/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    /* ── Progress & result sections ─────────────────────────────── */
+    .ocr-progress-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+    }
+    .ocr-status {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      margin-top: .5rem;
+      min-height: 1.4em;
+    }
+    .ocr-result-card {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+    }
+    .ocr-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-md);
+      padding: .75rem 1rem;
+      font-size: var(--text-sm);
+      color: #991b1b;
+    }
+    .lang-select-row {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      flex-wrap: wrap;
+    }
+  </style>
+
+  <!-- Schema -->
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "PDF to Searchable PDF (OCR)",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Web browser",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "description": "Make scanned PDFs searchable with free browser-based OCR. No upload, no server.",
+  "url": "https://aintob.com/document/pdf-to-searchable/"
+}</script>
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<nav class="navbar-aintob" aria-label="Main navigation">
+  <div class="container" style="max-width:var(--max-width); display:flex; align-items:center; justify-content:space-between;">
+    <a href="/" class="navbar-logo" aria-label="AintoB home">🅰️➡️🅱️ <span style="font-size:1rem; font-weight:500; color:var(--color-text-muted);">AintoB</span></a>
+    <nav aria-label="Site navigation" style="display:flex; align-items:center; gap:0.75rem;">
+      <a href="/file-converter/" class="navbar-tools-link"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> All Converters</a>
+    </nav>
+  </div>
+</nav>
+
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Document Converter","item":"https://aintob.com/document-converter/"},{"@type":"ListItem","position":2,"name":"PDF Converter","item":"https://aintob.com/document/pdf-converter/"},{"@type":"ListItem","position":3,"name":"PDF to Searchable PDF","item":"https://aintob.com/document/pdf-to-searchable/"}]}</script>
+<nav aria-label="Breadcrumb" class="breadcrumb-nav">
+  <div class="container" style="max-width:var(--max-width);">
+    <ol class="breadcrumb mb-0" style="padding: 0.625rem 0; font-size: var(--text-sm);">
+      <li class="breadcrumb-item"><a href="/">Home</a></li>
+      <li class="breadcrumb-item"><a href="/document-converter/">Document Converter</a></li>
+      <li class="breadcrumb-item"><a href="/document/pdf-converter/">PDF Converter</a></li>
+      <li class="breadcrumb-item active" aria-current="page">PDF to Searchable PDF</li>
+    </ol>
+  </div>
+</nav>
+
+<main id="main-content">
+
+  <!-- Hero -->
+  <section class="section-hero section-hero--pair" aria-labelledby="pair-h1">
+    <div class="container" style="max-width:800px; text-align:center;">
+      <div class="format-badge-row">
+        <span class="format-badge format-badge--from">PDF</span>
+        <span class="format-badge-arrow" aria-hidden="true">→</span>
+        <span class="format-badge format-badge--to">Searchable PDF</span>
+      </div>
+      <h1 class="hero-title" id="pair-h1">PDF to Searchable PDF (OCR)</h1>
+      <p class="hero-subtitle mx-auto">Add a searchable text layer to scanned or image-based PDFs using Tesseract OCR — entirely in your browser. No file upload, no server, no account.</p>
+    </div>
+  </section>
+
+  <!-- Converter -->
+  <section class="section-converter" id="converter" aria-labelledby="converter-heading">
+    <div class="container" style="max-width:800px;">
+      <div class="converter-card">
+        <h2 class="visually-hidden" id="converter-heading">Create Searchable PDF</h2>
+
+        <!-- Drop Zone -->
+        <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Click or drag a PDF file here">
+          <i class="bi bi-cloud-upload drop-zone__icon" aria-hidden="true"></i>
+          <p class="drop-zone__text">Drag &amp; drop your <strong>PDF</strong> file here</p>
+          <p class="drop-zone__sub">or</p>
+          <label class="btn btn-primary px-4" for="fileInput">
+            <i class="bi bi-folder2-open me-2" aria-hidden="true"></i>Browse File
+          </label>
+          <input type="file" id="fileInput" class="visually-hidden" accept=".pdf" aria-label="Select PDF file">
+          <p class="drop-zone__limit">Max ~50 MB · Processing time depends on page count and scan quality</p>
+        </div>
+
+        <!-- Settings (shown after file selected) -->
+        <div class="converter-settings mt-3" id="converterSettings" hidden>
+          <div class="d-flex align-items-center gap-3 mb-3 file-selected-row">
+            <i class="bi bi-file-earmark-check-fill text-accent" style="font-size:1.5rem;" aria-hidden="true"></i>
+            <div class="flex-grow-1">
+              <p class="mb-0 fw-600" id="selectedFileName">file.pdf</p>
+              <p class="text-muted mb-0" style="font-size:var(--text-sm);" id="selectedFileSize"></p>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" id="clearFileBtn" aria-label="Remove file">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <!-- OCR Language -->
+          <div class="mb-3">
+            <label class="converter-label" for="ocrLang">OCR Language</label>
+            <div class="lang-select-row">
+              <select id="ocrLang" class="form-select" style="max-width:220px;">
+                <option value="eng" selected>English</option>
+                <option value="deu">German (Deutsch)</option>
+                <option value="fra">French (Français)</option>
+                <option value="spa">Spanish (Español)</option>
+                <option value="por">Portuguese (Português)</option>
+                <option value="ita">Italian (Italiano)</option>
+                <option value="nld">Dutch (Nederlands)</option>
+                <option value="pol">Polish (Polski)</option>
+                <option value="rus">Russian (Русский)</option>
+                <option value="chi_sim">Chinese Simplified</option>
+                <option value="jpn">Japanese (日本語)</option>
+                <option value="ara">Arabic (عربي)</option>
+              </select>
+              <span class="text-muted" style="font-size:var(--text-xs);">Select the main language in the PDF for better accuracy.</span>
+            </div>
+          </div>
+
+          <div class="explainer-note mb-3">
+            <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+            <strong>How it works:</strong> Each page is rendered as an image and processed by Tesseract OCR in your browser. An invisible text layer is then embedded so the PDF becomes searchable and copy-paste works. OCR takes 3–15 seconds per page.
+          </div>
+
+          <button class="btn btn-primary btn-lg w-100" id="convertBtn">
+            <i class="bi bi-search me-2" aria-hidden="true"></i>Create Searchable PDF
+          </button>
+        </div>
+
+        <!-- Progress -->
+        <div id="ocrProgress" class="mt-3" hidden>
+          <div class="ocr-progress-card">
+            <p class="fw-600 mb-2">OCR in progress…</p>
+            <div class="progress mb-1" role="progressbar" aria-label="OCR progress"
+                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="height:10px;">
+              <div id="ocrProgressBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                   style="width:0%">0%</div>
+            </div>
+            <p id="ocrStatus" class="ocr-status">Initialising…</p>
+            <p class="text-muted mb-0" style="font-size:var(--text-xs);">
+              OCR runs locally in your browser. Large or complex scans take longer. Do not close this tab.
+            </p>
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div id="ocrResult" class="mt-3" hidden>
+          <div class="ocr-result-card d-flex align-items-start gap-3 mb-3">
+            <i class="bi bi-check-circle-fill text-success" style="font-size:1.5rem; flex-shrink:0;" aria-hidden="true"></i>
+            <p id="ocrResultMsg" class="mb-0 fw-600"></p>
+          </div>
+          <button id="downloadBtn" class="btn btn-primary btn-lg w-100 mb-2" hidden>
+            <i class="bi bi-download me-2" aria-hidden="true"></i>Download Searchable PDF
+          </button>
+          <button id="convertAnotherBtn" class="btn btn-outline-secondary w-100">Process another file</button>
+        </div>
+
+        <!-- Error -->
+        <div id="ocrError" class="ocr-error mt-3" hidden></div>
+
+        <!-- Privacy note -->
+        <p class="mode-desc mt-2">
+          <i class="bi bi-shield-lock-fill text-accent" aria-hidden="true"></i>
+          Your file is processed locally in your browser — nothing is ever uploaded.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Intro & Why -->
+  <section class="section-content" aria-labelledby="intro-h2">
+    <div class="container" style="max-width:800px;">
+      <h2 class="section-title" id="intro-h2">Why Make a PDF Searchable?</h2>
+      <p>Scanned documents, photographed pages, and image-based PDFs look like PDFs but are really just pictures. You cannot search the text, highlight words, or copy content. OCR (Optical Character Recognition) reads the image and adds an invisible text layer so the document becomes truly usable.</p>
+      <h3 class="explainer-subtitle">Common use cases</h3>
+      <ul class="explainer-list">
+        <li><i class="bi bi-check-circle-fill text-accent me-2" aria-hidden="true"></i>Scanned contracts, invoices, or receipts you need to search through.</li>
+        <li><i class="bi bi-check-circle-fill text-accent me-2" aria-hidden="true"></i>Digitised books, articles, or historical documents.</li>
+        <li><i class="bi bi-check-circle-fill text-accent me-2" aria-hidden="true"></i>Making archived documents accessible to screen readers.</li>
+      </ul>
+      <div class="explainer-note">
+        <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+        <strong>Honest limitation:</strong> Tesseract OCR accuracy depends heavily on scan quality. Blurry, skewed, or very small text will produce imperfect results. This tool is best for clean, straight scans at 150 dpi or higher. Handwriting is not reliably recognised.
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="section-how-it-works" aria-labelledby="how-h2">
+    <div class="container" style="max-width:800px;">
+      <h2 class="section-title" id="how-h2">How to Make a PDF Searchable</h2>
+      <ol class="how-it-works-list">
+        <li>Upload your scanned or image-based PDF using the drop zone above.</li>
+        <li>Select the main language of the document for better OCR accuracy.</li>
+        <li>Click <strong>Create Searchable PDF</strong> and wait while each page is processed.</li>
+        <li>Download the resulting PDF — it now has a searchable, copy-paste-able text layer.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Format Explainer -->
+  <section class="section-formats-explainer" aria-labelledby="formats-h2">
+    <div class="container" style="max-width:var(--max-width);">
+      <h2 class="section-title mb-4" id="formats-h2">What This Tool Does</h2>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="format-explainer-card">
+            <div class="format-explainer-card__header">
+              <span class="format-explainer-card__icon" aria-hidden="true">🔍</span>
+              <h3 class="format-explainer-card__name">Image-Only PDFs</h3>
+            </div>
+            <p>If your PDF was created by scanning paper or photographing pages, it contains only images. Search, copy, and accessibility tools cannot find any text — because there is no text in the file, only pixels.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="format-explainer-card">
+            <div class="format-explainer-card__header">
+              <span class="format-explainer-card__icon" aria-hidden="true">📄</span>
+              <h3 class="format-explainer-card__name">Searchable PDFs</h3>
+            </div>
+            <p>A searchable PDF keeps the original page image as a visual background and adds an invisible text layer on top. PDF viewers use that layer for search, selection, and copying — while the document still looks exactly as scanned.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="privacy-block">
+    <div class="privacy-block__inner">
+      <span class="privacy-icon" aria-hidden="true">🔒</span>
+      <div>
+        <strong>100% Private &amp; Browser-Based</strong>
+        <p>Your PDF never leaves your device. Tesseract OCR runs entirely in your browser as a Web Assembly module. No data is uploaded anywhere. No account required.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related -->
+  <section class="related-section" aria-labelledby="related-more-pdf">
+    <div class="container" style="max-width:var(--max-width);">
+      <h2 class="section-title mb-4" id="related-more-pdf">More PDF Tools</h2>
+      <div class="converter-grid">
+        <a href="/document/pdf-to-txt/" class="converter-card-link">
+          <span class="converter-card-link__label">PDF to TXT Converter</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/document/pdf-to-jpg/" class="converter-card-link">
+          <span class="converter-card-link__label">PDF to JPG Converter</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/document/pdf-to-png/" class="converter-card-link">
+          <span class="converter-card-link__label">PDF to PNG Converter</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/document/pdf-edit/" class="converter-card-link">
+          <span class="converter-card-link__label">PDF Editor (Merge, Split, Rotate…)</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/document/pdf-to-txt/" class="converter-card-link">
+          <span class="converter-card-link__label">PDF Text Extractor</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/document/pdf-converter/" class="converter-card-link">
+          <span class="converter-card-link__label">All PDF Conversions</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does this OCR tool work on scanned PDFs?","acceptedAnswer":{"@type":"Answer","text":"Yes — this tool is specifically designed for image-based and scanned PDFs. It renders each page and runs Tesseract OCR in your browser to extract the text."}},{"@type":"Question","name":"How long does OCR take?","acceptedAnswer":{"@type":"Answer","text":"Approximately 3–15 seconds per page depending on page size, scan quality, and your device speed. A 10-page scanned PDF typically takes 1–2 minutes."}},{"@type":"Question","name":"Is my PDF uploaded anywhere?","acceptedAnswer":{"@type":"Answer","text":"No. The entire process runs in your browser using Tesseract.js (a JavaScript OCR engine). Your file never leaves your device."}},{"@type":"Question","name":"What if the PDF already has text?","acceptedAnswer":{"@type":"Answer","text":"The tool checks for existing text first. If your PDF already contains selectable text, it will tell you so and you can download the original without any OCR processing."}},{"@type":"Question","name":"What languages does the OCR support?","acceptedAnswer":{"@type":"Answer","text":"The tool supports English, German, French, Spanish, Portuguese, Italian, Dutch, Polish, Russian, Chinese Simplified, Japanese, and Arabic. Select the correct language before processing for best accuracy."}}]}</script>
+  <section class="section-faq" aria-labelledby="faq-heading">
+    <div class="container" style="max-width:800px;">
+      <div class="text-center mb-5">
+        <p class="section-label">FAQ</p>
+        <h2 class="section-title" id="faq-heading">Frequently Asked Questions</h2>
+      </div>
+      <div class="accordion" id="faqAccordion">
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq0" aria-expanded="true">
+              Does this OCR tool work on scanned PDFs?
+            </button>
+          </h3>
+          <div id="faq0" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">Yes — this tool is specifically designed for image-based and scanned PDFs. It renders each page and runs Tesseract OCR in your browser to extract the text.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" aria-expanded="false">
+              How long does OCR take?
+            </button>
+          </h3>
+          <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">Approximately 3–15 seconds per page depending on page size, scan quality, and your device speed. A 10-page scanned PDF typically takes 1–2 minutes.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" aria-expanded="false">
+              Is my PDF uploaded anywhere?
+            </button>
+          </h3>
+          <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">No. The entire process runs in your browser using Tesseract.js. Your file never leaves your device.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" aria-expanded="false">
+              What if the PDF already has text?
+            </button>
+          </h3>
+          <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">The tool checks for existing text first. If your PDF already contains selectable text, it will tell you so and allow you to download the original without OCR processing.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4" aria-expanded="false">
+              What languages does the OCR support?
+            </button>
+          </h3>
+          <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">English, German, French, Spanish, Portuguese, Italian, Dutch, Polish, Russian, Chinese Simplified, Japanese, and Arabic. Select the correct language before processing for best accuracy.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer-main" role="contentinfo">
+  <div class="container" style="max-width:var(--max-width);">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-4">
+      <div>
+        <a href="/" class="footer-logo" aria-label="AintoB home">🅰️➡️🅱️ AintoB</a>
+        <p class="footer-copy">© 2026 AintoB.com – All rights reserved.</p>
+        <p class="footer-gdpr-badge"><i class="bi bi-shield-check" aria-hidden="true"></i> Privacy-first · Browser-only · No uploads</p>
+      </div>
+      <nav aria-label="Footer navigation">
+        <ul class="footer-links">
+          <li><a href="/file-converter/">All Converters</a></li>
+          <li><a href="/document-converter/">Document Converters</a></li>
+          <li><a href="/document/pdf-converter/">PDF Converter</a></li>
+          <li><a href="/document/pdf-edit/">PDF Editor</a></li>
+          <li><a href="/privacy/">Privacy Policy</a></li>
+          <li><a href="/imprint/">Imprint</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<!-- Cookie Banner -->
+<div id="cookie-banner" role="dialog" aria-label="Cookie preferences" aria-live="polite">
+  <div class="container" style="max-width:var(--max-width); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem;">
+    <p class="cookie-text mb-0">We use essential cookies only. No tracking without your consent. <a href="/privacy/">Privacy Policy</a></p>
+    <div style="display:flex; gap:.5rem;">
+      <button class="btn btn-primary btn-sm" onclick="acceptCookies('all')">Accept All</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="acceptCookies('essential')">Essential Only</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+<script src="/assets/js/site.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js" defer></script>
+<script src="/assets/js/converters/pdf-to-searchable.js" defer></script>
+</body>
+</html>

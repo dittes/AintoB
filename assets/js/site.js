@@ -52,6 +52,7 @@
     let selectedFile     = null;
     let lastResultBlob   = null;
     let lastResultName   = 'converted';
+    let lastPrintFn      = null;
 
     function formatBytes(bytes) {
       if (bytes < 1024) return bytes + ' B';
@@ -71,11 +72,16 @@
     function resetWidget() {
       selectedFile   = null;
       lastResultBlob = null;
+      lastPrintFn    = null;
       if (fileInput) fileInput.value = '';
       if (dropZone) dropZone.hidden = false;
       if (converterSettings) converterSettings.hidden = true;
       if (converterOutput)   converterOutput.hidden = true;
       if (converterTextArea) converterTextArea.value = '';
+      // Restore download button original text if it was changed by a print converter
+      if (downloadBtn) {
+        downloadBtn.innerHTML = downloadBtn.dataset.origHtml || downloadBtn.innerHTML;
+      }
     }
 
     // ── Tab switching ────────────────────────────────────────
@@ -153,6 +159,26 @@
 
       try {
         const result = await window.performConversion(input);
+
+        // Print-based converters return { printMode: true, printFn }
+        if (result && result.printMode) {
+          lastPrintFn    = result.printFn || null;
+          lastResultBlob = null;
+          if (buttonEl === convertBtn && converterSettings) converterSettings.hidden = true;
+          if (converterOutput) {
+            // Swap the download button into a "print again" button
+            if (downloadBtn) {
+              if (!downloadBtn.dataset.origHtml) downloadBtn.dataset.origHtml = downloadBtn.innerHTML;
+              downloadBtn.innerHTML = '<i class="bi bi-printer me-2" aria-hidden="true"></i>Print / Save as PDF Again';
+            }
+            converterOutput.hidden = false;
+          }
+          showToast('Print dialog opened. Choose "Save as PDF" as the destination.', 'info');
+          buttonEl.disabled = false;
+          buttonEl.innerHTML = origHtml;
+          return;
+        }
+
         lastResultBlob = result.blob;
         lastResultName = result.filename || 'converted';
 
@@ -188,6 +214,8 @@
     // ── Download ─────────────────────────────────────────────
     if (downloadBtn) {
       downloadBtn.addEventListener('click', function () {
+        // Print-mode: re-open the print dialog
+        if (lastPrintFn) { lastPrintFn(); return; }
         if (!lastResultBlob) { showToast('Nothing to download yet.', 'info'); return; }
         const url = URL.createObjectURL(lastResultBlob);
         const a   = document.createElement('a');
