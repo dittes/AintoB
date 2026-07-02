@@ -287,6 +287,87 @@ const FMT = {
     limitation: 'Limited native support on Apple devices — Safari does not support VP8/VP9 WebM well; iOS and macOS prefer H.264 MP4.',
     compat: 'Chrome, Firefox, Edge, Android. Limited or no support on Safari and iOS without workarounds.',
   },
+  BMP: {
+    fullName: 'Bitmap Image File',
+    ext: '.bmp', mime: 'image/bmp', category: 'image',
+    icon: '🗺️',
+    description: 'BMP is an uncompressed raster format from the early days of Windows. Every pixel is stored without compression, which makes BMP files large but completely lossless and trivially simple to read — the reason it survives in embedded systems, scanners, and legacy Windows software.',
+    useCases: ['Exchanging images with legacy Windows applications', 'Embedded systems and firmware that expect raw bitmaps', 'Intermediate lossless captures before further editing'],
+    limitation: 'No compression — BMP files are far larger than PNG at identical quality, making them impractical for web use or sharing.',
+    compat: 'Supported by all major browsers, Windows, macOS, and virtually every image editor.',
+  },
+  ICO: {
+    fullName: 'Windows Icon Format',
+    ext: '.ico', mime: 'image/x-icon', category: 'image',
+    icon: '🔖',
+    description: 'ICO is the icon container format used by Windows and by every website favicon. A single ICO file can hold multiple image sizes (16×16 up to 256×256) so the operating system or browser can pick the sharpest variant for the context.',
+    useCases: ['Website favicons served as /favicon.ico', 'Windows application and shortcut icons', 'Toolbar and system-tray icons at multiple sizes'],
+    limitation: 'ICO is only meant for small icons — images are capped at 256×256 pixels, so it is unsuitable as a general-purpose image format.',
+    compat: 'Universal favicon support in every browser. Windows native. Most image editors need a plugin to save ICO.',
+  },
+  JSON: {
+    fullName: 'JavaScript Object Notation',
+    ext: '.json', mime: 'application/json', category: 'data',
+    icon: '🧩',
+    description: 'JSON is the standard data-interchange format of the web. It represents structured data as nested objects and arrays in plain text — human-readable, language-independent, and natively supported by every programming language and API in common use.',
+    useCases: ['REST API payloads and configuration files', 'Exchanging structured data between services and languages', 'Storing settings, fixtures, and exported records'],
+    limitation: 'JSON has no comments, no date type, and gets hard to read when deeply nested or minified — formatting and conversion tools help.',
+    compat: 'Universal — every programming language, browser, and modern tool reads JSON.',
+  },
+  YAML: {
+    fullName: "YAML Ain't Markup Language",
+    ext: '.yaml', mime: 'application/x-yaml', category: 'data',
+    icon: '📋',
+    description: 'YAML is a human-friendly data format that uses indentation instead of brackets and quotes. It is the de-facto standard for configuration files — Kubernetes, Docker Compose, GitHub Actions, and CI pipelines all speak YAML — and it maps one-to-one onto the same data model as JSON.',
+    useCases: ['Kubernetes manifests and Docker Compose files', 'CI/CD pipeline definitions (GitHub Actions, GitLab CI)', 'Application configuration that humans edit by hand'],
+    limitation: 'Whitespace sensitivity makes YAML easy to break with a stray indent, and its implicit typing (the "Norway problem") can surprise you.',
+    compat: 'Supported by all major languages via libraries. Not natively parsed by browsers — which is why converters exist.',
+  },
+  XML: {
+    fullName: 'Extensible Markup Language',
+    ext: '.xml', mime: 'application/xml', category: 'data',
+    icon: '🏷️',
+    description: 'XML is a markup-based data format that predates JSON. It wraps data in nested named tags with attributes, and remains entrenched in enterprise systems, SOAP APIs, RSS feeds, sitemaps, and document standards like SVG and Office files.',
+    useCases: ['Legacy enterprise and SOAP API integrations', 'RSS/Atom feeds and XML sitemaps', 'Configuration for Java and .NET ecosystems'],
+    limitation: 'Verbose compared to JSON — the same data takes considerably more bytes and is harder to consume in JavaScript, which is why XML to JSON conversion is so common.',
+    compat: 'Universal parser support. Browsers parse XML natively via DOMParser.',
+  },
+  Base64: {
+    fullName: 'Base64 Encoding',
+    ext: '.txt', mime: 'text/plain', category: 'data',
+    icon: '🔢',
+    description: 'Base64 is a binary-to-text encoding that represents any data using 64 safe ASCII characters. It lets binary content — images, files, credentials — travel through channels that only handle text, such as JSON payloads, data URIs, email attachments, and HTTP basic authentication.',
+    useCases: ['Embedding images as data URIs in HTML/CSS', 'Transporting binary data inside JSON or XML', 'Encoding credentials and tokens for HTTP headers'],
+    limitation: 'Base64 output is ~33% larger than the original data and is an encoding, not encryption — it provides zero confidentiality.',
+    compat: 'Universal — every language and browser encodes/decodes Base64 natively.',
+  },
+  Text: {
+    fullName: 'Plain Text',
+    ext: '.txt', mime: 'text/plain', category: 'data',
+    icon: '📝',
+    description: 'Plain text is the simplest possible data format: a sequence of characters with no styling or structure. It is the universal input and output of every text tool, from encoders to case converters.',
+    useCases: ['Notes, logs, and README files', 'Input for encoders, formatters, and text utilities', 'Maximum-compatibility data exchange'],
+    limitation: 'No formatting, structure, or metadata — plain text carries only the characters themselves.',
+    compat: 'Universal — readable on every device and operating system ever made.',
+  },
+  'URL-encoded': {
+    fullName: 'Percent-Encoded Text',
+    ext: '.txt', mime: 'text/plain', category: 'data',
+    icon: '🔗',
+    description: 'URL encoding (percent-encoding) replaces characters that are not allowed in URLs with %-prefixed hexadecimal sequences — a space becomes %20, an ampersand %26. It keeps query strings, form submissions, and path segments unambiguous and safe to transmit.',
+    useCases: ['Building query strings with special characters', 'Encoding form data for GET/POST requests', 'Making non-ASCII text safe inside URLs'],
+    limitation: 'Encoded text is hard to read and must be decoded exactly once — double-encoding is a classic source of bugs.',
+    compat: 'Universal — defined by RFC 3986 and supported natively everywhere.',
+  },
+  Image: {
+    fullName: 'Any Raster Image',
+    ext: '.png,.jpg,.jpeg,.webp,.gif,.bmp,.avif', mime: 'image/*', category: 'image',
+    icon: '🖼️',
+    description: 'This tool accepts any common raster image — JPG, PNG, WebP, GIF, BMP, or AVIF — and processes it directly in your browser using the canvas API.',
+    useCases: ['Preparing images for the web', 'Meeting upload size and dimension limits', 'Optimising photos before sharing'],
+    limitation: 'Output is re-encoded by your browser, so exotic metadata (EXIF, colour profiles) is not preserved.',
+    compat: 'Works in every modern browser.',
+  },
 };
 
 // Normalise lookup key
@@ -322,7 +403,7 @@ function titleCase(str) {
 function categoryLabel(cat) {
   const map = {
     image: 'Image', document: 'Document', spreadsheet: 'Spreadsheet',
-    audio: 'Audio', video: 'Video', all: 'All'
+    audio: 'Audio', video: 'Video', data: 'Data & Text', all: 'All'
   };
   const base = cat.split('→')[0];
   return map[base] || titleCase(base);
@@ -332,14 +413,15 @@ function categoryHub(cat) {
   const base = cat.split('→')[0];
   const slugs = {
     image: '/image-converter/', document: '/document-converter/',
-    spreadsheet: '/spreadsheet-converter/', audio: '/audio-converter/', video: '/video-converter/'
+    spreadsheet: '/spreadsheet-converter/', audio: '/audio-converter/', video: '/video-converter/',
+    data: '/data-converter/'
   };
   return slugs[base] || '/file-converter/';
 }
 
 function categoryIcon(cat) {
   const base = cat.split('→')[0];
-  const icons = { image: '🖼️', document: '📄', spreadsheet: '📊', audio: '🎵', video: '🎬', all: '🔄' };
+  const icons = { image: '🖼️', document: '📄', spreadsheet: '📊', audio: '🎵', video: '🎬', data: '🧰', all: '🔄' };
   return icons[base] || '🔄';
 }
 
@@ -355,17 +437,56 @@ const CDN = {
   pdfJS:      'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
   xlsx:       'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
   heic2any:   'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js',
+  jsYaml:     'https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js',
+  ffmpeg:     'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js',
+  ffmpegUtil: 'https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js',
 };
 
-const IMAGE_FMTS  = new Set(['AVIF','GIF','HEIC','JPG','PNG','SVG','TIFF','WEBP']);
+const IMAGE_FMTS  = new Set(['AVIF','BMP','GIF','HEIC','ICO','JPG','PNG','SVG','TIFF','WEBP']);
 const SHEET_FMTS  = new Set(['CSV','TSV','EXCEL','ODS']);
+const AUDIO_FMTS  = new Set(['M4A','MP3','OGG','WAV']);
+const VIDEO_FMTS  = new Set(['AVI','MOV','MP4','WEBM']);
+// Raster formats ffmpeg.wasm can read AND write (used for TIFF/GIF image pairs
+// that the canvas API cannot handle)
+const FFMPEG_RASTER = new Set(['BMP','GIF','JPG','PNG','TIFF','WEBP']);
 
-// Returns { textMode, libs[], converterScript } or null if no browser converter exists.
+// Returns { textMode, libs[], converterScript, action?, engineNote? } or null
+// if no browser converter exists.
 function getConverterConfig(from, to, slug) {
   const f = (from || '').toUpperCase().replace('JPEG','JPG');
   const t = (to   || '').toUpperCase().replace('JPEG','JPG');
-  const C = (script, libs = [], textMode = false) =>
-    ({ textMode, libs, converterScript: `/assets/js/converters/${script}` });
+  const C = (script, libs = [], textMode = false, opts = {}) =>
+    ({ textMode, libs, converterScript: `/assets/js/converters/${script}`,
+       engineNote: script === 'media-convert.js', ...opts });
+
+  // ── Data & text tools (slug-keyed — one shared script) ────────────────────
+  const dataMap = {
+    '/data/json-to-csv/':    C('data-convert.js', [], true),
+    '/data/csv-to-json/':    C('data-convert.js', [], true),
+    '/data/json-to-yaml/':   C('data-convert.js', [CDN.jsYaml], true),
+    '/data/yaml-to-json/':   C('data-convert.js', [CDN.jsYaml], true),
+    '/data/xml-to-json/':    C('data-convert.js', [], true),
+    '/data/json-formatter/': C('data-convert.js', [], true, { action: 'Format JSON' }),
+    '/data/base64-encode/':  C('data-convert.js', [], true, { action: 'Encode to Base64' }),
+    '/data/base64-decode/':  C('data-convert.js', [], true, { action: 'Decode Base64' }),
+    '/data/url-encode/':     C('data-convert.js', [], true, { action: 'URL-Encode' }),
+    '/data/url-decode/':     C('data-convert.js', [], true, { action: 'URL-Decode' }),
+    '/data/case-converter/': C('data-convert.js', [], true, { action: 'Convert Case' }),
+  };
+  if (dataMap[slug]) return dataMap[slug];
+
+  // ── Standalone image tools ────────────────────────────────────────────────
+  if (slug === '/image/resize-image/')   return C('image-resize.js',   [], false, { action: 'Resize Image' });
+  if (slug === '/image/compress-image/') return C('image-compress.js', [], false, { action: 'Compress Image' });
+
+  // ── Audio / video (ffmpeg.wasm, loaded lazily on first conversion) ────────
+  const isMedia = AUDIO_FMTS.has(f) || AUDIO_FMTS.has(t) || VIDEO_FMTS.has(f) || VIDEO_FMTS.has(t);
+  if (isMedia) return C('media-convert.js', [CDN.ffmpeg, CDN.ffmpegUtil]);
+
+  // ── TIFF / GIF image pairs the canvas API cannot encode → ffmpeg.wasm ─────
+  if (FFMPEG_RASTER.has(f) && FFMPEG_RASTER.has(t) && (f === 'TIFF' || t === 'TIFF' || t === 'GIF')) {
+    return C('media-convert.js', [CDN.ffmpeg, CDN.ffmpegUtil]);
+  }
 
   // ── Markdown (existing, explicit) ─────────────────────────────────────────
   const mdMap = {
@@ -595,6 +716,7 @@ function footer(extraLinks, extraScripts) {
     { label: 'Spreadsheet Converters', href: '/spreadsheet-converter/' },
     { label: 'Audio Converters', href: '/audio-converter/' },
     { label: 'Video Converters', href: '/video-converter/' },
+    { label: 'Data & Text Tools', href: '/data-converter/' },
     ...(extraLinks || []),
     { label: 'Privacy Policy', href: '/privacy/' },
     { label: 'Imprint', href: '/imprint/' },
@@ -636,10 +758,13 @@ ${(extraScripts || []).map(s => `<script src="${s}" defer></script>`).join('\n')
 
 // ─── Converter Widget ─────────────────────────────────────────────────────────
 // textMode: boolean — if true, shows a "Paste Text" tab alongside the file upload.
-function converterWidget(from, to, pageSlug, textMode) {
+function converterWidget(from, to, pageSlug, textMode, opts) {
+  opts = opts || {};
   const fromInfo = FMT[fmtKey(from)] || {};
   const toInfo   = FMT[fmtKey(to)]   || {};
   const fromLower = (from || 'file').toLowerCase();
+  const sameFmt  = from === to;
+  const action   = opts.action || `Convert to ${esc(to)}`;
 
   const textPanel = textMode ? `
       <!-- Text Paste Panel (shown when "Paste Text" tab is active) -->
@@ -649,8 +774,16 @@ function converterWidget(from, to, pageSlug, textMode) {
           placeholder="Paste your ${esc(from)} content here…"
           rows="12" spellcheck="false" aria-label="Paste ${esc(from)} text"></textarea>
         <button class="btn btn-primary btn-lg w-100 mt-3" id="convertTextBtn">
-          <i class="bi bi-arrow-right-circle me-2" aria-hidden="true"></i>Convert to ${esc(to)}
+          <i class="bi bi-arrow-right-circle me-2" aria-hidden="true"></i>${action}
         </button>
+      </div>` : '';
+
+  // Heads-up for pages powered by the in-browser ffmpeg engine (large first download)
+  const engineNote = opts.engineNote ? `
+      <div class="alert alert-info d-flex align-items-start gap-2 mb-3 py-2 px-3" style="font-size:var(--text-sm);border-radius:var(--radius-md);" id="engineNote">
+        <i class="bi bi-info-circle-fill mt-1 flex-shrink-0" aria-hidden="true"></i>
+        <span>This converter runs a full <strong>FFmpeg engine in your browser</strong>. The first conversion
+        downloads the engine (~31&nbsp;MB, cached afterwards) — your file itself still never leaves your device.</span>
       </div>` : '';
 
   // Browser compatibility notice for formats that require Safari (HEIC encoding)
@@ -665,8 +798,8 @@ function converterWidget(from, to, pageSlug, textMode) {
   return `<section class="section-converter" id="converter" aria-labelledby="converter-heading" data-from="${esc(from)}" data-to="${esc(to)}">
   <div class="container" style="max-width:800px;">
     <div class="converter-card">
-      <h2 class="visually-hidden" id="converter-heading">Convert ${esc(from)} to ${esc(to)}</h2>
-      ${safariOnlyNote}
+      <h2 class="visually-hidden" id="converter-heading">${sameFmt ? action : `Convert ${esc(from)} to ${esc(to)}`}</h2>
+      ${safariOnlyNote}${engineNote}
 
       ${textMode ? `<!-- Mode Tabs -->
       <div class="converter-mode-tabs" id="converterModeTabs" role="tablist" aria-label="Input method">
@@ -706,7 +839,7 @@ function converterWidget(from, to, pageSlug, textMode) {
             </button>
           </div>
 
-          <div class="row g-3 align-items-end mb-3">
+          ${sameFmt ? '' : `<div class="row g-3 align-items-end mb-3">
             <div class="col-sm-5">
               <label class="converter-label" for="inputFormat">From</label>
               <div class="form-control bg-light fw-600">${esc(from)}</div>
@@ -720,10 +853,10 @@ function converterWidget(from, to, pageSlug, textMode) {
               <label class="converter-label" for="outputFormat">To</label>
               <div class="form-control bg-light fw-600">${esc(to)}</div>
             </div>
-          </div>
+          </div>`}
 
           <button class="btn btn-primary btn-lg w-100" id="convertBtn">
-            <i class="bi bi-arrow-right-circle me-2" aria-hidden="true"></i>Convert to ${esc(to)}
+            <i class="bi bi-arrow-right-circle me-2" aria-hidden="true"></i>${action}
           </button>
         </div>
       </div>
@@ -737,7 +870,7 @@ function converterWidget(from, to, pageSlug, textMode) {
           <p class="mb-0 fw-600">Conversion complete!</p>
         </div>
         <button class="btn btn-primary btn-lg w-100 mb-2" id="downloadBtn">
-          <i class="bi bi-download me-2" aria-hidden="true"></i>Download ${esc(to)} File
+          <i class="bi bi-download me-2" aria-hidden="true"></i>${opts.action ? 'Download Result' : `Download ${esc(to)} File`}
         </button>
         <button class="btn btn-outline-secondary w-100" id="convertAnotherBtn">Convert another file</button>
       </div>
@@ -779,6 +912,7 @@ function buildHomepage(allPages) {
     { label: 'Spreadsheet Converter', icon: '📊', href: '/spreadsheet-converter/', desc: 'CSV, Excel, ODS, TSV and more.' },
     { label: 'Audio Converter', icon: '🎵', href: '/audio-converter/', desc: 'MP3, WAV, M4A, OGG and more.' },
     { label: 'Video Converter', icon: '🎬', href: '/video-converter/', desc: 'MP4, MOV, WebM, AVI, GIF and more.' },
+    { label: 'Data & Text Tools', icon: '🧰', href: '/data-converter/', desc: 'JSON, CSV, YAML, XML, Base64, URL encoding and more.' },
   ];
 
   // Popular pages: P1 priority pair pages
@@ -802,7 +936,7 @@ function buildHomepage(allPages) {
   const faqs = [
     { q: 'Is AintoB free to use?', a: 'Yes, every tool on AintoB.com is completely free with no registration or account required. There are no hidden costs or premium tiers.' },
     { q: 'Is my data safe?', a: 'Your files are processed entirely within your browser using local JavaScript. Nothing is ever uploaded to our servers — your data stays on your device from start to finish.' },
-    { q: 'What file formats does AintoB support?', a: 'AintoB supports image formats (JPG, PNG, WebP, HEIC, AVIF, GIF, SVG, TIFF), document formats (PDF, Word, HTML, Markdown, RTF, TXT), spreadsheet formats (CSV, Excel, ODS, TSV), audio formats (MP3, WAV, M4A, OGG), and video formats (MP4, MOV, WebM, AVI).' },
+    { q: 'What file formats does AintoB support?', a: 'AintoB supports image formats (JPG, PNG, WebP, HEIC, AVIF, GIF, SVG, TIFF, BMP, ICO), document formats (PDF, Word, HTML, Markdown, RTF, TXT), spreadsheet formats (CSV, Excel, ODS, TSV), audio formats (MP3, WAV, M4A, OGG), video formats (MP4, MOV, WebM, AVI), and data formats (JSON, YAML, XML, Base64).' },
     { q: 'Do I need to install anything?', a: 'No. AintoB works entirely in your web browser — no app to download, no plugin to install. Open the page, drop your file, and convert.' },
     { q: 'Are there file size limits?', a: 'For browser-based conversion we recommend files under 50 MB for the best experience. Very large files may take longer to process depending on your device performance.' },
   ];
@@ -959,6 +1093,7 @@ function buildMasterHub(page, allPages) {
     { label: 'Spreadsheet Converters', icon: '📊', href: '/spreadsheet-converter/', count: allPages.filter(p => p['Category'] === 'spreadsheet' && p['Page Type'] === 'Pair').length },
     { label: 'Audio Converters', icon: '🎵', href: '/audio-converter/', count: allPages.filter(p => (p['Category']||'').split('→')[0] === 'audio' && p['Page Type'] === 'Pair').length },
     { label: 'Video Converters', icon: '🎬', href: '/video-converter/', count: allPages.filter(p => (p['Category']||'').split('→')[0] === 'video' && p['Page Type'] === 'Pair').length },
+    { label: 'Data & Text Tools', icon: '🧰', href: '/data-converter/', count: allPages.filter(p => (p['Category']||'').split('→')[0] === 'data' && p['Page Type'] === 'Pair').length },
   ];
 
   const formatHubs = allPages.filter(p => p['Page Type'] === 'Format Hub');
@@ -1077,6 +1212,7 @@ function buildCategoryHub(page, allPages) {
     spreadsheet: 'Spreadsheet converters handle tabular data formats used in data analysis, finance, and business reporting. Convert between CSV, Excel, ODS, and TSV — essential for data exchange between different systems and applications.',
     audio: 'Audio converters handle music, podcast, and recording formats. Whether you\'re extracting audio from video, converting between compression formats, or preparing files for specific devices or platforms, these tools cover the most common audio conversion needs.',
     video: 'Video converters handle the formats used for streaming, editing, and sharing video content. Convert between MP4, MOV, WebM, AVI, and more — and extract audio or create animated GIFs from video clips.',
+    data: 'Data and text tools handle the structured formats developers and analysts work with every day. Convert between JSON, CSV, YAML, and XML, encode or decode Base64 and URLs, format and minify JSON, and change text case — all instantly in your browser.',
   };
 
   const faqs = buildCategoryFAQs(catBase);
@@ -1102,7 +1238,7 @@ function buildCategoryHub(page, allPages) {
     </div>
   </section>
 
-  <!-- Format Hubs -->
+  ${fmtHubs.length ? `<!-- Format Hubs -->
   <section class="section-formats" aria-labelledby="formats-h2">
     <div class="container" style="max-width:var(--max-width);">
       <h2 class="section-title mb-1" id="formats-h2">Browse by Format</h2>
@@ -1123,7 +1259,7 @@ function buildCategoryHub(page, allPages) {
         }).join('\n        ')}
       </div>
     </div>
-  </section>
+  </section>` : ''}
 
   ${topPairs.length ? `<!-- Top Pairs -->
   <section class="section-popular" aria-labelledby="popular-h2">
@@ -1190,6 +1326,12 @@ function buildCategoryFAQs(cat) {
       base,
       { q: 'Which video format is best for social media?', a: 'MP4 with H.264 encoding is the universal choice — accepted by YouTube, Instagram, TikTok, Twitter, and virtually every platform. It balances quality, compatibility, and file size.' },
       { q: 'Can I convert a video to a GIF?', a: 'Yes — AintoB includes MP4 to GIF, WebM to GIF, and MOV to GIF converters. Note that GIFs are limited to 256 colours and can be quite large — for short clips, WebP animation or MP4 is often a better choice.' },
+    ],
+    data: [
+      { q: 'Are the data and text tools free?', a: 'Yes — every data tool on AintoB is completely free. No account, no subscription, no usage limits.' },
+      { q: 'Is it safe to paste sensitive data like API responses or tokens?', a: 'All processing happens locally in your browser with JavaScript — nothing you paste or upload is ever sent to a server. For highly sensitive data you can even load the page, disconnect from the internet, and run the conversion offline.' },
+      { q: 'What is the difference between JSON and YAML?', a: 'Both represent the same data model. JSON uses brackets and quotes and is the standard for APIs; YAML uses indentation and is preferred for hand-edited configuration files like Kubernetes manifests and CI pipelines.' },
+      { q: 'Is Base64 encryption?', a: 'No — Base64 is an encoding, not encryption. It makes binary data safe to transmit as text, but anyone can decode it. Never rely on Base64 to protect secrets.' },
     ],
   };
   return catFaqs[cat] || [base];
@@ -1332,11 +1474,13 @@ function buildPairPage(page, allPages) {
   const catHubLabel = categoryLabel(catBase) + ' Converter';
 
   // Related: same source format (different target), same target format (different source), reverse
-  const sameFrom    = allPages.filter(p => p['Page Type'] === 'Pair' && p['Source Format'] === from && p['Target Format'] !== to).slice(0, 6);
+  const sameFrom    = allPages.filter(p => p['Page Type'] === 'Pair' && p['Source Format'] === from &&
+                        (p['Target Format'] !== to || (from === to && p['URL Slug'] !== page['URL Slug']))).slice(0, 6);
   const sameTo      = allPages.filter(p => p['Page Type'] === 'Pair' && p['Target Format'] === to && p['Source Format'] !== from).slice(0, 6);
-  const reverse     = allPages.find(p => p['Page Type'] === 'Pair' && p['Source Format'] === to && p['Target Format'] === from);
+  const reverse     = from === to ? null : allPages.find(p => p['Page Type'] === 'Pair' && p['Source Format'] === to && p['Target Format'] === from);
 
   const convConfig = getConverterConfig(from, to, page['URL Slug']);
+  const sameFmt   = from === to; // single-format tools (formatter, resize, case converter…)
   const isNoIndex = page['Indexation'] !== 'Index now';
   const robots = isNoIndex ? 'noindex, follow' : 'index, follow';
 
@@ -1352,7 +1496,11 @@ function buildPairPage(page, allPages) {
   };
 
   // Build how-it-works steps from template
-  const steps = [
+  const steps = sameFmt ? [
+    `Upload or drop your <strong>${esc(from)}</strong> file into the tool above${convConfig && convConfig.textMode ? ', or paste your content directly' : ''}.`,
+    `Choose your options in the settings panel.`,
+    `Click the button and download your result instantly.`,
+  ] : [
     `Upload or drop your <strong>${esc(from)}</strong> file into the converter above.`,
     `Adjust any output settings for <strong>${esc(to)}</strong> if needed.`,
     `Click <strong>Convert</strong> and download your converted file instantly.`,
@@ -1362,7 +1510,7 @@ function buildPairPage(page, allPages) {
   const whyConvert = buildWhyConvert(from, to, fromInfo, toInfo, page);
 
   // Page-specific FAQs
-  const faqs = buildPairFAQs(from, to, fromInfo, toInfo);
+  const faqs = buildPairFAQs(from, to, fromInfo, toInfo, page['Page Name']);
 
   return head({
     title: page['SEO Title'],
@@ -1382,21 +1530,22 @@ function buildPairPage(page, allPages) {
   <section class="section-hero section-hero--pair" aria-labelledby="pair-h1">
     <div class="container" style="max-width:800px; text-align:center;">
       <div class="format-badge-row">
-        <span class="format-badge format-badge--from">${esc(from)}</span>
+        ${sameFmt ? `<span class="format-badge format-badge--from">${esc(from)}</span>` : `<span class="format-badge format-badge--from">${esc(from)}</span>
         <span class="format-badge-arrow" aria-hidden="true">→</span>
-        <span class="format-badge format-badge--to">${esc(to)}</span>
+        <span class="format-badge format-badge--to">${esc(to)}</span>`}
       </div>
       <h1 class="hero-title" id="pair-h1">${esc(page['H1'])}</h1>
       <p class="hero-subtitle mx-auto">${esc(page['Meta Description'])}</p>
     </div>
   </section>
 
-  ${converterWidget(from, to, page['URL Slug'], convConfig ? convConfig.textMode : false)}
+  ${converterWidget(from, to, page['URL Slug'], convConfig ? convConfig.textMode : false,
+      convConfig ? { action: convConfig.action, engineNote: convConfig.engineNote } : {})}
 
   <!-- Intro & Why -->
   <section class="section-content" aria-labelledby="intro-h2">
     <div class="container" style="max-width:800px;">
-      <h2 class="section-title" id="intro-h2">Why Convert ${esc(from)} to ${esc(to)}?</h2>
+      <h2 class="section-title" id="intro-h2">${sameFmt ? `Why Use the ${esc(page['Page Name'])}?` : `Why Convert ${esc(from)} to ${esc(to)}?`}</h2>
       <p>${whyConvert.intro}</p>
       <h3 class="explainer-subtitle">Common use cases</h3>
       <ul class="explainer-list">
@@ -1409,7 +1558,7 @@ function buildPairPage(page, allPages) {
   <!-- How It Works -->
   <section class="section-how-it-works" aria-labelledby="how-h2">
     <div class="container" style="max-width:800px;">
-      <h2 class="section-title" id="how-h2">How to Convert ${esc(from)} to ${esc(to)}</h2>
+      <h2 class="section-title" id="how-h2">${sameFmt ? `How to Use the ${esc(page['Page Name'])}` : `How to Convert ${esc(from)} to ${esc(to)}`}</h2>
       <ol class="how-it-works-list">
         ${steps.map(s => `<li>${s}</li>`).join('\n        ')}
       </ol>
@@ -1419,9 +1568,9 @@ function buildPairPage(page, allPages) {
   <!-- Format Explainers -->
   <section class="section-formats-explainer" aria-labelledby="formats-h2">
     <div class="container" style="max-width:var(--max-width);">
-      <h2 class="section-title mb-4" id="formats-h2">About the Formats</h2>
+      <h2 class="section-title mb-4" id="formats-h2">${sameFmt ? 'About This Tool' : 'About the Formats'}</h2>
       <div class="row g-4">
-        <div class="col-md-6">
+        <div class="${sameFmt ? 'col-12' : 'col-md-6'}">
           <div class="format-explainer-card">
             <div class="format-explainer-card__header">
               <span class="format-explainer-card__icon" aria-hidden="true">${fromInfo.icon || '📁'}</span>
@@ -1431,7 +1580,7 @@ function buildPairPage(page, allPages) {
             ${fromInfo.compat ? `<p class="text-muted" style="font-size:var(--text-sm);"><strong>Compatibility:</strong> ${fromInfo.compat}</p>` : ''}
           </div>
         </div>
-        <div class="col-md-6">
+        ${sameFmt ? '' : `<div class="col-md-6">
           <div class="format-explainer-card">
             <div class="format-explainer-card__header">
               <span class="format-explainer-card__icon" aria-hidden="true">${toInfo.icon || '📁'}</span>
@@ -1440,7 +1589,7 @@ function buildPairPage(page, allPages) {
             <p>${toInfo.description ? toInfo.description.split('.').slice(0, 2).join('.') + '.' : `${to} is a ${catBase} file format.`}</p>
             ${toInfo.compat ? `<p class="text-muted" style="font-size:var(--text-sm);"><strong>Compatibility:</strong> ${toInfo.compat}</p>` : ''}
           </div>
-        </div>
+        </div>`}
       </div>
     </div>
   </section>
@@ -1494,7 +1643,17 @@ function buildWhyConvert(from, to, fromInfo, toInfo, page) {
   return { intro, useCases, limitation };
 }
 
-function buildPairFAQs(from, to, fromInfo, toInfo) {
+function buildPairFAQs(from, to, fromInfo, toInfo, pageName) {
+  // Single-format tools (formatter, resize, case converter…) — neutral phrasing
+  if (from === to) {
+    const name = pageName || `${from} tool`;
+    return [
+      { q: `Is the ${name} free?`, a: `Yes — completely free with no sign-up, no watermarks, and no size limits for typical files.` },
+      { q: `Is my data safe?`, a: `Your file or pasted content is processed entirely within your browser using local JavaScript. It is never uploaded to any server. Only you can access your data.` },
+      { q: `How large a file can I process?`, a: `For browser-based processing, files up to 50 MB work best. Very large files may take longer depending on your device.` },
+      { q: `Do I need to install anything?`, a: `No — the ${name} runs entirely in your web browser. No app, plugin, or account required.` },
+    ];
+  }
   return [
     { q: `Is the ${from} to ${to} converter free?`, a: `Yes — completely free with no sign-up, no watermarks, and no size limits for typical files.` },
     { q: `Will quality be lost when converting from ${from} to ${to}?`, a: (() => {
@@ -1643,6 +1802,11 @@ function build() {
         case 'Category Hub': html = buildCategoryHub(page, allPages); break;
         case 'Format Hub':   html = buildFormatHub(page, allPages);   break;
         case 'Pair':         html = buildPairPage(page, allPages);    break;
+        case 'Custom':
+          // Hand-built page (e.g. /document/pdf-edit/) — not regenerated, but
+          // the CSV row keeps it in the sitemap and internal link graph.
+          console.log(`  ○ ${slug} (custom page, kept as-is)`);
+          continue;
         default:
           console.warn(`  ⚠ Unknown page type "${page['Page Type']}" for ${slug}`);
           continue;

@@ -24,7 +24,7 @@ window.performConversion = async function (input) {
   }
 
   const MIME_MAP = { JPG: 'image/jpeg', PNG: 'image/png', WEBP: 'image/webp', AVIF: 'image/avif' };
-  const EXT_MAP  = { JPG: 'jpg', PNG: 'png', WEBP: 'webp', AVIF: 'avif', HEIC: 'heic' };
+  const EXT_MAP  = { JPG: 'jpg', PNG: 'png', WEBP: 'webp', AVIF: 'avif', HEIC: 'heic', BMP: 'bmp', ICO: 'ico' };
 
   let sourceBlob = input instanceof Blob ? input : new Blob([await input.arrayBuffer()]);
 
@@ -82,6 +82,46 @@ window.performConversion = async function (input) {
     );
   }
 
+  // ── BMP output (manual 24-bit encoder — canvas cannot write BMP) ───────────
+  if (TO === 'BMP') {
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    return { blob: encodeBMP(imgData), filename: 'converted.bmp' };
+  }
+
+  // ── ICO output (PNG-in-ICO container, scaled to icon size) ─────────────────
+  if (TO === 'ICO') {
+    // Modern ICO files embed PNG data; 256px is the maximum icon dimension
+    const size = Math.min(256, Math.max(canvas.width, canvas.height));
+    const icoCanvas = document.createElement('canvas');
+    icoCanvas.width = size;
+    icoCanvas.height = size;
+    const icoCtx = icoCanvas.getContext('2d');
+    icoCtx.imageSmoothingEnabled = true;
+    icoCtx.imageSmoothingQuality = 'high';
+    // Centre the image inside a square icon, preserving aspect ratio
+    const scale = Math.min(size / canvas.width, size / canvas.height);
+    const dw = Math.round(canvas.width * scale), dh = Math.round(canvas.height * scale);
+    icoCtx.drawImage(canvas, Math.floor((size - dw) / 2), Math.floor((size - dh) / 2), dw, dh);
+
+    const pngBlob = await new Promise((res, rej) =>
+      icoCanvas.toBlob(b => b ? res(b) : rej(new Error('Icon export failed.')), 'image/png'));
+    const png = new Uint8Array(await pngBlob.arrayBuffer());
+
+    // ICONDIR (6 bytes) + one ICONDIRENTRY (16 bytes) + PNG payload
+    const ico = new Uint8Array(22 + png.length);
+    const dv  = new DataView(ico.buffer);
+    dv.setUint16(2, 1, true);                     // type: icon
+    dv.setUint16(4, 1, true);                     // image count
+    ico[6] = size === 256 ? 0 : size;             // width  (0 = 256)
+    ico[7] = size === 256 ? 0 : size;             // height (0 = 256)
+    dv.setUint16(10, 1, true);                    // colour planes
+    dv.setUint16(12, 32, true);                   // bits per pixel
+    dv.setUint32(14, png.length, true);           // payload size
+    dv.setUint32(18, 22, true);                   // payload offset
+    ico.set(png, 22);
+    return { blob: new Blob([ico], { type: 'image/x-icon' }), filename: 'favicon.ico' };
+  }
+
   // ── Standard canvas export ─────────────────────────────────────────────────
   const outMime = MIME_MAP[TO] || 'image/png';
   const outExt  = EXT_MAP[TO]  || TO.toLowerCase();
@@ -101,3 +141,40 @@ window.performConversion = async function (input) {
 
   return { blob: outBlob, filename: `converted.${outExt}` };
 };
+
+// 24-bit uncompressed BMP encoder (BITMAPINFOHEADER, bottom-up rows, BGR order).
+// Transparency is composited onto white, matching the JPG behaviour above.
+function encodeBMP(imgData) {
+  const w = imgData.width, h = imgData.height, src = imgData.data;
+  const rowSize = Math.floor((24 * w + 31) / 32) * 4; // rows padded to 4 bytes
+  const pixelBytes = rowSize * h;
+  const buf = new ArrayBuffer(54 + pixelBytes);
+  const dv  = new DataView(buf);
+  const out = new Uint8Array(buf);
+
+  // BITMAPFILEHEADER
+  out[0] = 0x42; out[1] = 0x4D;            // 'BM'
+  dv.setUint32(2, 54 + pixelBytes, true);  // file size
+  dv.setUint32(10, 54, true);              // pixel data offset
+  // BITMAPINFOHEADER
+  dv.setUint32(14, 40, true);
+  dv.setInt32(18, w, true);
+  dv.setInt32(22, h, true);
+  dv.setUint16(26, 1, true);               // planes
+  dv.setUint16(28, 24, true);              // bpp
+  dv.setUint32(34, pixelBytes, true);
+  dv.setInt32(38, 2835, true);             // 72 DPI
+  dv.setInt32(42, 2835, true);
+
+  for (let y = 0; y < h; y++) {
+    let off = 54 + (h - 1 - y) * rowSize;  // bottom-up
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      const a = src[i + 3] / 255;
+      out[off++] = Math.round(src[i + 2] * a + 255 * (1 - a)); // B
+      out[off++] = Math.round(src[i + 1] * a + 255 * (1 - a)); // G
+      out[off++] = Math.round(src[i]     * a + 255 * (1 - a)); // R
+    }
+  }
+  return new Blob([buf], { type: 'image/bmp' });
+}
