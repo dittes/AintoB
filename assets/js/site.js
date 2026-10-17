@@ -5,6 +5,47 @@
 (function () {
   'use strict';
 
+  // ── i18n ──────────────────────────────────────────────────
+  // Pages in other languages load /assets/js/lang/<code>.js first, which sets
+  // window.AINTOB_DICT (English string → translation). Scripts call __t(englishText,
+  // vars) and get the English text back when no translation exists. Keys ending in
+  // "*" are prefix patterns for messages with a variable tail (e.g. "Invalid JSON: *").
+  var DICT = window.AINTOB_DICT || {};
+  var WILD = Object.keys(DICT).filter(function (k) { return k.charAt(k.length - 1) === '*'; });
+  function __t(str, vars) {
+    var out = DICT[str];
+    if (out === undefined) {
+      for (var i = 0; i < WILD.length; i++) {
+        var prefix = WILD[i].slice(0, -1);
+        if (str.indexOf(prefix) === 0) { out = DICT[WILD[i]].replace('*', str.slice(prefix.length)); break; }
+      }
+    }
+    if (out === undefined) out = str;
+    if (vars) out = out.replace(/\{(\w+)\}/g, function (m, k) { return vars[k] !== undefined ? vars[k] : m; });
+    return out;
+  }
+  window.__t = __t;
+
+  // Remember an explicit language choice (used by the / router and old-URL redirects)
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[data-lang]');
+    if (a) { try { localStorage.setItem('aintob_lang', a.getAttribute('data-lang')); } catch (x) { /* storage blocked */ } }
+  });
+
+  // Close the language menu on outside click / Escape
+  document.addEventListener('click', function (e) {
+    document.querySelectorAll('details.lang-switch[open]').forEach(function (d) {
+      if (!d.contains(e.target)) d.removeAttribute('open');
+    });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('details.lang-switch[open]').forEach(function (d) {
+      d.removeAttribute('open');
+      var s = d.querySelector('summary'); if (s) s.focus();
+    });
+  });
+
   // ── Cookie Banner ─────────────────────────────────────────
   const CONSENT_KEY = 'aintob_cookie_consent';
 
@@ -150,12 +191,12 @@
     // ── Shared conversion runner ─────────────────────────────
     async function runConversion(input, buttonEl) {
       if (!window.performConversion) {
-        showToast('Converter not available for this format yet.', 'error');
+        showToast(__t('Converter not available for this format yet.'), 'error');
         return;
       }
       const origHtml = buttonEl.innerHTML;
       buttonEl.disabled = true;
-      buttonEl.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Converting…';
+      buttonEl.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + __t('Converting…');
 
       try {
         const result = await window.performConversion(input);
@@ -169,11 +210,11 @@
             // Swap the download button into a "print again" button
             if (downloadBtn) {
               if (!downloadBtn.dataset.origHtml) downloadBtn.dataset.origHtml = downloadBtn.innerHTML;
-              downloadBtn.innerHTML = '<i class="bi bi-printer me-2" aria-hidden="true"></i>Print / Save as PDF Again';
+              downloadBtn.innerHTML = '<i class="bi bi-printer me-2" aria-hidden="true"></i>' + __t('Print / Save as PDF Again');
             }
             converterOutput.hidden = false;
           }
-          showToast('Print dialog opened. Choose "Save as PDF" as the destination.', 'info');
+          showToast(__t('Print dialog opened. Choose "Save as PDF" as the destination.'), 'info');
           buttonEl.disabled = false;
           buttonEl.innerHTML = origHtml;
           return;
@@ -187,7 +228,7 @@
         }
         if (converterOutput) converterOutput.hidden = false;
       } catch (err) {
-        showToast('Conversion failed: ' + (err.message || 'Unknown error'), 'error');
+        showToast(__t('Conversion failed: {msg}', { msg: __t(err.message || 'Unknown error') }), 'error');
       } finally {
         buttonEl.disabled = false;
         buttonEl.innerHTML = origHtml;
@@ -206,7 +247,7 @@
     if (convertTextBtn) {
       convertTextBtn.addEventListener('click', function () {
         const text = converterTextArea ? converterTextArea.value.trim() : '';
-        if (!text) { showToast('Please paste some text first.', 'info'); return; }
+        if (!text) { showToast(__t('Please paste some text first.'), 'info'); return; }
         runConversion(text, convertTextBtn);
       });
     }
@@ -216,7 +257,7 @@
       downloadBtn.addEventListener('click', function () {
         // Print-mode: re-open the print dialog
         if (lastPrintFn) { lastPrintFn(); return; }
-        if (!lastResultBlob) { showToast('Nothing to download yet.', 'info'); return; }
+        if (!lastResultBlob) { showToast(__t('Nothing to download yet.'), 'info'); return; }
         const url = URL.createObjectURL(lastResultBlob);
         const a   = document.createElement('a');
         a.href     = url;
@@ -225,7 +266,7 @@
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        showToast('File downloaded.', 'success');
+        showToast(__t('File downloaded.'), 'success');
       });
     }
 
@@ -238,7 +279,7 @@
     const swapBtn = document.getElementById('swapBtn');
     if (!swapBtn) return;
     swapBtn.addEventListener('click', function () {
-      showToast('Use the reverse converter link below to swap directions.', 'info');
+      showToast(__t('Use the reverse converter link below to swap directions.'), 'info');
     });
     swapBtn.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
@@ -259,8 +300,8 @@
       box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:.625rem;max-width:320px;
       font-size:var(--text-sm);animation:fadeUp .25s ease;`;
     t.innerHTML = `<i class="bi ${icons[type] || icons.info}" style="color:${colors[type]};font-size:1rem;" aria-hidden="true"></i>
-      <span>${msg}</span>
-      <button onclick="this.parentElement.remove()" aria-label="Close" style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:var(--color-text-light);">
+      <span>${String(msg).replace(/&/g, "&amp;").replace(/</g, "&lt;")}</span>
+      <button onclick="this.parentElement.remove()" aria-label="${__t('Close')}" style="margin-left:auto;background:none;border:none;cursor:pointer;padding:0;color:var(--color-text-light);">
         <i class="bi bi-x-lg" aria-hidden="true"></i>
       </button>`;
     document.body.appendChild(t);

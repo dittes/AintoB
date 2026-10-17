@@ -1,584 +1,141 @@
 #!/usr/bin/env node
 /**
- * AintoB.com Static Site Generator
- * ─────────────────────────────────
- * Reads page_map.csv and generates all static HTML pages.
+ * AintoB.com — multilingual static site generator (plain Node, no dependencies).
  *
- * Usage:
  *   node build.js
  *
- * Output: all pages written to the repo root (served by GitHub Pages).
+ * Reads page_map.csv (page list + English SEO copy) and the locale modules in
+ * i18n/, then writes every page once per language under /<lang>/ (en, de, cs, pl),
+ * plus: the language router at /, redirect stubs for the pre-i18n URLs,
+ * sitemap.xml (with hreflang alternates), robots.txt and a _redirects file.
  */
-
 'use strict';
 
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
+const { parseCSV } = require('./lib/csv');
+const { getConverterConfig } = require('./lib/converters');
+const tpl = require('./lib/tpl');
+const { check: checkI18n } = require('./lib/check-i18n');
+const { LANGS, DEFAULT_LANG, loadLocale } = require('./i18n');
 
-// ─── Config ───────────────────────────────────────────────────────────────────
-const ROOT   = __dirname;
+const ROOT = __dirname;
 const DOMAIN = 'https://aintob.com';
-const YEAR   = new Date().getFullYear();
+// Sister site for opening (not converting) files. Point this at a deeper URL
+// (e.g. per-format pages) once open-online.com has them.
+const OPEN_ONLINE_URL = 'https://open-online.com/';
+const YEAR = new Date().getFullYear();
+const TODAY = new Date().toISOString().split('T')[0];
 
-// ─── CSV Parser ───────────────────────────────────────────────────────────────
-function parseCSV(content) {
-  const lines = content.split('\n');
-  const headers = parseCSVRow(lines[0]);
-  const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    const vals = parseCSVRow(line);
-    const row = {};
-    headers.forEach((h, idx) => { row[h.trim()] = (vals[idx] || '').trim(); });
-    rows.push(row);
-  }
-  return rows;
+// ─── Locale state ─────────────────────────────────────────────────────────────
+const LOCALES = Object.fromEntries(LANGS.map(m => [m.code, loadLocale(m)]));
+let LANG = DEFAULT_LANG;
+let L = LOCALES[LANG];
+
+function setLang(code) { LANG = code; L = LOCALES[code]; }
+
+/** Localised string with {placeholders}. Throws on a missing key so no page ships half-translated. */
+function s(key, vars) {
+  const str = L.s[key];
+  if (str === undefined) throw new Error(`Missing string "${key}" for language "${LANG}"`);
+  return vars ? str.replace(/\{(\w+)\}/g, (m, n) => (vars[n] !== undefined ? vars[n] : m)) : str;
 }
 
-function parseCSVRow(row) {
-  const result = [];
-  let cur = '', inQ = false;
-  for (let i = 0; i < row.length; i++) {
-    const c = row[i];
-    if (c === '"') {
-      if (inQ && row[i + 1] === '"') { cur += '"'; i++; }
-      else inQ = !inQ;
-    } else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
-    else cur += c;
-  }
-  result.push(cur);
-  return result;
-}
+/** Language-prefixed internal URL for a language-neutral slug. */
+const u = slug => `/${LANG}${slug}`;
+/** Absolute URL for a slug in a given language. */
+const abs = (slug, lang) => `${DOMAIN}/${lang || LANG}${slug}`;
 
-// ─── Format Knowledge Base ────────────────────────────────────────────────────
-const FMT = {
-  AVIF: {
-    fullName: 'AV1 Image File Format',
-    ext: '.avif', mime: 'image/avif', category: 'image',
-    icon: '🖼️',
-    description: 'AVIF is a next-generation image format developed by the Alliance for Open Media. It offers significantly better compression than JPG or WebP while maintaining high visual quality, supporting HDR, wide color gamut, and transparency.',
-    useCases: ['Optimising images for web performance and Core Web Vitals', 'Reducing bandwidth costs on high-traffic sites', 'Storing HDR photography with modern devices'],
-    limitation: 'Browser support is growing but not universal — older browsers do not support AVIF and will need a fallback format.',
-    compat: 'Chrome 85+, Firefox 93+, Safari 16+, Edge 121+.',
-  },
-  GIF: {
-    fullName: 'Graphics Interchange Format',
-    ext: '.gif', mime: 'image/gif', category: 'image',
-    icon: '🎞️',
-    description: 'GIF is one of the oldest web image formats, dating back to 1987. It supports simple frame-by-frame animations and is limited to a 256-colour palette per frame. Despite its age, GIF remains ubiquitous for short looping animations and reactions across social platforms and messaging apps.',
-    useCases: ['Short looping animations and reaction clips', 'Simple animated banners or loading indicators', 'Platform-compatible animated images for messaging apps'],
-    limitation: 'Limited to 256 colours per frame — unsuitable for photographs or images with complex gradients.',
-    compat: 'Universal — supported in every browser, email client, and messaging platform.',
-  },
-  HEIC: {
-    fullName: 'High Efficiency Image Container',
-    ext: '.heic', mime: 'image/heic', category: 'image',
-    icon: '📷',
-    description: 'HEIC is the photo format used by Apple devices since iOS 11. Based on the HEIF standard with H.265 compression, HEIC files are roughly half the size of equivalent JPGs while maintaining superior image quality. They also support depth maps, transparency, and multi-image sequences for Live Photos.',
-    useCases: ['Sharing photos taken on iPhone or iPad', 'Reducing iCloud storage with smaller file sizes', 'Archiving high-quality iPhone photography for editing'],
-    limitation: 'Limited native support outside Apple ecosystems — Windows, Android, and many apps require conversion or a codec plugin.',
-    compat: 'Native on iOS 11+, macOS High Sierra+. Requires plugins or conversion for Windows and Android.',
-  },
-  JPG: {
-    fullName: 'Joint Photographic Experts Group',
-    ext: '.jpg', mime: 'image/jpeg', category: 'image',
-    icon: '🌅',
-    description: "JPG (or JPEG) is the world's most widely used image format for photographs. Lossy compression achieves small file sizes at the cost of some image detail — a trade-off that works well for natural scenes and photographs where minor quality loss is imperceptible.",
-    useCases: ['Sharing photographs online and via email', 'Uploading images to social media platforms', 'Storing camera photos with manageable file sizes'],
-    limitation: 'Lossy compression permanently discards image data. JPG is unsuitable for text-heavy images, logos, or files that require repeated editing.',
-    compat: 'Universal — supported by every browser, OS, device, and image application on the planet.',
-  },
-  PNG: {
-    fullName: 'Portable Network Graphics',
-    ext: '.png', mime: 'image/png', category: 'image',
-    icon: '🏳️',
-    description: 'PNG uses lossless compression, preserving every pixel of the original without any quality degradation. It supports full alpha-channel transparency, making it ideal for logos, icons, UI elements, and any image that requires a transparent background or pixel-perfect fidelity.',
-    useCases: ['Logos and icons requiring crisp transparency', 'Screenshots and interface mockups', 'Images requiring repeated editing without any quality loss'],
-    limitation: 'PNG files are significantly larger than JPG for photographic content — not ideal for photos on bandwidth-constrained sites.',
-    compat: 'Universal — supported by all browsers, operating systems, and image editors.',
-  },
-  SVG: {
-    fullName: 'Scalable Vector Graphics',
-    ext: '.svg', mime: 'image/svg+xml', category: 'image',
-    icon: '📐',
-    description: 'SVG is an XML-based vector format. Unlike raster formats, SVG images scale to any size without losing sharpness — perfect for logos, icons, illustrations, and any graphic that must look crisp on retina displays or at large print sizes.',
-    useCases: ['Website logos and icons that scale across resolutions', 'Infographics and interactive data visualisations', 'Print-ready artwork requiring sharp edges at any size'],
-    limitation: 'Not suitable for photographs or complex raster imagery. SVG works best with geometric shapes and flat-colour illustrations.',
-    compat: 'Supported by all modern browsers. Can be embedded directly in HTML.',
-  },
-  TIFF: {
-    fullName: 'Tagged Image File Format',
-    ext: '.tiff', mime: 'image/tiff', category: 'image',
-    icon: '🗂️',
-    description: 'TIFF is the professional standard for archival-quality image storage. It supports lossless compression, multiple layers, and high colour depth — making it the preferred format for print production, document scanning, and archival photography where maximum image fidelity is non-negotiable.',
-    useCases: ['Archiving scanned documents and artwork at full quality', 'Print production and publishing pre-press workflows', 'Medical and scientific imaging requiring maximum fidelity'],
-    limitation: 'Very large file sizes make TIFF impractical for web use or casual sharing. Most web browsers do not support TIFF natively.',
-    compat: 'Supported by professional tools (Photoshop, GIMP, Lightroom), but not by most web browsers or basic viewers.',
-  },
-  WebP: {
-    fullName: 'Web Picture Format',
-    ext: '.webp', mime: 'image/webp', category: 'image',
-    icon: '🌐',
-    description: "WebP is a modern image format developed by Google for the web. It delivers superior lossless and lossy compression compared to PNG and JPG — WebP images are typically 25–35% smaller than equivalent JPGs at the same visual quality — while also supporting transparency and animation.",
-    useCases: ['Optimising images for faster web performance', 'Reducing page load times on image-heavy websites', 'Web images requiring transparency without PNG file sizes'],
-    limitation: "Older versions of Safari and some legacy apps have limited WebP support, though compatibility is now near-universal in modern browsers.",
-    compat: 'Chrome, Firefox, Edge, Safari 14+, and most modern applications.',
-  },
-  HTML: {
-    fullName: 'HyperText Markup Language',
-    ext: '.html', mime: 'text/html', category: 'document',
-    icon: '🌐',
-    description: 'HTML is the standard markup language for web content. HTML files describe the structure of a webpage — headings, paragraphs, links, images, tables — using a hierarchy of elements and tags. It is the universal output format for web content and can be converted to and from document and plain-text formats.',
-    useCases: ['Exporting web content for offline reading', 'Converting web pages to editable documents', 'Archiving HTML reports as PDFs or plain text'],
-    limitation: 'Complex layouts, JavaScript interactions, and external resources (CSS, images) may not translate accurately when converting HTML to other formats.',
-    compat: 'Universal — every browser natively renders HTML.',
-  },
-  Markdown: {
-    fullName: 'Markdown',
-    ext: '.md', mime: 'text/markdown', category: 'document',
-    icon: '📝',
-    description: 'Markdown is a lightweight, human-readable plain-text formatting syntax created by John Gruber and Aaron Swartz. Simple punctuation marks up headings, bold, italics, links, code, and lists — and it converts cleanly to HTML. Markdown is the de-facto standard for README files, documentation, and technical writing.',
-    useCases: ['Writing documentation and README files for code repositories', 'Blog posts and technical articles in static-site generators', 'Converting to HTML or PDF for publication and sharing'],
-    limitation: 'Different Markdown flavours (CommonMark, GFM, kramdown) have slightly different syntax — complex tables or custom extensions may not convert perfectly across tools.',
-    compat: 'Supported by GitHub, VS Code, Notion, Obsidian, Hugo, Jekyll, and virtually all developer tools.',
-  },
-  PDF: {
-    fullName: 'Portable Document Format',
-    ext: '.pdf', mime: 'application/pdf', category: 'document',
-    icon: '📄',
-    description: "PDF, created by Adobe, is the global standard for sharing documents with fixed layouts. A PDF preserves fonts, images, and formatting identically across all devices and operating systems — what you see on screen is exactly what prints. It is used for contracts, reports, invoices, and official documents worldwide.",
-    useCases: ['Sharing reports, invoices, or contracts that must look identical everywhere', 'Archiving documents in a non-editable, print-ready format', 'Combining multiple pages or images into a single shareable file'],
-    limitation: 'PDFs are difficult to edit without specialist software. Extracting text or data for re-use in other formats can be imprecise, especially for scanned PDFs.',
-    compat: 'Universal — supported natively by every modern OS, browser, and countless applications.',
-  },
-  RTF: {
-    fullName: 'Rich Text Format',
-    ext: '.rtf', mime: 'application/rtf', category: 'document',
-    icon: '📋',
-    description: 'RTF is a document format created by Microsoft in 1987 for cross-platform text exchange. It supports basic formatting — bold, italics, font sizes, colours, and tables — while remaining compatible with virtually every word processor: Microsoft Word, LibreOffice, TextEdit, and WordPad.',
-    useCases: ['Exchanging formatted documents across different word processors', 'Basic document compatibility when .docx is not supported', 'Email attachments requiring readable formatting on any system'],
-    limitation: 'RTF supports only basic formatting — complex Word layouts, macros, embedded objects, and advanced tables may not transfer correctly.',
-    compat: 'Near-universal — readable by Microsoft Word, LibreOffice, Apple Pages, Google Docs, and most word processors.',
-  },
-  TXT: {
-    fullName: 'Plain Text',
-    ext: '.txt', mime: 'text/plain', category: 'document',
-    icon: '📃',
-    description: "Plain text (.txt) files contain unformatted characters with no styling, fonts, or layout. What you see is exactly what is stored — simple characters and line breaks. TXT is the most universally compatible format in computing, readable by literally every text editor, terminal, and programming language without special software.",
-    useCases: ['Storing data readable by any system or language', 'Exporting log files, configuration files, or raw data', 'Stripping formatting from a document to access plain content'],
-    limitation: 'No support for bold, italics, headings, tables, or any visual formatting — unsuitable for documents requiring visual structure.',
-    compat: 'Universal — readable by every OS, text editor, browser, and programming language.',
-  },
-  Word: {
-    fullName: 'Microsoft Word Document',
-    ext: '.docx', mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', category: 'document',
-    icon: '📝',
-    description: "Microsoft Word's .docx format is the world's most widely used word processor format. Word documents support rich formatting — styles, headers, footers, tables, images, tracked changes, and macros — and are the standard for business, academic, and legal documents globally.",
-    useCases: ['Business reports, letters, and formal proposals', 'Academic papers and formatted essays requiring citation styles', 'Legal documents requiring tracked changes and precise formatting'],
-    limitation: 'Complex Word features — mail merges, macros, specific fonts — may not render identically in non-Microsoft applications.',
-    compat: 'Supported by Microsoft Word, LibreOffice, Google Docs, Apple Pages, WPS Office, and most modern productivity applications.',
-  },
-  CSV: {
-    fullName: 'Comma-Separated Values',
-    ext: '.csv', mime: 'text/csv', category: 'spreadsheet',
-    icon: '📊',
-    description: 'CSV is a plain-text format for tabular data where each line represents a row and commas separate column values. It is the most universal data-exchange format — virtually every database, spreadsheet application, CRM, and analytics tool can import and export CSV files without any special configuration.',
-    useCases: ['Exporting database records for analysis in Excel or Google Sheets', 'Importing contact lists, product catalogues, or financial records', 'Data exchange between different software systems and APIs'],
-    limitation: "CSV has no standard for data types, number formats, or multiple sheets — all values are stored as text. Commas inside values require careful quoting.",
-    compat: 'Universal — supported by Excel, Google Sheets, LibreOffice, every database system, and virtually all data tools.',
-  },
-  Excel: {
-    fullName: 'Microsoft Excel Workbook',
-    ext: '.xlsx', mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', category: 'spreadsheet',
-    icon: '📈',
-    description: "Microsoft Excel's .xlsx format is the world's most widely used spreadsheet format. Excel files support multiple sheets, formulas, charts, pivot tables, conditional formatting, macros, and rich cell styling — making them the standard for financial modelling, data analysis, and business reporting.",
-    useCases: ['Financial modelling, budgets, and accounting workbooks', 'Data analysis with formulas, pivot tables, and charts', 'Business reports and dashboards shared across teams'],
-    limitation: 'Complex formulas, macros, or proprietary Excel features may not convert correctly to other formats or open correctly in non-Microsoft applications.',
-    compat: 'Supported by Microsoft Excel, Google Sheets, LibreOffice Calc, Apple Numbers, and most spreadsheet applications.',
-  },
-  ODS: {
-    fullName: 'OpenDocument Spreadsheet',
-    ext: '.ods', mime: 'application/vnd.oasis.opendocument.spreadsheet', category: 'spreadsheet',
-    icon: '📉',
-    description: 'ODS is the open-standard spreadsheet format used by LibreOffice, OpenOffice, and Google Sheets. Part of the ISO-standardised OpenDocument Format, ODS stores spreadsheet data — cells, formulas, charts, and formatting — in an open, non-proprietary way, free from vendor lock-in.',
-    useCases: ['LibreOffice and OpenOffice-based workflows', 'Sharing spreadsheets without requiring Microsoft Office', 'Government and academic documents requiring open-format compliance'],
-    limitation: 'Some complex Excel formulas, macros, or proprietary chart types may not convert perfectly from or to ODS.',
-    compat: 'Native in LibreOffice and OpenOffice. Supported by Google Sheets, Microsoft Excel 2007+, and most modern spreadsheet tools.',
-  },
-  TSV: {
-    fullName: 'Tab-Separated Values',
-    ext: '.tsv', mime: 'text/tab-separated-values', category: 'spreadsheet',
-    icon: '📋',
-    description: 'TSV is a plain-text tabular format similar to CSV but using tab characters as delimiters. Because tabs rarely appear inside data values, TSV avoids the quoting complexity of CSV and is popular in bioinformatics, database exports, and scientific data exchange.',
-    useCases: ['Exporting database tables where comma-separated values would be ambiguous', 'Bioinformatics and scientific data exchange between tools', 'Data imports into tools that prefer tab delimiters over commas'],
-    limitation: 'Like CSV, TSV has no native support for formatting, multiple sheets, or typed data — all values are plain text.',
-    compat: 'Supported by Excel, Google Sheets, most database clients, and any text editor.',
-  },
-  M4A: {
-    fullName: 'MPEG-4 Audio',
-    ext: '.m4a', mime: 'audio/mp4', category: 'audio',
-    icon: '🎵',
-    description: "M4A is Apple's container format for AAC-encoded audio. It delivers excellent audio quality at low bitrates — significantly better than MP3 at equivalent sizes — and is the default format for Apple Music, iTunes purchases, and voice recordings on Apple devices.",
-    useCases: ['Music from Apple Music or iTunes', 'High-quality audio on Apple devices (iPhone, iPad, Mac)', 'Podcast audio and voice recordings within the Apple ecosystem'],
-    limitation: 'Some older devices and media players may not support .m4a files and require conversion to MP3.',
-    compat: 'Native on Apple devices, iTunes, QuickTime, and most modern media players including VLC and Windows Media Player.',
-  },
-  MP3: {
-    fullName: 'MPEG Audio Layer III',
-    ext: '.mp3', mime: 'audio/mpeg', category: 'audio',
-    icon: '🎶',
-    description: "MP3 is the world's most widely supported audio format. Introduced in 1993, it uses psychoacoustic compression to dramatically reduce file sizes while preserving perceptible audio quality. Despite newer formats existing, MP3's universal compatibility makes it the default for music, podcasts, and voice recordings.",
-    useCases: ['Music libraries, playlists, and portable players', 'Podcast distribution and audio content delivery', 'Voice recordings, interviews, and audio messages'],
-    limitation: 'Lossy compression permanently discards some audio data. At very low bitrates, quality degradation becomes audible.',
-    compat: 'Universal — supported by every device, browser, media player, and platform.',
-  },
-  OGG: {
-    fullName: 'Ogg Vorbis',
-    ext: '.ogg', mime: 'audio/ogg', category: 'audio',
-    icon: '🎼',
-    description: 'OGG is an open, royalty-free audio container format developed by Xiph.Org, typically using the Vorbis codec. OGG Vorbis delivers audio quality comparable to MP3 and AAC without any licensing restrictions, making it popular in open-source applications, web games, Linux systems, and browser-based audio.',
-    useCases: ['Open-source applications and games requiring royalty-free audio', 'Web audio where royalty-free browser-native support is needed', 'Linux and open-source desktop audio applications'],
-    limitation: 'Limited support on Apple devices — Safari and iOS do not support OGG natively and require a JavaScript fallback.',
-    compat: 'Chrome, Firefox, Android, VLC, and most open-source players. Not natively supported by Safari or iOS.',
-  },
-  WAV: {
-    fullName: 'Waveform Audio File Format',
-    ext: '.wav', mime: 'audio/wav', category: 'audio',
-    icon: '🔊',
-    description: "WAV is Microsoft's uncompressed audio format and the standard for professional audio production. WAV files contain raw PCM audio data with no compression, delivering lossless quality. This makes WAV the preferred format for recording studios, audio editors, broadcast production, and any workflow requiring pristine, unaltered audio.",
-    useCases: ['Professional audio recording and studio production', 'Intermediate format during editing to avoid quality loss', 'Audio samples, sound effects, and broadcast-ready masters'],
-    limitation: 'Very large file sizes — uncompressed audio can be 10× the size of an equivalent MP3. Not practical for storage or streaming at scale.',
-    compat: 'Universal — supported by every professional audio application, DAW, media player, and most devices.',
-  },
-  AVI: {
-    fullName: 'Audio Video Interleave',
-    ext: '.avi', mime: 'video/x-msvideo', category: 'video',
-    icon: '🎥',
-    description: 'AVI is one of the oldest video container formats, introduced by Microsoft in 1992. While largely superseded by MP4 for most purposes, AVI remains widely recognised and stored in archives. It can contain video encoded with various codecs (DivX, XviD, H.264) alongside audio tracks.',
-    useCases: ['Playing back legacy video files from older archives', 'Compatibility with older video editing software', 'Windows-native and industrial applications still using AVI'],
-    limitation: 'AVI has poor support for modern codecs, does not support streaming, and generally produces larger files than MP4.',
-    compat: 'Supported by Windows Media Player, VLC, and most video players. Modern browsers do not support AVI natively.',
-  },
-  MOV: {
-    fullName: 'QuickTime Movie',
-    ext: '.mov', mime: 'video/quicktime', category: 'video',
-    icon: '🎬',
-    description: "MOV is Apple's QuickTime container format, introduced in 1991. It is the native format for video recorded on iPhone, iPad, and Mac cameras, and is widely used in professional video production on macOS. MOV files typically use H.264 or H.265 encoding and support multiple audio tracks.",
-    useCases: ['Raw video from iPhone, iPad, or Mac cameras', 'Professional video editing in Final Cut Pro or other macOS tools', 'High-quality video sharing within the Apple ecosystem'],
-    limitation: 'MOV files can be large and may need conversion for Windows compatibility or reliable web playback.',
-    compat: 'Natively supported on macOS and iOS. VLC handles MOV on Windows. Not natively supported in most web browsers.',
-  },
-  MP4: {
-    fullName: 'MPEG-4 Part 14',
-    ext: '.mp4', mime: 'video/mp4', category: 'video',
-    icon: '🎦',
-    description: "MP4 is the world's most widely supported video container format. It efficiently stores video (H.264 or H.265), audio, and subtitles in a single file with excellent compression. MP4 is the standard for streaming platforms, social media, mobile devices, and video sharing — if you need one video format that works everywhere, MP4 is it.",
-    useCases: ['Video for YouTube, social media, and streaming services', 'Recording and sharing video on any mobile device', 'Web-embedded video that plays in all browsers'],
-    limitation: 'MP4 with H.264 is widely supported but not fully open — H.264 is patent-encumbered, and H.265 has even more complex licensing.',
-    compat: 'Universal — supported by every browser, device, operating system, and video platform.',
-  },
-  WebM: {
-    fullName: 'WebM Video',
-    ext: '.webm', mime: 'video/webm', category: 'video',
-    icon: '🌐',
-    description: "WebM is an open, royalty-free video format developed by Google for web delivery. It uses VP8/VP9 or AV1 video with Vorbis or Opus audio — providing excellent compression and quality for streaming without codec licensing costs. WebM is the preferred open format for HTML5 video in browsers that avoid proprietary codecs.",
-    useCases: ['Open-source and royalty-free web video without licensing concerns', 'Browser-based video in HTML5 players', 'Web applications and games using open video formats'],
-    limitation: 'Limited native support on Apple devices — Safari does not support VP8/VP9 WebM well; iOS and macOS prefer H.264 MP4.',
-    compat: 'Chrome, Firefox, Edge, Android. Limited or no support on Safari and iOS without workarounds.',
-  },
-  BMP: {
-    fullName: 'Bitmap Image File',
-    ext: '.bmp', mime: 'image/bmp', category: 'image',
-    icon: '🗺️',
-    description: 'BMP is an uncompressed raster format from the early days of Windows. Every pixel is stored without compression, which makes BMP files large but completely lossless and trivially simple to read — the reason it survives in embedded systems, scanners, and legacy Windows software.',
-    useCases: ['Exchanging images with legacy Windows applications', 'Embedded systems and firmware that expect raw bitmaps', 'Intermediate lossless captures before further editing'],
-    limitation: 'No compression — BMP files are far larger than PNG at identical quality, making them impractical for web use or sharing.',
-    compat: 'Supported by all major browsers, Windows, macOS, and virtually every image editor.',
-  },
-  ICO: {
-    fullName: 'Windows Icon Format',
-    ext: '.ico', mime: 'image/x-icon', category: 'image',
-    icon: '🔖',
-    description: 'ICO is the icon container format used by Windows and by every website favicon. A single ICO file can hold multiple image sizes (16×16 up to 256×256) so the operating system or browser can pick the sharpest variant for the context.',
-    useCases: ['Website favicons served as /favicon.ico', 'Windows application and shortcut icons', 'Toolbar and system-tray icons at multiple sizes'],
-    limitation: 'ICO is only meant for small icons — images are capped at 256×256 pixels, so it is unsuitable as a general-purpose image format.',
-    compat: 'Universal favicon support in every browser. Windows native. Most image editors need a plugin to save ICO.',
-  },
-  JSON: {
-    fullName: 'JavaScript Object Notation',
-    ext: '.json', mime: 'application/json', category: 'data',
-    icon: '🧩',
-    description: 'JSON is the standard data-interchange format of the web. It represents structured data as nested objects and arrays in plain text — human-readable, language-independent, and natively supported by every programming language and API in common use.',
-    useCases: ['REST API payloads and configuration files', 'Exchanging structured data between services and languages', 'Storing settings, fixtures, and exported records'],
-    limitation: 'JSON has no comments, no date type, and gets hard to read when deeply nested or minified — formatting and conversion tools help.',
-    compat: 'Universal — every programming language, browser, and modern tool reads JSON.',
-  },
-  YAML: {
-    fullName: "YAML Ain't Markup Language",
-    ext: '.yaml', mime: 'application/x-yaml', category: 'data',
-    icon: '📋',
-    description: 'YAML is a human-friendly data format that uses indentation instead of brackets and quotes. It is the de-facto standard for configuration files — Kubernetes, Docker Compose, GitHub Actions, and CI pipelines all speak YAML — and it maps one-to-one onto the same data model as JSON.',
-    useCases: ['Kubernetes manifests and Docker Compose files', 'CI/CD pipeline definitions (GitHub Actions, GitLab CI)', 'Application configuration that humans edit by hand'],
-    limitation: 'Whitespace sensitivity makes YAML easy to break with a stray indent, and its implicit typing (the "Norway problem") can surprise you.',
-    compat: 'Supported by all major languages via libraries. Not natively parsed by browsers — which is why converters exist.',
-  },
-  XML: {
-    fullName: 'Extensible Markup Language',
-    ext: '.xml', mime: 'application/xml', category: 'data',
-    icon: '🏷️',
-    description: 'XML is a markup-based data format that predates JSON. It wraps data in nested named tags with attributes, and remains entrenched in enterprise systems, SOAP APIs, RSS feeds, sitemaps, and document standards like SVG and Office files.',
-    useCases: ['Legacy enterprise and SOAP API integrations', 'RSS/Atom feeds and XML sitemaps', 'Configuration for Java and .NET ecosystems'],
-    limitation: 'Verbose compared to JSON — the same data takes considerably more bytes and is harder to consume in JavaScript, which is why XML to JSON conversion is so common.',
-    compat: 'Universal parser support. Browsers parse XML natively via DOMParser.',
-  },
-  Base64: {
-    fullName: 'Base64 Encoding',
-    ext: '.txt', mime: 'text/plain', category: 'data',
-    icon: '🔢',
-    description: 'Base64 is a binary-to-text encoding that represents any data using 64 safe ASCII characters. It lets binary content — images, files, credentials — travel through channels that only handle text, such as JSON payloads, data URIs, email attachments, and HTTP basic authentication.',
-    useCases: ['Embedding images as data URIs in HTML/CSS', 'Transporting binary data inside JSON or XML', 'Encoding credentials and tokens for HTTP headers'],
-    limitation: 'Base64 output is ~33% larger than the original data and is an encoding, not encryption — it provides zero confidentiality.',
-    compat: 'Universal — every language and browser encodes/decodes Base64 natively.',
-  },
-  Text: {
-    fullName: 'Plain Text',
-    ext: '.txt', mime: 'text/plain', category: 'data',
-    icon: '📝',
-    description: 'Plain text is the simplest possible data format: a sequence of characters with no styling or structure. It is the universal input and output of every text tool, from encoders to case converters.',
-    useCases: ['Notes, logs, and README files', 'Input for encoders, formatters, and text utilities', 'Maximum-compatibility data exchange'],
-    limitation: 'No formatting, structure, or metadata — plain text carries only the characters themselves.',
-    compat: 'Universal — readable on every device and operating system ever made.',
-  },
-  'URL-encoded': {
-    fullName: 'Percent-Encoded Text',
-    ext: '.txt', mime: 'text/plain', category: 'data',
-    icon: '🔗',
-    description: 'URL encoding (percent-encoding) replaces characters that are not allowed in URLs with %-prefixed hexadecimal sequences — a space becomes %20, an ampersand %26. It keeps query strings, form submissions, and path segments unambiguous and safe to transmit.',
-    useCases: ['Building query strings with special characters', 'Encoding form data for GET/POST requests', 'Making non-ASCII text safe inside URLs'],
-    limitation: 'Encoded text is hard to read and must be decoded exactly once — double-encoding is a classic source of bugs.',
-    compat: 'Universal — defined by RFC 3986 and supported natively everywhere.',
-  },
-  Image: {
-    fullName: 'Any Raster Image',
-    ext: '.png,.jpg,.jpeg,.webp,.gif,.bmp,.avif', mime: 'image/*', category: 'image',
-    icon: '🖼️',
-    description: 'This tool accepts any common raster image — JPG, PNG, WebP, GIF, BMP, or AVIF — and processes it directly in your browser using the canvas API.',
-    useCases: ['Preparing images for the web', 'Meeting upload size and dimension limits', 'Optimising photos before sharing'],
-    limitation: 'Output is re-encoded by your browser, so exotic metadata (EXIF, colour profiles) is not preserved.',
-    compat: 'Works in every modern browser.',
-  },
+// ─── Generic helpers ──────────────────────────────────────────────────────────
+function writeFile(relPath, content) {
+  const full = path.join(ROOT, relPath);
+  fs.mkdirSync(path.dirname(full), { recursive: true });
+  fs.writeFileSync(full, content, 'utf8');
+}
+const slugToPath = slug => slug.replace(/^\//, '') + 'index.html';
+const esc = str => String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const stripTags = h => String(h).replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+const firstSentence = t => { if (!t) return ''; const m = t.match(/^[\s\S]*?[.!?](?=\s|$)/); return m ? m[0] : t; };
+
+const HUB = {
+  image: '/image-converter/', document: '/document-converter/', spreadsheet: '/spreadsheet-converter/',
+  audio: '/audio-converter/', video: '/video-converter/', data: '/data-converter/',
 };
+const CATS = Object.keys(HUB);
+const ICON = { image: '🖼️', document: '📄', spreadsheet: '📊', audio: '🎵', video: '🎬', data: '🧰', all: '🔄' };
+const catBase = page => (page['Category'] || '').split('→')[0];
+const categoryHub = base => HUB[base] || '/file-converter/';
 
-// Normalise lookup key
 function fmtKey(name) {
   if (!name) return '';
   const n = name.trim();
-  // Handle aliases
-  const aliases = { JPEG: 'JPG', HEIF: 'HEIC', DOCX: 'Word', DOC: 'Word',
-    XLSX: 'Excel', XLS: 'Excel', HTM: 'HTML', MD: 'Markdown', TIF: 'TIFF', OGV: 'OGG' };
+  const aliases = { JPEG: 'JPG', HEIF: 'HEIC', DOCX: 'Word', DOC: 'Word', XLSX: 'Excel', XLS: 'Excel', HTM: 'HTML', MD: 'Markdown', TIF: 'TIFF', OGV: 'OGG' };
   return aliases[n.toUpperCase()] || n.charAt(0).toUpperCase() + n.slice(1);
 }
+const fmtInfo = f => L.formats[fmtKey(f)] || {};
+/** Display name of a format (pseudo-formats like "Text" or "Image" are translated). */
+const fname = f => (L.fmtNames && L.fmtNames[f]) || f;
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-function slugToPath(slug) {
-  // '/image/jpg-to-png/' → 'image/jpg-to-png/index.html'
-  return slug.replace(/^\//, '').replace(/\/$/, '') + '/index.html';
-}
-
-function writeFile(relPath, content) {
-  const abs = path.join(ROOT, relPath);
-  fs.mkdirSync(path.dirname(abs), { recursive: true });
-  fs.writeFileSync(abs, content, 'utf8');
-}
-
-function esc(str) {
-  return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function titleCase(str) {
-  return (str || '').replace(/\w\S*/g, t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase());
-}
-
-function categoryLabel(cat) {
-  const map = {
-    image: 'Image', document: 'Document', spreadsheet: 'Spreadsheet',
-    audio: 'Audio', video: 'Video', data: 'Data & Text', all: 'All'
-  };
-  const base = cat.split('→')[0];
-  return map[base] || titleCase(base);
-}
-
-function categoryHub(cat) {
-  const base = cat.split('→')[0];
-  const slugs = {
-    image: '/image-converter/', document: '/document-converter/',
-    spreadsheet: '/spreadsheet-converter/', audio: '/audio-converter/', video: '/video-converter/',
-    data: '/data-converter/'
-  };
-  return slugs[base] || '/file-converter/';
-}
-
-function categoryIcon(cat) {
-  const base = cat.split('→')[0];
-  const icons = { image: '🖼️', document: '📄', spreadsheet: '📊', audio: '🎵', video: '🎬', data: '🧰', all: '🔄' };
-  return icons[base] || '🔄';
-}
-
-// ─── Converter Configs ────────────────────────────────────────────────────────
-// CDN library URLs used by converter scripts
-const CDN = {
-  markdownIt: 'https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js',
-  turndown:   'https://cdn.jsdelivr.net/npm/turndown@7.2.0/dist/turndown.min.js',
-  mammoth:    'https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js',
-  htmlDocx:   'https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js',
-  html2pdf:   'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js',
-  jsPDF:      'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
-  pdfJS:      'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
-  xlsx:       'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
-  heic2any:   'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js',
-  jsYaml:     'https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js',
-  ffmpeg:     'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js',
-  ffmpegUtil: 'https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js',
-};
-
-const IMAGE_FMTS  = new Set(['AVIF','BMP','GIF','HEIC','ICO','JPG','PNG','SVG','TIFF','WEBP']);
-const SHEET_FMTS  = new Set(['CSV','TSV','EXCEL','ODS']);
-const AUDIO_FMTS  = new Set(['M4A','MP3','OGG','WAV']);
-const VIDEO_FMTS  = new Set(['AVI','MOV','MP4','WEBM']);
-// Raster formats ffmpeg.wasm can read AND write (used for TIFF/GIF image pairs
-// that the canvas API cannot handle)
-const FFMPEG_RASTER = new Set(['BMP','GIF','JPG','PNG','TIFF','WEBP']);
-
-// Returns { textMode, libs[], converterScript, action?, engineNote? } or null
-// if no browser converter exists.
-function getConverterConfig(from, to, slug) {
-  const f = (from || '').toUpperCase().replace('JPEG','JPG');
-  const t = (to   || '').toUpperCase().replace('JPEG','JPG');
-  const C = (script, libs = [], textMode = false, opts = {}) =>
-    ({ textMode, libs, converterScript: `/assets/js/converters/${script}`,
-       engineNote: script === 'media-convert.js', ...opts });
-
-  // ── Data & text tools (slug-keyed — one shared script) ────────────────────
-  const dataMap = {
-    '/data/json-to-csv/':    C('data-convert.js', [], true),
-    '/data/csv-to-json/':    C('data-convert.js', [], true),
-    '/data/json-to-yaml/':   C('data-convert.js', [CDN.jsYaml], true),
-    '/data/yaml-to-json/':   C('data-convert.js', [CDN.jsYaml], true),
-    '/data/xml-to-json/':    C('data-convert.js', [], true),
-    '/data/json-formatter/': C('data-convert.js', [], true, { action: 'Format JSON' }),
-    '/data/base64-encode/':  C('data-convert.js', [], true, { action: 'Encode to Base64' }),
-    '/data/base64-decode/':  C('data-convert.js', [], true, { action: 'Decode Base64' }),
-    '/data/url-encode/':     C('data-convert.js', [], true, { action: 'URL-Encode' }),
-    '/data/url-decode/':     C('data-convert.js', [], true, { action: 'URL-Decode' }),
-    '/data/case-converter/': C('data-convert.js', [], true, { action: 'Convert Case' }),
-  };
-  if (dataMap[slug]) return dataMap[slug];
-
-  // ── Standalone image tools ────────────────────────────────────────────────
-  if (slug === '/image/resize-image/')   return C('image-resize.js',   [], false, { action: 'Resize Image' });
-  if (slug === '/image/compress-image/') return C('image-compress.js', [], false, { action: 'Compress Image' });
-
-  // ── Audio / video (ffmpeg.wasm, loaded lazily on first conversion) ────────
-  const isMedia = AUDIO_FMTS.has(f) || AUDIO_FMTS.has(t) || VIDEO_FMTS.has(f) || VIDEO_FMTS.has(t);
-  if (isMedia) return C('media-convert.js', [CDN.ffmpeg, CDN.ffmpegUtil]);
-
-  // ── TIFF / GIF image pairs the canvas API cannot encode → ffmpeg.wasm ─────
-  if (FFMPEG_RASTER.has(f) && FFMPEG_RASTER.has(t) && (f === 'TIFF' || t === 'TIFF' || t === 'GIF')) {
-    return C('media-convert.js', [CDN.ffmpeg, CDN.ffmpegUtil]);
+/**
+ * SEO text (name/title/meta/h1) of a page in the current language.
+ * English comes from page_map.csv; other languages are built from templates in the
+ * locale (ordinary pages) or from the locale's `tools` table (special tools).
+ */
+function pageText(page) {
+  const slug = page['URL Slug'];
+  if (L.tools[slug]) return L.tools[slug];
+  if (LANG === DEFAULT_LANG) {
+    return { name: page['Page Name'], title: page['SEO Title'], meta: page['Meta Description'], h1: page['H1'] };
   }
-
-  // ── Markdown (existing, explicit) ─────────────────────────────────────────
-  const mdMap = {
-    '/document/markdown-to-html/': C('md-to-html.js', [CDN.markdownIt], true),
-    '/document/html-to-markdown/': C('html-to-md.js', [CDN.turndown], true),
-    '/document/markdown-to-pdf/':  C('md-to-pdf.js',  [CDN.markdownIt, CDN.html2pdf]),
-    '/document/markdown-to-word/': C('md-to-word.js', [CDN.markdownIt, CDN.htmlDocx]),
-    '/document/word-to-markdown/': C('word-to-md.js', [CDN.mammoth, CDN.turndown]),
-    '/document/markdown-to-txt/':  C('md-to-txt.js',  [], true),
-    '/document/txt-to-markdown/':  C('txt-to-md.js',  [], true),
-  };
-  if (mdMap[slug]) return mdMap[slug];
-
-  // ── Image → Image (canvas) ────────────────────────────────────────────────
-  if (IMAGE_FMTS.has(f) && IMAGE_FMTS.has(t)) {
-    const libs = f === 'HEIC' ? [CDN.heic2any] : [];
-    return C('image-convert.js', libs);
+  const type = page['Page Type'];
+  const cb = catBase(page);
+  if (type === 'Master Hub') return L.pages.master;
+  if (type === 'Category Hub') return L.cat[cb].hub;
+  if (type === 'Format Hub') {
+    const fmt = page['Source Format'];
+    return { name: s('hubName', { fmt }), title: s('hubTitle', { fmt }), meta: s('hubMeta', { fmt }), h1: s('hubH1', { fmt }) };
   }
-
-  // ── Image → PDF ───────────────────────────────────────────────────────────
-  if (IMAGE_FMTS.has(f) && t === 'PDF') {
-    const libs = f === 'HEIC' ? [CDN.heic2any, CDN.jsPDF] : [CDN.jsPDF];
-    return C('image-to-pdf.js', libs);
+  if (type === 'Pair') {
+    const from = fname(page['Source Format']), to = fname(page['Target Format']);
+    const benefit = L.benefit[cb];
+    if (!benefit || from === to) throw new Error(`No ${LANG} text for ${slug} (add it to tools{})`);
+    return { name: s('pairName', { from, to }), title: s('pairTitle', { from, to }), meta: s('pairMeta', { from, to, benefit }), h1: s('pairH1', { from, to }) };
   }
-
-  // ── PDF → Image ───────────────────────────────────────────────────────────
-  if (f === 'PDF' && IMAGE_FMTS.has(t)) {
-    return C('pdf-to-image.js', [CDN.pdfJS]);
-  }
-
-  // ── PDF → TXT ─────────────────────────────────────────────────────────────
-  if (f === 'PDF' && t === 'TXT') {
-    return C('pdf-to-txt.js', [CDN.pdfJS]);
-  }
-
-  // ── HTML conversions ──────────────────────────────────────────────────────
-  if (f === 'HTML' && t === 'TXT')  return C('html-to-txt.js',  [],                  true);
-  if (f === 'HTML' && t === 'PDF')  return C('html-to-pdf.js',  [CDN.html2pdf],      true);
-  if (f === 'HTML' && t === 'WORD') return C('html-to-word.js', [CDN.htmlDocx],      true);
-
-  // ── TXT conversions ───────────────────────────────────────────────────────
-  if (f === 'TXT' && t === 'HTML')  return C('txt-to-html.js',  [],                  true);
-  if (f === 'TXT' && t === 'PDF')   return C('txt-to-pdf.js',   [CDN.html2pdf],      true);
-  if (f === 'TXT' && t === 'WORD')  return C('txt-to-word.js',  [CDN.htmlDocx],      true);
-  if (f === 'TXT' && t === 'CSV')   return C('txt-to-csv.js',   [],                  true);
-
-  // ── RTF conversions ───────────────────────────────────────────────────────
-  if (f === 'RTF' && t === 'TXT')   return C('rtf-to-txt.js',   [],                  true);
-
-  // ── Word conversions ──────────────────────────────────────────────────────
-  if (f === 'WORD' && t === 'HTML') return C('word-to-html.js', [CDN.mammoth]);
-  if (f === 'WORD' && t === 'PDF')  return C('word-to-pdf.js',  [CDN.mammoth, CDN.html2pdf]);
-  if (f === 'WORD' && t === 'TXT')  return C('word-to-txt.js',  [CDN.mammoth]);
-
-  // ── Spreadsheet ↔ Spreadsheet ─────────────────────────────────────────────
-  if (SHEET_FMTS.has(f) && SHEET_FMTS.has(t)) {
-    const textMode = f === 'CSV' || f === 'TSV';
-    return C('spreadsheet-convert.js', [CDN.xlsx], textMode);
-  }
-
-  // ── Spreadsheet → PDF ─────────────────────────────────────────────────────
-  if (SHEET_FMTS.has(f) && t === 'PDF') {
-    const textMode = f === 'CSV' || f === 'TSV';
-    return C('spreadsheet-to-pdf.js', [CDN.xlsx, CDN.html2pdf], textMode);
-  }
-
-  // ── CSV ↔ TXT ─────────────────────────────────────────────────────────────
-  if (f === 'CSV' && t === 'TXT') return C('csv-to-txt.js', [], true);
-
-  return null; // no browser converter for this pair
+  throw new Error(`No ${LANG} text for ${slug}`);
 }
 
-// ─── HTML Components ──────────────────────────────────────────────────────────
+const robotsFor = page => (page['Indexation'] === 'Index now' ? 'index, follow' : 'noindex, follow');
+const nameOf = page => pageText(page).name;
 
-function head({ title, desc, canonical, robots, schema, ogTitle }) {
+// ─── HTML components ──────────────────────────────────────────────────────────
+function head({ title, desc, slug, robots, schema, ogTitle, extraHead }) {
   const robo = robots || 'index, follow';
-  const og   = ogTitle || title;
+  const og = ogTitle || title;
+  const indexed = !/noindex/.test(robo);
+  const alternates = indexed
+    ? LANGS.map(l => `  <link rel="alternate" hreflang="${l.htmlLang}" href="${abs(slug, l.code)}">`).join('\n') +
+      `\n  <link rel="alternate" hreflang="x-default" href="${abs(slug, DEFAULT_LANG)}">`
+    : '';
+  const ogAlt = LANGS.filter(l => l.code !== LANG)
+    .map(l => `  <meta property="og:locale:alternate" content="${l.ogLocale}">`).join('\n');
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${L.meta.htmlLang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${esc(title)}</title>
   <meta name="description" content="${esc(desc)}">
   <meta name="robots" content="${robo}">
-  <link rel="canonical" href="${DOMAIN}${canonical}">
+  <link rel="canonical" href="${abs(slug)}">
+${alternates}
 
   <!-- Open Graph -->
   <meta property="og:title" content="${esc(og)}">
   <meta property="og:description" content="${esc(desc)}">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="${DOMAIN}${canonical}">
+  <meta property="og:url" content="${abs(slug)}">
+  <meta property="og:locale" content="${L.meta.ogLocale}">
+${ogAlt}
   <meta property="og:image" content="${DOMAIN}/assets/img/og-image.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${esc(og)}">
@@ -592,51 +149,51 @@ function head({ title, desc, canonical, robots, schema, ogTitle }) {
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/site.css">
-
+${extraHead || ''}
   <!-- Schema -->
   ${schema ? `<script type="application/ld+json">${JSON.stringify(schema, null, 2)}</script>` : ''}
 </head>
 <body>`;
 }
 
-function skipLink() {
-  return `<a class="skip-link" href="#main-content">Skip to main content</a>`;
+const skipLink = () => `<a class="skip-link" href="#main-content">${esc(s('skip'))}</a>`;
+
+function langSwitch(slug) {
+  const items = LANGS.map(l => `<li><a href="/${l.code}${slug}" hreflang="${l.htmlLang}" lang="${l.htmlLang}" data-lang="${l.code}"${l.code === LANG ? ' aria-current="true"' : ''}>${l.name}</a></li>`).join('');
+  return `<details class="lang-switch">
+        <summary aria-label="${esc(s('langLabel'))}"><i class="bi bi-translate" aria-hidden="true"></i> <span>${L.meta.short}</span></summary>
+        <ul>${items}</ul>
+      </details>`;
 }
 
-function navbar() {
-  return `<nav class="navbar-aintob" aria-label="Main navigation">
-  <div class="container" style="max-width:var(--max-width); display:flex; align-items:center; justify-content:space-between;">
-    <a href="/" class="navbar-logo" aria-label="AintoB home">🅰️➡️🅱️ <span style="font-size:1rem; font-weight:500; color:var(--color-text-muted);">AintoB</span></a>
-    <nav aria-label="Site navigation" style="display:flex; align-items:center; gap:0.75rem;">
-      <a href="/file-converter/" class="navbar-tools-link"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> All Converters</a>
-    </nav>
+function navbar(slug) {
+  return `<nav class="navbar-aintob" aria-label="${esc(s('navMain'))}">
+  <div class="container navbar-inner" style="max-width:var(--max-width);">
+    <a href="${u('/')}" class="navbar-logo" aria-label="${esc(s('logoAria'))}">🅰️➡️🅱️ <span style="font-size:1rem; font-weight:500; color:var(--color-text-muted);">AintoB</span></a>
+    <div class="navbar-actions">
+      <a href="${OPEN_ONLINE_URL}" class="navbar-tools-link navbar-open" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <span class="nav-label">${esc(s('openFiles'))}</span><span class="visually-hidden"> ${esc(s('newTab'))}</span></a>
+      <a href="${u('/file-converter/')}" class="navbar-tools-link"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> <span class="nav-label">${esc(s('allConverters'))}</span></a>
+      ${langSwitch(slug)}
+    </div>
   </div>
 </nav>`;
 }
 
+/** items: [{label, href}] with language-neutral hrefs; "Home" is prepended. */
 function breadcrumbs(items) {
-  // items: [{label, href}]
+  const all = [{ label: s('home'), href: '/' }, ...items];
   const schema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": items.map((it, i) => ({
-      "@type": "ListItem",
-      "position": i + 1,
-      "name": it.label,
-      "item": it.href ? `${DOMAIN}${it.href}` : undefined
-    }))
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: all.map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.label, item: abs(it.href) })),
   };
-  const html = items.map((it, i) => {
-    const isLast = i === items.length - 1;
-    return isLast
-      ? `<li class="breadcrumb-item active" aria-current="page">${esc(it.label)}</li>`
-      : `<li class="breadcrumb-item"><a href="${it.href}">${esc(it.label)}</a></li>`;
-  }).join('\n');
+  const html = all.map((it, i) => (i === all.length - 1
+    ? `<li class="breadcrumb-item active" aria-current="page">${esc(it.label)}</li>`
+    : `<li class="breadcrumb-item"><a href="${u(it.href)}">${esc(it.label)}</a></li>`)).join('\n      ');
   return `<script type="application/ld+json">${JSON.stringify(schema)}</script>
-<nav aria-label="Breadcrumb" class="breadcrumb-nav">
+<nav aria-label="${esc(s('breadcrumbAria'))}" class="breadcrumb-nav">
   <div class="container" style="max-width:var(--max-width);">
     <ol class="breadcrumb mb-0" style="padding: 0.625rem 0; font-size: var(--text-sm);">
-      <li class="breadcrumb-item"><a href="/">Home</a></li>
       ${html}
     </ol>
   </div>
@@ -648,33 +205,50 @@ function privacyBlock() {
   <div class="privacy-block__inner">
     <span class="privacy-icon" aria-hidden="true">🔒</span>
     <div>
-      <strong>100% Private &amp; Browser-Based</strong>
-      <p>Your files never leave your device. All conversion happens locally in your browser — nothing is uploaded to any server. No sign-up required.</p>
+      <strong>${esc(s('privTitle'))}</strong>
+      <p>${esc(s('privText'))}</p>
     </div>
   </div>
 </div>`;
 }
 
+/** Callout linking to open-online.com. `fmt` = a real file format, or null for the generic variant. */
+function openOnlineBox(fmt) {
+  const title = fmt ? s('ooTitleFmt', { fmt: esc(fmt) }) : s('ooTitleGeneric');
+  return `<aside class="open-online" aria-label="open-online.com">
+  <div class="container" style="max-width:800px;">
+    <div class="open-online__inner">
+      <span class="open-online__icon" aria-hidden="true">📂</span>
+      <div class="open-online__text">
+        <strong>${title}</strong>
+        <p>${esc(s('ooText'))}</p>
+      </div>
+      <a class="btn btn-outline-secondary open-online__btn" href="${OPEN_ONLINE_URL}" target="_blank" rel="noopener">${esc(s('ooButton'))} <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i><span class="visually-hidden"> ${esc(s('newTab'))}</span></a>
+    </div>
+  </div>
+</aside>`;
+}
+
 function featureCards() {
   const features = [
-    { icon: 'bi-lightning-charge-fill', title: 'Instant', text: 'Results in milliseconds. No queues, no waiting, no server round-trips.' },
-    { icon: 'bi-shield-lock-fill', title: 'Private', text: 'Your data never leaves your browser. Zero server storage, zero uploads.' },
-    { icon: 'bi-phone', title: 'Mobile-friendly', text: 'Works flawlessly on any device — phone, tablet, or desktop.' },
-    { icon: 'bi-star-fill', title: 'Always Free', text: 'No sign-up, no subscription, no hidden costs. Free forever.' },
+    { icon: 'bi-lightning-charge-fill', title: s('feat1Title'), text: s('feat1Text') },
+    { icon: 'bi-shield-lock-fill', title: s('feat2Title'), text: s('feat2Text') },
+    { icon: 'bi-phone', title: s('feat3Title'), text: s('feat3Text') },
+    { icon: 'bi-star-fill', title: s('feat4Title'), text: s('feat4Text') },
   ];
   return `<section class="section-features" aria-labelledby="why-aintob">
   <div class="container" style="max-width:var(--max-width);">
     <div class="text-center mb-5">
-      <p class="section-label">Why AintoB?</p>
-      <h2 class="section-title" id="why-aintob">Built for Speed, Privacy &amp; Simplicity</h2>
-      <p class="section-sub mx-auto">No installs, no accounts, no file uploads. Every conversion runs entirely in your browser.</p>
+      <p class="section-label">${esc(s('whyLabel'))}</p>
+      <h2 class="section-title" id="why-aintob">${esc(s('whyTitle'))}</h2>
+      <p class="section-sub mx-auto">${esc(s('whySub'))}</p>
     </div>
     <div class="row g-4">
       ${features.map(f => `<div class="col-sm-6 col-lg-3">
         <div class="feature-card">
           <div class="feature-icon mx-auto"><i class="bi ${f.icon}" aria-hidden="true"></i></div>
-          <h3 class="feature-title">${f.title}</h3>
-          <p class="feature-text">${f.text}</p>
+          <h3 class="feature-title">${esc(f.title)}</h3>
+          <p class="feature-text">${esc(f.text)}</p>
         </div>
       </div>`).join('\n      ')}
     </div>
@@ -683,14 +257,16 @@ function featureCards() {
 }
 
 function faqBlock(faqs) {
-  const schemaItems = faqs.map(f => ({ "@type": "Question", "name": f.q, "acceptedAnswer": { "@type": "Answer", "text": f.a } }));
-  const schema = { "@context": "https://schema.org", "@type": "FAQPage", "mainEntity": schemaItems };
+  const schema = {
+    '@context': 'https://schema.org', '@type': 'FAQPage', inLanguage: L.meta.htmlLang,
+    mainEntity: faqs.map(f => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: stripTags(f.a) } })),
+  };
   return `<script type="application/ld+json">${JSON.stringify(schema)}</script>
 <section class="section-faq" aria-labelledby="faq-heading">
   <div class="container" style="max-width:800px;">
     <div class="text-center mb-5">
-      <p class="section-label">FAQ</p>
-      <h2 class="section-title" id="faq-heading">Frequently Asked Questions</h2>
+      <p class="section-label">${esc(s('faqLabel'))}</p>
+      <h2 class="section-title" id="faq-heading">${esc(s('faqTitle'))}</h2>
     </div>
     <div class="accordion" id="faqAccordion">
       ${faqs.map((f, i) => `<div class="accordion-item">
@@ -708,30 +284,29 @@ function faqBlock(faqs) {
 </section>`;
 }
 
-function footer(extraLinks, extraScripts) {
+function footer(slug, extraLinks, extraScripts) {
   const links = [
-    { label: 'All Converters', href: '/file-converter/' },
-    { label: 'Image Converters', href: '/image-converter/' },
-    { label: 'Document Converters', href: '/document-converter/' },
-    { label: 'Spreadsheet Converters', href: '/spreadsheet-converter/' },
-    { label: 'Audio Converters', href: '/audio-converter/' },
-    { label: 'Video Converters', href: '/video-converter/' },
-    { label: 'Data & Text Tools', href: '/data-converter/' },
-    ...(extraLinks || []),
-    { label: 'Privacy Policy', href: '/privacy/' },
-    { label: 'Imprint', href: '/imprint/' },
+    { label: s('allConverters'), href: u('/file-converter/') },
+    ...CATS.map(c => ({ label: L.cat[c].converters, href: u(HUB[c]) })),
+    ...(extraLinks || []).map(l => ({ label: l.label, href: u(l.href) })),
+    { label: s('privacyPolicy'), href: u('/privacy/') },
+    { label: s('imprint'), href: u('/imprint/') },
+    { label: s('footerOpenOnline'), href: OPEN_ONLINE_URL, external: true },
   ];
+  const langLinks = LANGS.map(l => `<a href="/${l.code}${slug}" hreflang="${l.htmlLang}" lang="${l.htmlLang}" data-lang="${l.code}"${l.code === LANG ? ' aria-current="true"' : ''}>${l.name}</a>`).join(' · ');
+  const dict = LANG === DEFAULT_LANG ? '' : `<script src="/assets/js/lang/${LANG}.js" defer></script>\n`;
   return `<footer class="footer-main" role="contentinfo">
   <div class="container" style="max-width:var(--max-width);">
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-4">
       <div>
-        <a href="/" class="footer-logo" aria-label="AintoB home">🅰️➡️🅱️ AintoB</a>
-        <p class="footer-copy">© ${YEAR} AintoB.com – All rights reserved.</p>
-        <p class="footer-gdpr-badge"><i class="bi bi-shield-check" aria-hidden="true"></i> Privacy-first · Browser-only · No uploads</p>
+        <a href="${u('/')}" class="footer-logo" aria-label="${esc(s('logoAria'))}">🅰️➡️🅱️ AintoB</a>
+        <p class="footer-copy">${esc(s('footerCopy', { year: YEAR }))}</p>
+        <p class="footer-gdpr-badge"><i class="bi bi-shield-check" aria-hidden="true"></i> ${esc(s('footerBadge'))}</p>
+        <p class="footer-langs"><span>${esc(s('langFooter'))}:</span> ${langLinks}</p>
       </div>
-      <nav aria-label="Footer navigation">
+      <nav aria-label="${esc(s('navFooter'))}">
         <ul class="footer-links">
-          ${links.map(l => `<li><a href="${l.href}">${esc(l.label)}</a></li>`).join('\n          ')}
+          ${links.map(l => `<li><a href="${l.href}"${l.external ? ' target="_blank" rel="noopener"' : ''}>${esc(l.label)}</a></li>`).join('\n          ')}
         </ul>
       </nav>
     </div>
@@ -739,119 +314,109 @@ function footer(extraLinks, extraScripts) {
 </footer>
 
 <!-- Cookie Banner -->
-<div id="cookie-banner" role="dialog" aria-label="Cookie preferences" aria-live="polite">
+<div id="cookie-banner" role="dialog" aria-label="${esc(s('cookieAria'))}" aria-live="polite">
   <div class="container" style="max-width:var(--max-width); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem;">
-    <p class="cookie-text mb-0">We use essential cookies only. No tracking without your consent. <a href="/privacy/">Privacy Policy</a></p>
+    <p class="cookie-text mb-0">${esc(s('cookieText'))} <a href="${u('/privacy/')}">${esc(s('privacyPolicy'))}</a></p>
     <div style="display:flex; gap:.5rem;">
-      <button class="btn btn-primary btn-sm" onclick="acceptCookies('all')">Accept All</button>
-      <button class="btn btn-outline-secondary btn-sm" onclick="acceptCookies('essential')">Essential Only</button>
+      <button class="btn btn-primary btn-sm" onclick="acceptCookies('all')">${esc(s('acceptAll'))}</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="acceptCookies('essential')">${esc(s('essentialOnly'))}</button>
     </div>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
-<script src="/assets/js/site.js" defer></script>
-${(extraScripts || []).map(s => `<script src="${s}" defer></script>`).join('\n')}
+${dict}<script src="/assets/js/site.js" defer></script>
+${(extraScripts || []).map(x => `<script src="${x}" defer></script>`).join('\n')}
 </body>
 </html>`;
 }
 
-// ─── Converter Widget ─────────────────────────────────────────────────────────
-// textMode: boolean — if true, shows a "Paste Text" tab alongside the file upload.
-function converterWidget(from, to, pageSlug, textMode, opts) {
+// ─── Converter widget ─────────────────────────────────────────────────────────
+// opts: { action?: string (button label for single-format tools), engineNote?: bool }
+function converterWidget(from, to, textMode, opts) {
   opts = opts || {};
-  const fromInfo = FMT[fmtKey(from)] || {};
-  const toInfo   = FMT[fmtKey(to)]   || {};
+  const fromInfo = fmtInfo(from);
   const fromLower = (from || 'file').toLowerCase();
-  const sameFmt  = from === to;
-  const action   = opts.action || `Convert to ${esc(to)}`;
+  const F = esc(fname(from)), T = esc(fname(to));
+  const sameFmt = from === to;
+  const action = esc(opts.action || s('convertTo', { to: fname(to) }));
 
   const textPanel = textMode ? `
-      <!-- Text Paste Panel (shown when "Paste Text" tab is active) -->
       <div id="panelPaste" class="converter-panel" hidden role="tabpanel" aria-labelledby="tabPaste">
-        <label class="converter-label" for="converterTextArea">Paste your ${esc(from)} content below</label>
+        <label class="converter-label" for="converterTextArea">${esc(s('pasteLabel', { from: fname(from) }))}</label>
         <textarea id="converterTextArea" class="form-control text-editor-area"
-          placeholder="Paste your ${esc(from)} content here…"
-          rows="12" spellcheck="false" aria-label="Paste ${esc(from)} text"></textarea>
+          placeholder="${esc(s('pastePlaceholder', { from: fname(from) }))}"
+          rows="12" spellcheck="false" aria-label="${esc(s('pasteAria', { from: fname(from) }))}"></textarea>
         <button class="btn btn-primary btn-lg w-100 mt-3" id="convertTextBtn">
           <i class="bi bi-arrow-right-circle me-2" aria-hidden="true"></i>${action}
         </button>
       </div>` : '';
 
-  // Heads-up for pages powered by the in-browser ffmpeg engine (large first download)
   const engineNote = opts.engineNote ? `
       <div class="alert alert-info d-flex align-items-start gap-2 mb-3 py-2 px-3" style="font-size:var(--text-sm);border-radius:var(--radius-md);" id="engineNote">
         <i class="bi bi-info-circle-fill mt-1 flex-shrink-0" aria-hidden="true"></i>
-        <span>This converter runs a full <strong>FFmpeg engine in your browser</strong>. The first conversion
-        downloads the engine (~31&nbsp;MB, cached afterwards) — your file itself still never leaves your device.</span>
+        <span>${s('engineNoteHtml')}</span>
       </div>` : '';
 
-  // Browser compatibility notice for formats that require Safari (HEIC encoding)
-  const safariOnlyNote = (to || '').toUpperCase() === 'HEIC' ? `
+  const heicNote = (to || '').toUpperCase() === 'HEIC' ? `
       <div class="alert alert-info d-flex align-items-start gap-2 mb-3 py-2 px-3" style="font-size:var(--text-sm);border-radius:var(--radius-md);" id="heicCompatNote">
         <i class="bi bi-info-circle-fill mt-1 flex-shrink-0" aria-hidden="true"></i>
-        <span><strong>Safari only:</strong> HEIC encoding is natively supported in Safari 17+.
-        On Chrome or Firefox, use <strong>PNG or WebP</strong> for lossless quality, or
-        on macOS open the file in Preview → File → Export → HEIC.</span>
+        <span>${s('heicNoteHtml')}</span>
       </div>` : '';
 
   return `<section class="section-converter" id="converter" aria-labelledby="converter-heading" data-from="${esc(from)}" data-to="${esc(to)}">
   <div class="container" style="max-width:800px;">
     <div class="converter-card">
-      <h2 class="visually-hidden" id="converter-heading">${sameFmt ? action : `Convert ${esc(from)} to ${esc(to)}`}</h2>
-      ${safariOnlyNote}${engineNote}
+      <h2 class="visually-hidden" id="converter-heading">${esc(opts.action && sameFmt ? opts.action : s('widgetHeading', { from: fname(from), to: fname(to) }))}</h2>
+      ${heicNote}${engineNote}
 
-      ${textMode ? `<!-- Mode Tabs -->
-      <div class="converter-mode-tabs" id="converterModeTabs" role="tablist" aria-label="Input method">
+      ${textMode ? `<div class="converter-mode-tabs" id="converterModeTabs" role="tablist" aria-label="${esc(s('inputMethod'))}">
         <button class="converter-mode-tab active" id="tabFile" role="tab" aria-selected="true" aria-controls="panelFile">
-          <i class="bi bi-file-earmark-arrow-up" aria-hidden="true"></i> Upload File
+          <i class="bi bi-file-earmark-arrow-up" aria-hidden="true"></i> ${esc(s('tabFile'))}
         </button>
         <button class="converter-mode-tab" id="tabPaste" role="tab" aria-selected="false" aria-controls="panelPaste">
-          <i class="bi bi-keyboard" aria-hidden="true"></i> Paste Text
+          <i class="bi bi-keyboard" aria-hidden="true"></i> ${esc(s('tabPaste'))}
         </button>
       </div>` : ''}
 
-      <!-- File Upload Panel -->
       <div id="panelFile" class="converter-panel" role="tabpanel" ${textMode ? 'aria-labelledby="tabFile"' : ''}>
-        <!-- Drop Zone -->
-        <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Click or drag a ${esc(from)} file here">
+        <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="${esc(s('dropAria', { from: fname(from) }))}">
           <i class="bi bi-cloud-upload drop-zone__icon" aria-hidden="true"></i>
-          <p class="drop-zone__text">Drag &amp; drop your <strong>${esc(from)}</strong> file here</p>
-          <p class="drop-zone__sub">or</p>
+          <p class="drop-zone__text">${s('dropTextHtml', { from: F })}</p>
+          <p class="drop-zone__sub">${esc(s('or'))}</p>
           <label class="btn btn-primary px-4" for="fileInput">
-            <i class="bi bi-folder2-open me-2" aria-hidden="true"></i>Browse File
+            <i class="bi bi-folder2-open me-2" aria-hidden="true"></i>${esc(s('browseFile'))}
           </label>
           <input type="file" id="fileInput" class="visually-hidden" accept="${esc(fromInfo.ext || '.*')}"
-                 aria-label="Select ${esc(from)} file">
-          <p class="drop-zone__limit">Max file size: 50 MB · Your file stays in your browser</p>
+                 aria-label="${esc(s('selectAria', { from: fname(from) }))}">
+          <p class="drop-zone__limit">${esc(s('dropLimit'))}</p>
         </div>
 
-        <!-- Selected File + Settings -->
         <div class="converter-settings mt-3" id="converterSettings" hidden>
           <div class="d-flex align-items-center gap-3 mb-3 file-selected-row">
             <i class="bi bi-file-earmark-check-fill text-accent" style="font-size:1.5rem;" aria-hidden="true"></i>
             <div class="flex-grow-1">
-              <p class="mb-0 fw-600" id="selectedFileName">file.${fromLower}</p>
+              <p class="mb-0 fw-600" id="selectedFileName">file.${esc(fromLower)}</p>
               <p class="text-muted mb-0" style="font-size:var(--text-sm);" id="selectedFileSize"></p>
             </div>
-            <button class="btn btn-outline-secondary btn-sm" id="clearFileBtn" aria-label="Remove file">
+            <button class="btn btn-outline-secondary btn-sm" id="clearFileBtn" aria-label="${esc(s('removeFile'))}">
               <i class="bi bi-x-lg" aria-hidden="true"></i>
             </button>
           </div>
 
           ${sameFmt ? '' : `<div class="row g-3 align-items-end mb-3">
             <div class="col-sm-5">
-              <label class="converter-label" for="inputFormat">From</label>
-              <div class="form-control bg-light fw-600">${esc(from)}</div>
+              <label class="converter-label" for="inputFormat">${esc(s('fromLabel'))}</label>
+              <div class="form-control bg-light fw-600">${F}</div>
             </div>
             <div class="col-sm-2 text-center">
-              <div class="converter-arrow mx-auto" id="swapBtn" role="button" tabindex="0" aria-label="Swap conversion direction" title="Swap A ↔ B">
+              <div class="converter-arrow mx-auto" id="swapBtn" role="button" tabindex="0" aria-label="${esc(s('swapAria'))}" title="${esc(s('swapTitle'))}">
                 ⇄
               </div>
             </div>
             <div class="col-sm-5">
-              <label class="converter-label" for="outputFormat">To</label>
-              <div class="form-control bg-light fw-600">${esc(to)}</div>
+              <label class="converter-label" for="outputFormat">${esc(s('toLabel'))}</label>
+              <div class="form-control bg-light fw-600">${T}</div>
             </div>
           </div>`}
 
@@ -863,180 +428,152 @@ function converterWidget(from, to, pageSlug, textMode, opts) {
 
       ${textPanel}
 
-      <!-- Output (shared by both modes) -->
       <div class="converter-output mt-3" id="converterOutput" hidden>
         <div class="output-success-row d-flex align-items-center gap-3 mb-3">
           <i class="bi bi-check-circle-fill text-success" style="font-size:1.5rem;" aria-hidden="true"></i>
-          <p class="mb-0 fw-600">Conversion complete!</p>
+          <p class="mb-0 fw-600">${esc(s('complete'))}</p>
         </div>
         <button class="btn btn-primary btn-lg w-100 mb-2" id="downloadBtn">
-          <i class="bi bi-download me-2" aria-hidden="true"></i>${opts.action ? 'Download Result' : `Download ${esc(to)} File`}
+          <i class="bi bi-download me-2" aria-hidden="true"></i>${esc(opts.action ? s('downloadResult') : s('downloadTo', { to: fname(to) }))}
         </button>
-        <button class="btn btn-outline-secondary w-100" id="convertAnotherBtn">Convert another file</button>
+        <button class="btn btn-outline-secondary w-100" id="convertAnotherBtn">${esc(s('convertAnother'))}</button>
       </div>
 
-      <!-- Privacy note -->
       <p class="mode-desc mt-2">
         <i class="bi bi-shield-lock-fill text-accent" aria-hidden="true"></i>
-        Your file is processed locally in your browser — nothing is ever uploaded.
+        ${esc(s('widgetPrivacy'))}
       </p>
     </div>
   </div>
 </section>`;
 }
 
-// ─── Related Converters Grid ──────────────────────────────────────────────────
+function linkGrid(pages) {
+  return pages.map(p => `<a href="${u(p['URL Slug'])}" class="converter-card-link">
+          <span class="converter-card-link__label">${esc(nameOf(p))}</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>`).join('\n        ');
+}
+
 function relatedGrid(title, pages, maxShow) {
   if (!pages || !pages.length) return '';
-  const show = pages.slice(0, maxShow || 12);
-  return `<section class="related-section" aria-labelledby="related-${title.toLowerCase().replace(/\s/g,'-')}">
+  const id = 'related-' + title.toLowerCase().replace(/[^a-z0-9À-ɏ]+/g, '-');
+  return `<section class="related-section" aria-labelledby="${id}">
   <div class="container" style="max-width:var(--max-width);">
-    <h2 class="section-title mb-4" id="related-${title.toLowerCase().replace(/\s/g,'-')}">${esc(title)}</h2>
+    <h2 class="section-title mb-4" id="${id}">${esc(title)}</h2>
     <div class="converter-grid">
-      ${show.map(p => `<a href="${p['URL Slug']}" class="converter-card-link">
-        <span class="converter-card-link__label">${esc(p['Page Name'])}</span>
-        <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
-      </a>`).join('\n      ')}
+      ${linkGrid(pages.slice(0, maxShow || 12))}
     </div>
   </div>
 </section>`;
 }
 
-// ─── Page Templates ───────────────────────────────────────────────────────────
+function pageGridSection(cls, labelId, title, sub, pages) {
+  if (!pages.length) return '';
+  return `<section class="${cls}" aria-labelledby="${labelId}">
+    <div class="container" style="max-width:var(--max-width);">
+      <h2 class="section-title ${sub ? 'mb-1' : 'mb-4'}" id="${labelId}">${esc(title)}</h2>
+      ${sub ? `<p class="text-muted mb-4">${esc(sub)}</p>` : ''}
+      <div class="converter-grid">
+        ${linkGrid(pages)}
+      </div>
+    </div>
+  </section>`;
+}
 
-// ── Homepage ──────────────────────────────────────────────────────────────────
+// ─── Homepage ─────────────────────────────────────────────────────────────────
 function buildHomepage(allPages) {
-  const categories = [
-    { label: 'Image Converter', icon: '🖼️', href: '/image-converter/', desc: 'JPG, PNG, WebP, HEIC, AVIF, GIF, SVG, TIFF and more.' },
-    { label: 'Document Converter', icon: '📄', href: '/document-converter/', desc: 'PDF, Word, HTML, Markdown, RTF, TXT and more.' },
-    { label: 'Spreadsheet Converter', icon: '📊', href: '/spreadsheet-converter/', desc: 'CSV, Excel, ODS, TSV and more.' },
-    { label: 'Audio Converter', icon: '🎵', href: '/audio-converter/', desc: 'MP3, WAV, M4A, OGG and more.' },
-    { label: 'Video Converter', icon: '🎬', href: '/video-converter/', desc: 'MP4, MOV, WebM, AVI, GIF and more.' },
-    { label: 'Data & Text Tools', icon: '🧰', href: '/data-converter/', desc: 'JSON, CSV, YAML, XML, Base64, URL encoding and more.' },
-  ];
+  const slug = '/';
+  const pairCount = allPages.filter(p => p['Page Type'] === 'Pair').length;
+  const n = Math.floor(pairCount / 10) * 10;
+  const popular = allPages.filter(p => p['Page Type'] === 'Pair' && p['Priority'] === 'P1').slice(0, 12);
 
-  // Popular pages: P1 priority pair pages
-  const popular = allPages
-    .filter(p => p['Page Type'] === 'Pair' && p['Priority'] === 'P1')
-    .slice(0, 12);
-
-  const websiteSchema = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "AintoB.com",
-    "url": DOMAIN,
-    "description": "Free online converter tools. Convert files, formats and more. Fast, free and privacy-friendly.",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": { "@type": "EntryPoint", "urlTemplate": `${DOMAIN}/search/?q={search_term_string}` },
-      "query-input": "required name=search_term_string"
-    }
+  const schema = {
+    '@context': 'https://schema.org', '@type': 'WebSite', name: 'AintoB.com', url: abs(slug),
+    inLanguage: L.meta.htmlLang, description: L.pages.home.desc,
   };
 
-  const faqs = [
-    { q: 'Is AintoB free to use?', a: 'Yes, every tool on AintoB.com is completely free with no registration or account required. There are no hidden costs or premium tiers.' },
-    { q: 'Is my data safe?', a: 'Your files are processed entirely within your browser using local JavaScript. Nothing is ever uploaded to our servers — your data stays on your device from start to finish.' },
-    { q: 'What file formats does AintoB support?', a: 'AintoB supports image formats (JPG, PNG, WebP, HEIC, AVIF, GIF, SVG, TIFF, BMP, ICO), document formats (PDF, Word, HTML, Markdown, RTF, TXT), spreadsheet formats (CSV, Excel, ODS, TSV), audio formats (MP3, WAV, M4A, OGG), video formats (MP4, MOV, WebM, AVI), and data formats (JSON, YAML, XML, Base64).' },
-    { q: 'Do I need to install anything?', a: 'No. AintoB works entirely in your web browser — no app to download, no plugin to install. Open the page, drop your file, and convert.' },
-    { q: 'Are there file size limits?', a: 'For browser-based conversion we recommend files under 50 MB for the best experience. Very large files may take longer to process depending on your device performance.' },
-  ];
-
-  return head({
-    title: 'AintoB – Free Online File Converter | Privacy-First, Browser-Based',
-    desc: 'Convert files online for free. Images, documents, spreadsheets, audio and video — all processed in your browser. No uploads, no sign-up.',
-    canonical: '/',
-    robots: 'index, follow',
-    schema: websiteSchema,
-  }) + skipLink() + navbar() + `
+  return head({ title: L.pages.home.title, desc: L.pages.home.desc, slug, schema })
+    + skipLink() + navbar(slug) + `
 
 <main id="main-content">
 
-  <!-- Hero -->
   <section class="section-hero" aria-labelledby="hero-h1">
     <div class="container text-center" style="max-width:800px;">
-      <span class="eyebrow">Free · Private · Browser-Based</span>
-      <h1 class="hero-title" id="hero-h1">Convert Anything<br><span class="text-accent">From A to B</span></h1>
-      <p class="hero-subtitle mx-auto">Free online file conversion for images, documents, spreadsheets, audio and video. Everything runs in your browser — nothing uploaded, nothing stored.</p>
+      <span class="eyebrow">${esc(s('homeEyebrow'))}</span>
+      <h1 class="hero-title" id="hero-h1">${s('homeTitleHtml')}</h1>
+      <p class="hero-subtitle mx-auto">${esc(s('homeSub'))}</p>
       <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
-        <a href="/file-converter/" class="btn btn-primary btn-lg px-5">
-          <i class="bi bi-grid-3x3-gap me-2" aria-hidden="true"></i>Browse All Converters
+        <a href="${u('/file-converter/')}" class="btn btn-primary btn-lg px-5">
+          <i class="bi bi-grid-3x3-gap me-2" aria-hidden="true"></i>${esc(s('browseAll'))}
         </a>
-        <a href="#categories" class="btn btn-outline-secondary btn-lg px-5">Explore Categories</a>
+        <a href="#categories" class="btn btn-outline-secondary btn-lg px-5">${esc(s('exploreCats'))}</a>
       </div>
     </div>
   </section>
 
-  <!-- Categories -->
   <section class="section-categories" id="categories" aria-labelledby="cat-heading">
     <div class="container" style="max-width:var(--max-width);">
       <div class="text-center mb-5">
-        <p class="section-label">File Types</p>
-        <h2 class="section-title" id="cat-heading">Choose a Converter Category</h2>
-        <p class="section-sub mx-auto">Browse by file type to find the exact converter you need.</p>
+        <p class="section-label">${esc(s('fileTypesLabel'))}</p>
+        <h2 class="section-title" id="cat-heading">${esc(s('chooseCat'))}</h2>
+        <p class="section-sub mx-auto">${esc(s('chooseCatSub'))}</p>
       </div>
       <div class="row g-4">
-        ${categories.map(c => `<div class="col-sm-6 col-lg-4">
-          <a href="${c.href}" class="category-card" aria-label="${c.label}">
-            <span class="category-card__icon" aria-hidden="true">${c.icon}</span>
-            <h3 class="category-card__title">${c.label}</h3>
-            <p class="category-card__desc">${c.desc}</p>
-            <span class="category-card__cta">Browse tools <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+        ${CATS.map(c => `<div class="col-sm-6 col-lg-4">
+          <a href="${u(HUB[c])}" class="category-card" aria-label="${esc(L.cat[c].converter)}">
+            <span class="category-card__icon" aria-hidden="true">${ICON[c]}</span>
+            <h3 class="category-card__title">${esc(L.cat[c].converter)}</h3>
+            <p class="category-card__desc">${esc(L.cat[c].homeDesc)}</p>
+            <span class="category-card__cta">${esc(s('browseTools'))} <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
           </a>
         </div>`).join('\n        ')}
         <div class="col-sm-6 col-lg-4">
-          <a href="/file-converter/" class="category-card category-card--all" aria-label="All converters">
-            <span class="category-card__icon" aria-hidden="true">🔄</span>
-            <h3 class="category-card__title">All Converters</h3>
-            <p class="category-card__desc">Browse the full directory of 150+ conversion tools, organised by format.</p>
-            <span class="category-card__cta">View all <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+          <a href="${u('/file-converter/')}" class="category-card category-card--all" aria-label="${esc(s('allConverters'))}">
+            <span class="category-card__icon" aria-hidden="true">${ICON.all}</span>
+            <h3 class="category-card__title">${esc(s('allConverters'))}</h3>
+            <p class="category-card__desc">${esc(s('allCardDesc', { n }))}</p>
+            <span class="category-card__cta">${esc(s('viewAll'))} <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
           </a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Popular Tools -->
   <section class="section-popular" aria-labelledby="popular-heading">
     <div class="container" style="max-width:var(--max-width);">
       <div class="text-center mb-5">
-        <p class="section-label">Most Used</p>
-        <h2 class="section-title" id="popular-heading">Popular Converter Tools</h2>
-        <p class="section-sub mx-auto">Jump straight to the most searched file conversions.</p>
+        <p class="section-label">${esc(s('popularLabel'))}</p>
+        <h2 class="section-title" id="popular-heading">${esc(s('popularTitle'))}</h2>
+        <p class="section-sub mx-auto">${esc(s('popularSub'))}</p>
       </div>
       <div class="converter-grid">
-        ${popular.map(p => `<a href="${p['URL Slug']}" class="converter-card-link">
-          <span class="converter-card-link__label">${esc(p['Page Name'])}</span>
-          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
-        </a>`).join('\n        ')}
+        ${linkGrid(popular)}
       </div>
       <div class="text-center mt-4">
-        <a href="/file-converter/" class="btn btn-outline-secondary px-5">View All 150+ Converters</a>
+        <a href="${u('/file-converter/')}" class="btn btn-outline-secondary px-5">${esc(s('viewAllN', { n }))}</a>
       </div>
     </div>
   </section>
 
-  <!-- Privacy Trust Section -->
   <section class="section-privacy" aria-labelledby="privacy-heading">
     <div class="container" style="max-width:var(--max-width);">
       <div class="row align-items-center g-5">
         <div class="col-lg-6">
-          <p class="section-label">Privacy First</p>
-          <h2 class="section-title" id="privacy-heading">Your Files Never Leave Your Browser</h2>
-          <p class="text-muted">Unlike most online converters, AintoB never uploads your files to a server. Every conversion runs entirely in your browser using local processing — which means:</p>
+          <p class="section-label">${esc(s('homePrivLabel'))}</p>
+          <h2 class="section-title" id="privacy-heading">${esc(s('homePrivTitle'))}</h2>
+          <p class="text-muted">${esc(s('homePrivText'))}</p>
           <ul class="privacy-list mt-3">
-            <li><i class="bi bi-check-circle-fill text-accent" aria-hidden="true"></i> No file uploads — your data stays on your device</li>
-            <li><i class="bi bi-check-circle-fill text-accent" aria-hidden="true"></i> No server storage — nothing is saved or logged</li>
-            <li><i class="bi bi-check-circle-fill text-accent" aria-hidden="true"></i> No account required — completely anonymous</li>
-            <li><i class="bi bi-check-circle-fill text-accent" aria-hidden="true"></i> Works offline after the page loads</li>
+            ${[1, 2, 3, 4].map(i => `<li><i class="bi bi-check-circle-fill text-accent" aria-hidden="true"></i> ${esc(s('homePriv' + i))}</li>`).join('\n            ')}
           </ul>
         </div>
         <div class="col-lg-6">
           <div class="privacy-illustration">
             <div class="priv-box">
               <i class="bi bi-laptop" style="font-size:3rem; color:var(--color-accent);" aria-hidden="true"></i>
-              <p class="fw-600 mb-1 mt-2">Your Browser</p>
-              <p class="text-muted" style="font-size:var(--text-sm);">File loaded → Converted → Downloaded</p>
-              <div class="priv-badge"><i class="bi bi-shield-check" aria-hidden="true"></i> 100% Local</div>
+              <p class="fw-600 mb-1 mt-2">${esc(s('homePrivBoxTitle'))}</p>
+              <p class="text-muted" style="font-size:var(--text-sm);">${esc(s('homePrivBoxText'))}</p>
+              <div class="priv-badge"><i class="bi bi-shield-check" aria-hidden="true"></i> ${esc(s('homePrivBadge'))}</div>
             </div>
           </div>
         </div>
@@ -1044,216 +581,126 @@ function buildHomepage(allPages) {
     </div>
   </section>
 
-  <!-- How It Works -->
   <section class="section-how" aria-labelledby="how-heading">
     <div class="container" style="max-width:var(--max-width);">
       <div class="text-center mb-5">
-        <p class="section-label">How It Works</p>
-        <h2 class="section-title" id="how-heading">Convert Files in Three Steps</h2>
+        <p class="section-label">${esc(s('howLabel'))}</p>
+        <h2 class="section-title" id="how-heading">${esc(s('howTitle'))}</h2>
       </div>
       <div class="row g-4 text-center">
-        <div class="col-md-4">
+        ${[1, 2, 3].map(i => `<div class="col-md-4">
           <div class="how-step">
-            <div class="how-step__num">1</div>
-            <h3 class="how-step__title">Choose a Converter</h3>
-            <p class="how-step__desc">Browse by category or format, or search for your exact conversion (e.g. "HEIC to JPG").</p>
+            <div class="how-step__num">${i}</div>
+            <h3 class="how-step__title">${esc(s('how' + i + 'Title'))}</h3>
+            <p class="how-step__desc">${esc(s('how' + i + 'Desc'))}</p>
           </div>
-        </div>
-        <div class="col-md-4">
-          <div class="how-step">
-            <div class="how-step__num">2</div>
-            <h3 class="how-step__title">Drop or Select Your File</h3>
-            <p class="how-step__desc">Drag and drop your file onto the converter, or click to browse from your device.</p>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="how-step">
-            <div class="how-step__num">3</div>
-            <h3 class="how-step__title">Download the Result</h3>
-            <p class="how-step__desc">Click convert and download your file in the new format — ready in seconds.</p>
-          </div>
-        </div>
+        </div>`).join('\n        ')}
       </div>
     </div>
   </section>
 
+  ${openOnlineBox(null)}
   ${featureCards()}
-  ${faqBlock(faqs)}
+  ${faqBlock(L.homeFaqs)}
 
 </main>
 
-` + footer();
+` + footer(slug);
 }
 
-// ── Master Hub (/file-converter/) ─────────────────────────────────────────────
+// ─── Master hub (/file-converter/) ────────────────────────────────────────────
 function buildMasterHub(page, allPages) {
-  const categories = [
-    { label: 'Image Converters', icon: '🖼️', href: '/image-converter/', count: allPages.filter(p => (p['Category']||'').split('→')[0] === 'image' && p['Page Type'] === 'Pair').length },
-    { label: 'Document Converters', icon: '📄', href: '/document-converter/', count: allPages.filter(p => p['Category'] === 'document' && p['Page Type'] === 'Pair').length },
-    { label: 'Spreadsheet Converters', icon: '📊', href: '/spreadsheet-converter/', count: allPages.filter(p => p['Category'] === 'spreadsheet' && p['Page Type'] === 'Pair').length },
-    { label: 'Audio Converters', icon: '🎵', href: '/audio-converter/', count: allPages.filter(p => (p['Category']||'').split('→')[0] === 'audio' && p['Page Type'] === 'Pair').length },
-    { label: 'Video Converters', icon: '🎬', href: '/video-converter/', count: allPages.filter(p => (p['Category']||'').split('→')[0] === 'video' && p['Page Type'] === 'Pair').length },
-    { label: 'Data & Text Tools', icon: '🧰', href: '/data-converter/', count: allPages.filter(p => (p['Category']||'').split('→')[0] === 'data' && p['Page Type'] === 'Pair').length },
-  ];
-
+  const slug = page['URL Slug'];
+  const txt = pageText(page);
+  const count = c => allPages.filter(p => catBase(p) === c && p['Page Type'] === 'Pair').length;
   const formatHubs = allPages.filter(p => p['Page Type'] === 'Format Hub');
-  const topPairs   = allPages.filter(p => p['Page Type'] === 'Pair' && p['Priority'] === 'P1');
+  const topPairs = allPages.filter(p => p['Page Type'] === 'Pair' && p['Priority'] === 'P1');
+  const intro = LANG === DEFAULT_LANG ? page['Template Intro'] : L.pages.master.intro;
 
-  const collectionSchema = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": page['Page Name'],
-    "description": page['Meta Description'],
-    "url": `${DOMAIN}${page['URL Slug']}`,
-  };
+  const schema = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: txt.name, description: txt.meta, url: abs(slug), inLanguage: L.meta.htmlLang };
 
-  return head({
-    title: page['SEO Title'],
-    desc: page['Meta Description'],
-    canonical: page['URL Slug'],
-    robots: page['Indexation'] === 'Index now' ? 'index, follow' : 'noindex, follow',
-    schema: collectionSchema,
-  }) + skipLink() + navbar()
-    + breadcrumbs([{ label: 'File Converter', href: '/file-converter/' }])
+  return head({ title: txt.title, desc: txt.meta, slug, robots: robotsFor(page), schema })
+    + skipLink() + navbar(slug)
+    + breadcrumbs([{ label: txt.name, href: slug }])
     + `<main id="main-content">
 
   <section class="section-hero" aria-labelledby="hub-h1">
     <div class="container" style="max-width:800px; text-align:center;">
-      <span class="eyebrow">Complete Directory</span>
-      <h1 class="hero-title" id="hub-h1">${esc(page['H1'])}</h1>
-      <p class="hero-subtitle mx-auto">${esc(page['Template Intro'])}</p>
+      <span class="eyebrow">${esc(s('masterEyebrow'))}</span>
+      <h1 class="hero-title" id="hub-h1">${esc(txt.h1)}</h1>
+      <p class="hero-subtitle mx-auto">${esc(intro)}</p>
     </div>
   </section>
 
-  <!-- Category Cards -->
   <section class="section-categories" aria-labelledby="categories-h2">
     <div class="container" style="max-width:var(--max-width);">
-      <h2 class="section-title mb-4" id="categories-h2">Browse by File Type</h2>
+      <h2 class="section-title mb-4" id="categories-h2">${esc(s('browseByType'))}</h2>
       <div class="row g-4">
-        ${categories.map(c => `<div class="col-sm-6 col-lg-4">
-          <a href="${c.href}" class="category-card">
-            <span class="category-card__icon" aria-hidden="true">${c.icon}</span>
-            <h3 class="category-card__title">${c.label}</h3>
-            <p class="category-card__desc">${c.count} converter tools in this category.</p>
-            <span class="category-card__cta">Browse <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+        ${CATS.map(c => `<div class="col-sm-6 col-lg-4">
+          <a href="${u(HUB[c])}" class="category-card">
+            <span class="category-card__icon" aria-hidden="true">${ICON[c]}</span>
+            <h3 class="category-card__title">${esc(L.cat[c].converters)}</h3>
+            <p class="category-card__desc">${esc(s('catCount', { n: count(c) }))}</p>
+            <span class="category-card__cta">${esc(s('browse'))} <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
           </a>
         </div>`).join('\n        ')}
       </div>
     </div>
   </section>
 
-  <!-- Format Hubs -->
-  <section class="section-formats" aria-labelledby="formats-h2">
-    <div class="container" style="max-width:var(--max-width);">
-      <h2 class="section-title mb-4" id="formats-h2">Browse by Format</h2>
-      <div class="converter-grid">
-        ${formatHubs.map(p => `<a href="${p['URL Slug']}" class="converter-card-link">
-          <span class="converter-card-link__label">${esc(p['Page Name'])}</span>
-          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
-        </a>`).join('\n        ')}
-      </div>
-    </div>
-  </section>
+  ${pageGridSection('section-formats', 'formats-h2', s('browseByFormat'), '', formatHubs)}
+  ${pageGridSection('section-popular', 'popular-h2', s('mostPopularConv'), '', topPairs)}
 
-  <!-- Top Pairs -->
-  <section class="section-popular" aria-labelledby="popular-h2">
-    <div class="container" style="max-width:var(--max-width);">
-      <h2 class="section-title mb-4" id="popular-h2">Most Popular Conversions</h2>
-      <div class="converter-grid">
-        ${topPairs.map(p => `<a href="${p['URL Slug']}" class="converter-card-link">
-          <span class="converter-card-link__label">${esc(p['Page Name'])}</span>
-          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
-        </a>`).join('\n        ')}
-      </div>
-    </div>
-  </section>
-
+  ${openOnlineBox(null)}
   ${privacyBlock()}
 
 </main>
-` + footer();
+` + footer(slug);
 }
 
-// ── Category Hub ──────────────────────────────────────────────────────────────
+// ─── Category hub ─────────────────────────────────────────────────────────────
 function buildCategoryHub(page, allPages) {
-  const cat = page['Category'];
-  const catBase = cat.split('→')[0];
+  const slug = page['URL Slug'];
+  const cb = catBase(page);
+  const C = L.cat[cb];
+  const txt = pageText(page);
 
-  // Format hubs in this category
-  const fmtHubs = allPages.filter(p => p['Page Type'] === 'Format Hub' && p['Category'] === catBase);
+  const fmtHubs = allPages.filter(p => p['Page Type'] === 'Format Hub' && p['Category'] === cb);
+  const pairPages = allPages.filter(p => p['Page Type'] === 'Pair' && catBase(p) === cb);
+  const topPairs = pairPages.filter(p => p['Priority'] === 'P1');
+  const morePairs = pairPages.filter(p => p['Priority'] !== 'P1');
 
-  // Top pair pages in this category
-  const pairPages = allPages.filter(p =>
-    p['Page Type'] === 'Pair' &&
-    (p['Category'] === cat || p['Category'] === catBase || p['Category'].startsWith(catBase))
-  );
-  const topPairs  = pairPages.filter(p => p['Priority'] === 'P1');
-  const morePairs = pairPages.filter(p => p['Priority'] !== 'P1').slice(0, 24);
-
-  const collectionSchema = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": page['Page Name'],
-    "description": page['Meta Description'],
-    "url": `${DOMAIN}${page['URL Slug']}`,
-    "breadcrumb": {
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": DOMAIN },
-        { "@type": "ListItem", "position": 2, "name": "File Converter", "item": `${DOMAIN}/file-converter/` },
-        { "@type": "ListItem", "position": 3, "name": page['Page Name'], "item": `${DOMAIN}${page['URL Slug']}` },
-      ]
-    }
+  const schema = {
+    '@context': 'https://schema.org', '@type': 'CollectionPage', name: txt.name, description: txt.meta, url: abs(slug), inLanguage: L.meta.htmlLang,
   };
 
-  const catDescriptions = {
-    image: 'Image converters handle raster and vector formats used in photography, web design, and print. Whether you\'re converting iPhone HEIC photos to JPG, optimising images to WebP for the web, or exporting SVGs to PNG for social media, these tools handle the most common image format workflows entirely in your browser.',
-    document: 'Document converters handle the formats used for text, reports, and structured content. Convert between PDF, Word, HTML, Markdown, RTF, and plain text — all without installing software or uploading files to a server.',
-    spreadsheet: 'Spreadsheet converters handle tabular data formats used in data analysis, finance, and business reporting. Convert between CSV, Excel, ODS, and TSV — essential for data exchange between different systems and applications.',
-    audio: 'Audio converters handle music, podcast, and recording formats. Whether you\'re extracting audio from video, converting between compression formats, or preparing files for specific devices or platforms, these tools cover the most common audio conversion needs.',
-    video: 'Video converters handle the formats used for streaming, editing, and sharing video content. Convert between MP4, MOV, WebM, AVI, and more — and extract audio or create animated GIFs from video clips.',
-    data: 'Data and text tools handle the structured formats developers and analysts work with every day. Convert between JSON, CSV, YAML, and XML, encode or decode Base64 and URLs, format and minify JSON, and change text case — all instantly in your browser.',
-  };
-
-  const faqs = buildCategoryFAQs(catBase);
-
-  return head({
-    title: page['SEO Title'],
-    desc: page['Meta Description'],
-    canonical: page['URL Slug'],
-    robots: 'index, follow',
-    schema: collectionSchema,
-  }) + skipLink() + navbar()
-    + breadcrumbs([
-        { label: 'File Converter', href: '/file-converter/' },
-        { label: page['Page Name'], href: page['URL Slug'] },
-      ])
+  return head({ title: txt.title, desc: txt.meta, slug, robots: robotsFor(page), schema })
+    + skipLink() + navbar(slug)
+    + breadcrumbs([{ label: nameOf(allPages.find(p => p['Page Type'] === 'Master Hub')), href: '/file-converter/' }, { label: txt.name, href: slug }])
     + `<main id="main-content">
 
   <section class="section-hero" aria-labelledby="cat-h1">
     <div class="container" style="max-width:800px; text-align:center;">
-      <span class="eyebrow">${categoryIcon(catBase)} ${categoryLabel(catBase)} Converters</span>
-      <h1 class="hero-title" id="cat-h1">${esc(page['H1'])}</h1>
-      <p class="hero-subtitle mx-auto">${catDescriptions[catBase] || esc(page['Template Intro'])}</p>
+      <span class="eyebrow">${ICON[cb]} ${esc(C.eyebrow)}</span>
+      <h1 class="hero-title" id="cat-h1">${esc(txt.h1)}</h1>
+      <p class="hero-subtitle mx-auto">${esc(C.desc)}</p>
     </div>
   </section>
 
-  ${fmtHubs.length ? `<!-- Format Hubs -->
-  <section class="section-formats" aria-labelledby="formats-h2">
+  ${fmtHubs.length ? `<section class="section-formats" aria-labelledby="formats-h2">
     <div class="container" style="max-width:var(--max-width);">
-      <h2 class="section-title mb-1" id="formats-h2">Browse by Format</h2>
-      <p class="text-muted mb-4">Select a format to see all available conversions from and to that format.</p>
+      <h2 class="section-title mb-1" id="formats-h2">${esc(s('browseByFormat'))}</h2>
+      <p class="text-muted mb-4">${esc(s('browseByFormatSub'))}</p>
       <div class="row g-4">
         ${fmtHubs.map(f => {
-          const info = FMT[fmtKey(f['Source Format'])] || {};
-          const fromCount = allPages.filter(p => p['Page Type'] === 'Pair' && p['Source Format'] === f['Source Format']).length;
-          const toCount   = allPages.filter(p => p['Page Type'] === 'Pair' && p['Target Format'] === f['Source Format']).length;
+          const info = fmtInfo(f['Source Format']);
+          const count = allPages.filter(p => p['Page Type'] === 'Pair' && (p['Source Format'] === f['Source Format'] || p['Target Format'] === f['Source Format'])).length;
           return `<div class="col-sm-6 col-lg-4">
-            <a href="${f['URL Slug']}" class="format-hub-card">
+            <a href="${u(f['URL Slug'])}" class="format-hub-card">
               <span class="format-hub-card__icon" aria-hidden="true">${info.icon || '📁'}</span>
               <h3 class="format-hub-card__name">${esc(f['Source Format'])}</h3>
               <p class="format-hub-card__full">${esc(info.fullName || '')}</p>
-              <p class="format-hub-card__count">${fromCount + toCount} conversion tools</p>
+              <p class="format-hub-card__count">${esc(s('convToolsCount', { n: count }))}</p>
             </a>
           </div>`;
         }).join('\n        ')}
@@ -1261,353 +708,222 @@ function buildCategoryHub(page, allPages) {
     </div>
   </section>` : ''}
 
-  ${topPairs.length ? `<!-- Top Pairs -->
-  <section class="section-popular" aria-labelledby="popular-h2">
-    <div class="container" style="max-width:var(--max-width);">
-      <h2 class="section-title mb-1" id="popular-h2">Most Popular ${categoryLabel(catBase)} Conversions</h2>
-      <p class="text-muted mb-4">The most searched ${catBase} format conversions.</p>
-      <div class="converter-grid">
-        ${topPairs.map(p => `<a href="${p['URL Slug']}" class="converter-card-link">
-          <span class="converter-card-link__label">${esc(p['Page Name'])}</span>
-          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
-        </a>`).join('\n        ')}
-      </div>
-    </div>
-  </section>` : ''}
+  ${pageGridSection('section-popular', 'popular-h2', C.popularTitle, C.popularSub, topPairs)}
+  ${pageGridSection('section-more-pairs', 'more-pairs-h2', C.allTitle, '', morePairs)}
 
-  ${morePairs.length ? `<!-- More Pairs -->
-  <section class="section-more-pairs" aria-labelledby="more-pairs-h2">
-    <div class="container" style="max-width:var(--max-width);">
-      <h2 class="section-title mb-4" id="more-pairs-h2">All ${categoryLabel(catBase)} Converters</h2>
-      <div class="converter-grid">
-        ${morePairs.map(p => `<a href="${p['URL Slug']}" class="converter-card-link">
-          <span class="converter-card-link__label">${esc(p['Page Name'])}</span>
-          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
-        </a>`).join('\n        ')}
-      </div>
-    </div>
-  </section>` : ''}
-
+  ${openOnlineBox(null)}
   ${privacyBlock()}
-  ${faqBlock(faqs)}
+  ${faqBlock(C.faqs)}
 
 </main>
-` + footer();
+` + footer(slug);
 }
 
-function buildCategoryFAQs(cat) {
-  const base = {
-    q: `Is the ${cat} converter free?`,
-    a: `Yes — all ${cat} converters on AintoB are completely free. No account, no subscription, no file size fees for typical files.`
-  };
-  const catFaqs = {
-    image: [
-      base,
-      { q: 'Which image format should I use for the web?', a: 'For photographs on the web, WebP or AVIF give the best file size with good quality. JPG is the safe, universally compatible fallback. Use PNG for graphics, icons, or images requiring transparency.' },
-      { q: 'Can I convert HEIC photos from my iPhone?', a: 'Yes — the HEIC to JPG converter processes your iPhone photos directly in the browser. No app or software installation required.' },
-      { q: 'Will converting reduce my image quality?', a: 'Converting to JPG or WebP uses lossy compression and will reduce quality slightly. Converting to PNG or TIFF is lossless. Lossless-to-lossless conversions (e.g. PNG to WebP in lossless mode) preserve full quality.' },
-    ],
-    document: [
-      base,
-      { q: 'Can I convert scanned PDFs to editable Word documents?', a: 'Scanned PDFs contain images of text rather than actual text characters. OCR (Optical Character Recognition) is required to extract editable text, which is beyond basic format conversion.' },
-      { q: 'Does converting from Markdown preserve formatting?', a: 'Yes — Markdown converts cleanly to HTML, preserving headings, bold, italics, links, lists, and code blocks. Converting Markdown to PDF or Word also works, though complex layouts may need manual adjustment.' },
-    ],
-    spreadsheet: [
-      base,
-      { q: 'Will formulas be preserved when converting from Excel?', a: 'When converting Excel to CSV or TXT, formulas are replaced by their calculated values — the formula itself is not stored in plain text formats. Converting between spreadsheet formats (Excel ↔ ODS) generally preserves formulas.' },
-      { q: 'What is the difference between CSV and TSV?', a: 'Both are plain-text tabular formats. CSV uses commas to separate values; TSV uses tab characters. TSV is safer for data that frequently contains commas (like addresses or numbers), while CSV is more universally supported.' },
-    ],
-    audio: [
-      base,
-      { q: 'Which audio format has the best quality?', a: 'For lossless quality, WAV preserves audio with no compression. For smaller files with excellent quality, M4A/AAC and OGG Vorbis outperform MP3 at the same bitrate. MP3 is the most compatible choice for broad device support.' },
-      { q: 'Can I extract audio from a video file?', a: 'Yes — AintoB includes tools like MP4 to MP3, MP4 to WAV, WebM to MP3, and more that extract the audio track from video files entirely in your browser.' },
-    ],
-    video: [
-      base,
-      { q: 'Which video format is best for social media?', a: 'MP4 with H.264 encoding is the universal choice — accepted by YouTube, Instagram, TikTok, Twitter, and virtually every platform. It balances quality, compatibility, and file size.' },
-      { q: 'Can I convert a video to a GIF?', a: 'Yes — AintoB includes MP4 to GIF, WebM to GIF, and MOV to GIF converters. Note that GIFs are limited to 256 colours and can be quite large — for short clips, WebP animation or MP4 is often a better choice.' },
-    ],
-    data: [
-      { q: 'Are the data and text tools free?', a: 'Yes — every data tool on AintoB is completely free. No account, no subscription, no usage limits.' },
-      { q: 'Is it safe to paste sensitive data like API responses or tokens?', a: 'All processing happens locally in your browser with JavaScript — nothing you paste or upload is ever sent to a server. For highly sensitive data you can even load the page, disconnect from the internet, and run the conversion offline.' },
-      { q: 'What is the difference between JSON and YAML?', a: 'Both represent the same data model. JSON uses brackets and quotes and is the standard for APIs; YAML uses indentation and is preferred for hand-edited configuration files like Kubernetes manifests and CI pipelines.' },
-      { q: 'Is Base64 encryption?', a: 'No — Base64 is an encoding, not encryption. It makes binary data safe to transmit as text, but anyone can decode it. Never rely on Base64 to protect secrets.' },
-    ],
-  };
-  return catFaqs[cat] || [base];
-}
-
-// ── Format Hub ────────────────────────────────────────────────────────────────
+// ─── Format hub ───────────────────────────────────────────────────────────────
 function buildFormatHub(page, allPages) {
-  const fmt  = page['Source Format'];
-  const info = FMT[fmtKey(fmt)] || {};
-  const catBase = (page['Category'] || '').split('→')[0];
+  const slug = page['URL Slug'];
+  const fmt = page['Source Format'];
+  const info = fmtInfo(fmt);
+  const cb = catBase(page);
+  const C = L.cat[cb];
+  const txt = pageText(page);
 
-  // From and To pair pages
   const fromPages = allPages.filter(p => p['Page Type'] === 'Pair' && p['Source Format'] === fmt);
-  const toPages   = allPages.filter(p => p['Page Type'] === 'Pair' && p['Target Format'] === fmt);
+  const toPages = allPages.filter(p => p['Page Type'] === 'Pair' && p['Target Format'] === fmt);
+  const relatedHubs = allPages.filter(p => p['Page Type'] === 'Format Hub' && p['Category'] === page['Category'] && p['Source Format'] !== fmt).slice(0, 6);
 
-  // Related format hubs (same category, different format)
-  const relatedHubs = allPages.filter(p =>
-    p['Page Type'] === 'Format Hub' &&
-    p['Category'] === page['Category'] &&
-    p['Source Format'] !== fmt
-  ).slice(0, 6);
-
-  const collectionSchema = {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": page['Page Name'],
-    "description": page['Meta Description'],
-    "url": `${DOMAIN}${page['URL Slug']}`,
-  };
-
-  const catHubHref  = page['Parent Hub'] || categoryHub(catBase);
-  const catHubLabel = categoryLabel(catBase) + ' Converter';
+  const schema = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: txt.name, description: txt.meta, url: abs(slug), inLanguage: L.meta.htmlLang };
+  const catHubHref = page['Parent Hub'] || categoryHub(cb);
+  const desc = info.description || s('fmtFallbackDesc', { fmt, full: info.fullName || fmt, cat: cb });
 
   const faqs = [
-    { q: `Is the ${fmt} converter free?`, a: `Yes — all ${fmt} conversion tools on AintoB are completely free. No account required, no upload limits for typical files.` },
-    { q: `What is a ${fmt} file?`, a: info.description || `${fmt} is a file format used for ${catBase} files.` },
-    { q: `Is converting ${fmt} files safe?`, a: `Your ${fmt} files are processed entirely in your browser. Nothing is sent to any server — the conversion is performed locally using browser-native APIs.` },
-    { q: `What does ${fmt} stand for?`, a: `${fmt} stands for ${info.fullName || fmt}. ${info.description ? info.description.split('.')[0] + '.' : ''}` },
+    { q: s('hubFaqFreeQ', { fmt }), a: s('hubFaqFreeA', { fmt }) },
+    { q: s('hubFaqWhatQ', { fmt }), a: desc },
+    { q: s('hubFaqSafeQ', { fmt }), a: s('hubFaqSafeA', { fmt }) },
+    { q: s('hubFaqStandQ', { fmt }), a: s('hubFaqStandA', { fmt, full: info.fullName || fmt, first: firstSentence(info.description) }).trim() },
   ];
 
-  return head({
-    title: page['SEO Title'],
-    desc: page['Meta Description'],
-    canonical: page['URL Slug'],
-    robots: 'index, follow',
-    schema: collectionSchema,
-  }) + skipLink() + navbar()
-    + breadcrumbs([
-        { label: categoryLabel(catBase) + ' Converter', href: catHubHref },
-        { label: page['Page Name'], href: page['URL Slug'] },
-      ])
+  return head({ title: txt.title, desc: txt.meta, slug, robots: robotsFor(page), schema })
+    + skipLink() + navbar(slug)
+    + breadcrumbs([{ label: C.converter, href: catHubHref }, { label: txt.name, href: slug }])
     + `<main id="main-content">
 
   <section class="section-hero" aria-labelledby="fmt-h1">
     <div class="container" style="max-width:800px; text-align:center;">
-      <span class="eyebrow">${info.icon || '📁'} ${esc(fmt)} Format</span>
-      <h1 class="hero-title" id="fmt-h1">${esc(page['H1'])}</h1>
-      <p class="hero-subtitle mx-auto">${esc(page['Meta Description'])}</p>
+      <span class="eyebrow">${info.icon || '📁'} ${esc(s('fmtEyebrow', { fmt }))}</span>
+      <h1 class="hero-title" id="fmt-h1">${esc(txt.h1)}</h1>
+      <p class="hero-subtitle mx-auto">${esc(txt.meta)}</p>
       <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
-        ${fromPages.slice(0,3).map(p => `<a href="${p['URL Slug']}" class="btn btn-primary px-4">${esc(p['Page Name'])}</a>`).join('\n        ')}
+        ${fromPages.slice(0, 3).map(p => `<a href="${u(p['URL Slug'])}" class="btn btn-primary px-4">${esc(nameOf(p))}</a>`).join('\n        ')}
       </div>
     </div>
   </section>
 
-  <!-- Format Explainer -->
   <section class="section-explainer" aria-labelledby="explainer-h2">
     <div class="container" style="max-width:800px;">
       <div class="explainer-card">
-        <h2 class="section-title" id="explainer-h2">What is ${esc(fmt)}?</h2>
-        <p>${info.description || `${fmt} (${info.fullName || fmt}) is a ${catBase} file format.`}</p>
-        ${info.useCases ? `<h3 class="explainer-subtitle">Common uses for ${esc(fmt)}</h3>
+        <h2 class="section-title" id="explainer-h2">${esc(s('whatIs', { fmt }))}</h2>
+        <p>${desc}</p>
+        ${info.useCases ? `<h3 class="explainer-subtitle">${esc(s('commonUses', { fmt }))}</h3>
         <ul class="explainer-list">
-          ${info.useCases.map(u => `<li><i class="bi bi-check-circle-fill text-accent me-2" aria-hidden="true"></i>${u}</li>`).join('\n          ')}
+          ${info.useCases.map(x => `<li><i class="bi bi-check-circle-fill text-accent me-2" aria-hidden="true"></i>${x}</li>`).join('\n          ')}
         </ul>` : ''}
-        ${info.limitation ? `<div class="explainer-note"><i class="bi bi-info-circle me-2" aria-hidden="true"></i><strong>Note:</strong> ${info.limitation}</div>` : ''}
-        ${info.compat ? `<p class="text-muted mt-2"><strong>Compatibility:</strong> ${info.compat}</p>` : ''}
+        ${info.limitation ? `<div class="explainer-note"><i class="bi bi-info-circle me-2" aria-hidden="true"></i><strong>${esc(s('note'))}</strong> ${info.limitation}</div>` : ''}
+        ${info.compat ? `<p class="text-muted mt-2"><strong>${esc(s('compat'))}</strong> ${info.compat}</p>` : ''}
       </div>
     </div>
   </section>
 
-  ${fromPages.length ? `<!-- Convert From -->
-  <section class="section-from-to" aria-labelledby="from-h2">
-    <div class="container" style="max-width:var(--max-width);">
-      <h2 class="section-title mb-1" id="from-h2">Convert from ${esc(fmt)}</h2>
-      <p class="text-muted mb-4">Choose the output format you need from a ${esc(fmt)} file.</p>
-      <div class="converter-grid">
-        ${fromPages.map(p => `<a href="${p['URL Slug']}" class="converter-card-link">
-          <span class="converter-card-link__label">${esc(p['Page Name'])}</span>
-          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
-        </a>`).join('\n        ')}
-      </div>
-    </div>
-  </section>` : ''}
+  ${pageGridSection('section-from-to', 'from-h2', s('convertFrom', { fmt }), s('convertFromSub', { fmt }), fromPages)}
+  ${pageGridSection('section-from-to section-from-to--to', 'to-h2', s('convertToFmt', { fmt }), s('convertToSub', { fmt }), toPages)}
+  ${pageGridSection('section-related', 'rel-hubs-h2', C.relatedFormats, '', relatedHubs)}
 
-  ${toPages.length ? `<!-- Convert To -->
-  <section class="section-from-to section-from-to--to" aria-labelledby="to-h2">
-    <div class="container" style="max-width:var(--max-width);">
-      <h2 class="section-title mb-1" id="to-h2">Convert to ${esc(fmt)}</h2>
-      <p class="text-muted mb-4">Convert other formats into ${esc(fmt)}.</p>
-      <div class="converter-grid">
-        ${toPages.map(p => `<a href="${p['URL Slug']}" class="converter-card-link">
-          <span class="converter-card-link__label">${esc(p['Page Name'])}</span>
-          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
-        </a>`).join('\n        ')}
-      </div>
-    </div>
-  </section>` : ''}
-
-  ${relatedHubs.length ? `<!-- Related Format Hubs -->
-  <section class="section-related" aria-labelledby="rel-hubs-h2">
-    <div class="container" style="max-width:var(--max-width);">
-      <h2 class="section-title mb-4" id="rel-hubs-h2">Related ${categoryLabel(catBase)} Formats</h2>
-      <div class="converter-grid">
-        ${relatedHubs.map(p => `<a href="${p['URL Slug']}" class="converter-card-link">
-          <span class="converter-card-link__label">${esc(p['Page Name'])}</span>
-          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
-        </a>`).join('\n        ')}
-      </div>
-    </div>
-  </section>` : ''}
-
+  ${openOnlineBox(fmt)}
   ${privacyBlock()}
   ${faqBlock(faqs)}
 
 </main>
-` + footer();
+` + footer(slug);
 }
 
-// ── Pair Page ─────────────────────────────────────────────────────────────────
+// ─── Converter (pair / tool) page ─────────────────────────────────────────────
+function pairUseCases(from, to, fromInfo, toInfo) {
+  const F = esc(fname(from)), T = esc(fname(to));
+  const items = [s('uc1Html', { from: F, to: T }), s('uc2Html', { from: F, to: T })];
+  if (toInfo.useCases && toInfo.useCases[0]) items.push(s('uc3Html', { to: T, use: toInfo.useCases[0] }));
+  items.push(s('uc4'));
+  return items;
+}
+
 function buildPairPage(page, allPages) {
-  const from     = page['Source Format'];
-  const to       = page['Target Format'];
-  const fromInfo = FMT[fmtKey(from)] || {};
-  const toInfo   = FMT[fmtKey(to)]   || {};
-  const catBase  = (page['Category'] || '').split('→')[0];
+  const slug = page['URL Slug'];
+  const from = page['Source Format'], to = page['Target Format'];
+  const fromInfo = fmtInfo(from), toInfo = fmtInfo(to);
+  const cb = catBase(page);
+  const C = L.cat[cb];
+  const txt = pageText(page);
+  const tool = L.tools[slug];
+  const sameFmt = from === to;
 
-  const parentSlug  = page['Parent Hub'];
-  const parentLabel = allPages.find(p => p['URL Slug'] === parentSlug)?.['Page Name'] || from + ' Converter';
-  const catHubHref  = categoryHub(catBase);
-  const catHubLabel = categoryLabel(catBase) + ' Converter';
+  const parentSlug = page['Parent Hub'];
+  const catHubHref = categoryHub(cb);
+  const parentPage = allPages.find(p => p['URL Slug'] === parentSlug);
 
-  // Related: same source format (different target), same target format (different source), reverse
-  const sameFrom    = allPages.filter(p => p['Page Type'] === 'Pair' && p['Source Format'] === from &&
-                        (p['Target Format'] !== to || (from === to && p['URL Slug'] !== page['URL Slug']))).slice(0, 6);
-  const sameTo      = allPages.filter(p => p['Page Type'] === 'Pair' && p['Target Format'] === to && p['Source Format'] !== from).slice(0, 6);
-  const reverse     = from === to ? null : allPages.find(p => p['Page Type'] === 'Pair' && p['Source Format'] === to && p['Target Format'] === from);
+  const sameFrom = allPages.filter(p => p['Page Type'] === 'Pair' && p['Source Format'] === from && p['URL Slug'] !== slug && (p['Target Format'] !== to || sameFmt)).slice(0, 6);
+  const sameTo = allPages.filter(p => p['Page Type'] === 'Pair' && p['Target Format'] === to && p['Source Format'] !== from).slice(0, 6);
+  const reverse = sameFmt ? null : allPages.find(p => p['Page Type'] === 'Pair' && p['Source Format'] === to && p['Target Format'] === from);
 
-  const convConfig = getConverterConfig(from, to, page['URL Slug']);
-  const sameFmt   = from === to; // single-format tools (formatter, resize, case converter…)
-  const isNoIndex = page['Indexation'] !== 'Index now';
-  const robots = isNoIndex ? 'noindex, follow' : 'index, follow';
+  const cfg = getConverterConfig(from, to, slug);
+  const robots = robotsFor(page);
+  const action = (tool && tool.action) || (cfg && cfg.action) || undefined;
+  if (LANG !== DEFAULT_LANG && cfg && cfg.action && !(tool && tool.action)) throw new Error(`${slug}: tools[].action missing (button label would be English)`);
 
-  const appSchema = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": page['Page Name'],
-    "applicationCategory": "UtilitiesApplication",
-    "operatingSystem": "Web browser",
-    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-    "description": page['Meta Description'],
-    "url": `${DOMAIN}${page['URL Slug']}`,
+  const schema = {
+    '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: txt.name,
+    applicationCategory: 'UtilitiesApplication', operatingSystem: 'Web browser', inLanguage: L.meta.htmlLang,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, description: txt.meta, url: abs(slug),
   };
 
-  // Build how-it-works steps from template
-  const steps = sameFmt ? [
-    `Upload or drop your <strong>${esc(from)}</strong> file into the tool above${convConfig && convConfig.textMode ? ', or paste your content directly' : ''}.`,
-    `Choose your options in the settings panel.`,
-    `Click the button and download your result instantly.`,
-  ] : [
-    `Upload or drop your <strong>${esc(from)}</strong> file into the converter above.`,
-    `Adjust any output settings for <strong>${esc(to)}</strong> if needed.`,
-    `Click <strong>Convert</strong> and download your converted file instantly.`,
-  ];
+  const steps = sameFmt
+    ? [s(cfg && cfg.textMode ? 'toolStep1PasteHtml' : 'toolStep1Html', { from: esc(fname(from)) }), s('toolStep2'), s('toolStep3')]
+    : [s('step1Html', { from: esc(fname(from)) }), s('step2Html', { to: esc(fname(to)) }), s('step3Html')];
 
-  // Value proposition: why convert from A to B
-  const whyConvert = buildWhyConvert(from, to, fromInfo, toInfo, page);
+  // Intro paragraph: authored text where it exists, otherwise built from the format facts.
+  let intro;
+  const csvValue = page['Template Value Block'] || '';
+  if (tool && tool.value) intro = tool.value;
+  else if (LANG === DEFAULT_LANG && csvValue && !/^Explain why someone converts/i.test(csvValue)) intro = csvValue;
+  else intro = s('pairIntro', {
+    from: fname(from), to: fname(to),
+    fromFirst: firstSentence(fromInfo.description), toFirst: firstSentence(toInfo.description),
+  }).replace(/\s+/g, ' ');
+  const limitation = toInfo.limitation || fromInfo.limitation || null;
 
-  // Page-specific FAQs
-  const faqs = buildPairFAQs(from, to, fromInfo, toInfo, page['Page Name']);
+  const faqs = sameFmt
+    ? [1, 2, 3, 4].map(i => ({ q: s(`toolFaq${i}Q`, { name: txt.name }), a: s(`toolFaq${i}A`, { name: txt.name }) }))
+    : buildPairFAQs(from, to);
 
-  return head({
-    title: page['SEO Title'],
-    desc: page['Meta Description'],
-    canonical: page['URL Slug'],
-    robots,
-    schema: appSchema,
-  }) + skipLink() + navbar()
-    + breadcrumbs([
-        { label: catHubLabel, href: catHubHref },
-        { label: parentLabel, href: parentSlug },
-        { label: page['Page Name'], href: page['URL Slug'] },
-      ])
+  const card = (key, info) => `<div class="${sameFmt ? 'col-12' : 'col-md-6'}">
+          <div class="format-explainer-card">
+            <div class="format-explainer-card__header">
+              <span class="format-explainer-card__icon" aria-hidden="true">${info.icon || '📁'}</span>
+              <h3 class="format-explainer-card__name">${esc(fname(key))} <span class="text-muted fw-normal">(${esc(info.fullName || key)})</span></h3>
+            </div>
+            <p>${info.description ? firstTwoSentences(info.description) : s('fmtFallbackDesc', { fmt: key, full: key, cat: cb })}</p>
+            ${info.compat ? `<p class="text-muted" style="font-size:var(--text-sm);"><strong>${esc(s('compat'))}</strong> ${info.compat}</p>` : ''}
+          </div>
+        </div>`;
+
+  const showOpenOnline = !sameFmt && fmtInfo(from).ext && !/\*/.test(fmtInfo(from).ext || '');
+  const extraLinks = [];
+  if (parentPage && parentSlug !== catHubHref) extraLinks.push({ label: nameOf(parentPage), href: parentSlug });
+  extraLinks.push({ label: C.converter, href: catHubHref });
+
+  const crumbs = [{ label: C.converter, href: catHubHref }];
+  if (parentPage && parentSlug !== catHubHref) crumbs.push({ label: nameOf(parentPage), href: parentSlug });
+  crumbs.push({ label: txt.name, href: slug });
+
+  return head({ title: txt.title, desc: txt.meta, slug, robots, schema })
+    + skipLink() + navbar(slug)
+    + breadcrumbs(crumbs)
     + `<main id="main-content">
 
-  <!-- Hero -->
   <section class="section-hero section-hero--pair" aria-labelledby="pair-h1">
     <div class="container" style="max-width:800px; text-align:center;">
       <div class="format-badge-row">
-        ${sameFmt ? `<span class="format-badge format-badge--from">${esc(from)}</span>` : `<span class="format-badge format-badge--from">${esc(from)}</span>
+        ${sameFmt ? `<span class="format-badge format-badge--from">${esc(fname(from))}</span>` : `<span class="format-badge format-badge--from">${esc(fname(from))}</span>
         <span class="format-badge-arrow" aria-hidden="true">→</span>
-        <span class="format-badge format-badge--to">${esc(to)}</span>`}
+        <span class="format-badge format-badge--to">${esc(fname(to))}</span>`}
       </div>
-      <h1 class="hero-title" id="pair-h1">${esc(page['H1'])}</h1>
-      <p class="hero-subtitle mx-auto">${esc(page['Meta Description'])}</p>
+      <h1 class="hero-title" id="pair-h1">${esc(txt.h1)}</h1>
+      <p class="hero-subtitle mx-auto">${esc(txt.meta)}</p>
     </div>
   </section>
 
-  ${converterWidget(from, to, page['URL Slug'], convConfig ? convConfig.textMode : false,
-      convConfig ? { action: convConfig.action, engineNote: convConfig.engineNote } : {})}
+  ${converterWidget(from, to, cfg ? cfg.textMode : false, { action, engineNote: cfg && cfg.engineNote })}
 
-  <!-- Intro & Why -->
   <section class="section-content" aria-labelledby="intro-h2">
     <div class="container" style="max-width:800px;">
-      <h2 class="section-title" id="intro-h2">${sameFmt ? `Why Use the ${esc(page['Page Name'])}?` : `Why Convert ${esc(from)} to ${esc(to)}?`}</h2>
-      <p>${whyConvert.intro}</p>
-      <h3 class="explainer-subtitle">Common use cases</h3>
+      <h2 class="section-title" id="intro-h2">${esc(sameFmt ? s('whyUse', { name: txt.name }) : s('whyConvert', { from: fname(from), to: fname(to) }))}</h2>
+      <p>${intro}</p>
+      <h3 class="explainer-subtitle">${esc(s('useCases'))}</h3>
       <ul class="explainer-list">
-        ${whyConvert.useCases.map(u => `<li><i class="bi bi-check-circle-fill text-accent me-2" aria-hidden="true"></i>${u}</li>`).join('\n        ')}
+        ${pairUseCases(from, to, fromInfo, toInfo).map(x => `<li><i class="bi bi-check-circle-fill text-accent me-2" aria-hidden="true"></i>${x}</li>`).join('\n        ')}
       </ul>
-      ${whyConvert.limitation ? `<div class="explainer-note"><i class="bi bi-info-circle me-2" aria-hidden="true"></i><strong>Keep in mind:</strong> ${whyConvert.limitation}</div>` : ''}
+      ${limitation ? `<div class="explainer-note"><i class="bi bi-info-circle me-2" aria-hidden="true"></i><strong>${esc(s('keepInMind'))}</strong> ${limitation}</div>` : ''}
     </div>
   </section>
 
-  <!-- How It Works -->
   <section class="section-how-it-works" aria-labelledby="how-h2">
     <div class="container" style="max-width:800px;">
-      <h2 class="section-title" id="how-h2">${sameFmt ? `How to Use the ${esc(page['Page Name'])}` : `How to Convert ${esc(from)} to ${esc(to)}`}</h2>
+      <h2 class="section-title" id="how-h2">${esc(sameFmt ? s('howToUse', { name: txt.name }) : s('howTo', { from: fname(from), to: fname(to) }))}</h2>
       <ol class="how-it-works-list">
-        ${steps.map(s => `<li>${s}</li>`).join('\n        ')}
+        ${steps.map(x => `<li>${x}</li>`).join('\n        ')}
       </ol>
     </div>
   </section>
 
-  <!-- Format Explainers -->
   <section class="section-formats-explainer" aria-labelledby="formats-h2">
     <div class="container" style="max-width:var(--max-width);">
-      <h2 class="section-title mb-4" id="formats-h2">${sameFmt ? 'About This Tool' : 'About the Formats'}</h2>
+      <h2 class="section-title mb-4" id="formats-h2">${esc(sameFmt ? s('aboutTool') : s('aboutFormats'))}</h2>
       <div class="row g-4">
-        <div class="${sameFmt ? 'col-12' : 'col-md-6'}">
-          <div class="format-explainer-card">
-            <div class="format-explainer-card__header">
-              <span class="format-explainer-card__icon" aria-hidden="true">${fromInfo.icon || '📁'}</span>
-              <h3 class="format-explainer-card__name">${esc(from)} <span class="text-muted fw-normal">(${esc(fromInfo.fullName || from)})</span></h3>
-            </div>
-            <p>${fromInfo.description ? fromInfo.description.split('.').slice(0, 2).join('.') + '.' : `${from} is a ${catBase} file format.`}</p>
-            ${fromInfo.compat ? `<p class="text-muted" style="font-size:var(--text-sm);"><strong>Compatibility:</strong> ${fromInfo.compat}</p>` : ''}
-          </div>
-        </div>
-        ${sameFmt ? '' : `<div class="col-md-6">
-          <div class="format-explainer-card">
-            <div class="format-explainer-card__header">
-              <span class="format-explainer-card__icon" aria-hidden="true">${toInfo.icon || '📁'}</span>
-              <h3 class="format-explainer-card__name">${esc(to)} <span class="text-muted fw-normal">(${esc(toInfo.fullName || to)})</span></h3>
-            </div>
-            <p>${toInfo.description ? toInfo.description.split('.').slice(0, 2).join('.') + '.' : `${to} is a ${catBase} file format.`}</p>
-            ${toInfo.compat ? `<p class="text-muted" style="font-size:var(--text-sm);"><strong>Compatibility:</strong> ${toInfo.compat}</p>` : ''}
-          </div>
-        </div>`}
+        ${card(from, fromInfo)}
+        ${sameFmt ? '' : card(to, toInfo)}
       </div>
     </div>
   </section>
 
+  ${showOpenOnline ? openOnlineBox(from) : openOnlineBox(null)}
   ${privacyBlock()}
 
-  <!-- Related: same source -->
-  ${sameFrom.length ? relatedGrid(`More ${esc(from)} Conversions`, sameFrom) : ''}
+  ${relatedGrid(s('moreFrom', { from: fname(from) }), sameFrom)}
+  ${relatedGrid(s('otherWays', { to: fname(to) }), sameTo)}
 
-  <!-- Related: same target -->
-  ${sameTo.length ? relatedGrid(`Other Ways to Get a ${esc(to)} File`, sameTo) : ''}
-
-  <!-- Reverse -->
   ${reverse ? `<section class="section-reverse" aria-labelledby="reverse-h2">
     <div class="container" style="max-width:var(--max-width);">
-      <h2 class="section-title mb-3" id="reverse-h2">Need the reverse?</h2>
-      <a href="${reverse['URL Slug']}" class="converter-card-link" style="max-width:320px;">
-        <span class="converter-card-link__label">${esc(reverse['Page Name'])}</span>
+      <h2 class="section-title mb-3" id="reverse-h2">${esc(s('needReverse'))}</h2>
+      <a href="${u(reverse['URL Slug'])}" class="converter-card-link" style="max-width:320px;">
+        <span class="converter-card-link__label">${esc(nameOf(reverse))}</span>
         <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
       </a>
     </div>
@@ -1616,226 +932,308 @@ function buildPairPage(page, allPages) {
   ${faqBlock(faqs)}
 
 </main>
-` + footer([
-    { label: parentLabel, href: parentSlug },
-    { label: catHubLabel, href: catHubHref },
-  ], convConfig ? [...convConfig.libs, convConfig.converterScript] : []);
+` + footer(slug, extraLinks, cfg ? [...cfg.libs, cfg.converterScript] : []);
 }
 
-function buildWhyConvert(from, to, fromInfo, toInfo, page) {
-  const valBlock = page['Template Value Block'] || '';
-
-  // Extract intro sentence from the template value block
-  const introRaw = valBlock.replace(/^Explain why someone converts.*?:/i, '').trim();
-  const intro = introRaw || `Converting ${from} to ${to} is a common workflow when you need to move between ${fromInfo.category || 'file'} formats. ${fromInfo.fullName || from} files ${fromInfo.description ? fromInfo.description.split('.')[0].toLowerCase().replace(`${from.toLowerCase()} `, '').replace(`${fromInfo.fullName || from} `, '') + '.' : ''} ${to} files ${toInfo.description ? toInfo.description.split('.')[0].toLowerCase().replace(`${to.toLowerCase()} `, '').replace(`${toInfo.fullName || to} `, '') + '.' : ''}`;
-
-  // Use cases from the from format, with a twist for the target
-  const fromUseCases = fromInfo.useCases || [];
-  const toUseCases   = toInfo.useCases   || [];
-  const useCases = [
-    fromUseCases[0] ? `You have a <strong>${from}</strong> file and need it in <strong>${to}</strong> format for ${toUseCases[0] ? toUseCases[0].toLowerCase() : 'compatibility'}.` : null,
-    toUseCases[0] ? `The target software or platform requires <strong>${to}</strong> but your file is in <strong>${from}</strong>.` : null,
-    `You want to reduce file size or improve compatibility without using desktop software.`,
-  ].filter(Boolean);
-
-  const limitation = toInfo.limitation || fromInfo.limitation || null;
-
-  return { intro, useCases, limitation };
+function firstTwoSentences(t) {
+  const m = t.match(/^([\s\S]*?[.!?])(\s+[\s\S]*?[.!?])?(?=\s|$)/);
+  return m ? (m[1] + (m[2] || '')) : t;
 }
 
-function buildPairFAQs(from, to, fromInfo, toInfo, pageName) {
-  // Single-format tools (formatter, resize, case converter…) — neutral phrasing
-  if (from === to) {
-    const name = pageName || `${from} tool`;
-    return [
-      { q: `Is the ${name} free?`, a: `Yes — completely free with no sign-up, no watermarks, and no size limits for typical files.` },
-      { q: `Is my data safe?`, a: `Your file or pasted content is processed entirely within your browser using local JavaScript. It is never uploaded to any server. Only you can access your data.` },
-      { q: `How large a file can I process?`, a: `For browser-based processing, files up to 50 MB work best. Very large files may take longer depending on your device.` },
-      { q: `Do I need to install anything?`, a: `No — the ${name} runs entirely in your web browser. No app, plugin, or account required.` },
-    ];
-  }
+function buildPairFAQs(from, to) {
+  const F = fname(from), T = fname(to);
+  const lossless = ['PNG', 'TIFF', 'WAV', 'BMP', 'SVG'];
+  const lossy = ['JPG', 'JPEG', 'MP3', 'HEIC'];
+  const quality = lossless.includes(to.toUpperCase()) && lossless.includes(from.toUpperCase())
+    ? s('faqQualityLossless', { from: F, to: T })
+    : lossy.includes(to.toUpperCase()) ? s('faqQualityLossy', { from: F, to: T }) : s('faqQualityGeneric');
   return [
-    { q: `Is the ${from} to ${to} converter free?`, a: `Yes — completely free with no sign-up, no watermarks, and no size limits for typical files.` },
-    { q: `Will quality be lost when converting from ${from} to ${to}?`, a: (() => {
-      const lossless = ['PNG', 'TIFF', 'WAV', 'BMP', 'SVG'];
-      const lossy    = ['JPG', 'JPEG', 'MP3', 'HEIC'];
-      if (lossless.includes(to.toUpperCase()) && lossless.includes(from.toUpperCase()))
-        return `Both ${from} and ${to} are lossless formats, so no quality will be lost during conversion.`;
-      if (lossy.includes(to.toUpperCase()))
-        return `${to} uses lossy compression, which may reduce quality slightly compared to the original ${from}. For most uses, the difference is imperceptible at standard quality settings.`;
-      return `Quality depends on the output settings. For lossless output, choose the highest quality setting available.`;
-    })() },
-    { q: `Is my ${from} file safe?`, a: `Your file is processed entirely within your browser using local JavaScript. It is never uploaded to any server. Only you can access your file.` },
-    { q: `How large a ${from} file can I convert?`, a: `For browser-based conversion, files up to 50 MB work best. Very large files may take longer depending on your device. We recommend splitting very large files before converting.` },
-    { q: `Can I convert multiple ${from} files at once?`, a: `Currently, AintoB converts one file at a time to keep the browser-based process simple and private. Reload the page to convert another file.` },
+    { q: s('faqFreeQ', { from: F, to: T }), a: s('faqFreeA') },
+    { q: s('faqQualityQ', { from: F, to: T }), a: quality },
+    { q: s('faqSafeQ', { from: F }), a: s('faqSafeA') },
+    { q: s('faqSizeQ', { from: F }), a: s('faqSizeA') },
+    { q: s('faqMultiQ', { from: F }), a: s('faqMultiA') },
   ];
 }
 
-// ── Simple Static Pages ───────────────────────────────────────────────────────
+// ─── Hand-built tool pages (templates/*.html) ─────────────────────────────────
+const CUSTOM = {
+  'pdf-edit': {
+    libs: ['https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js'],
+    scripts: ['/assets/js/converters/pdf-edit.js', '/assets/js/converters/pdf-edit-preview.js'],
+  },
+  'pdf-to-searchable': {
+    libs: ['https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js'],
+    scripts: ['/assets/js/converters/pdf-to-searchable.js'],
+  },
+};
+
+function buildCustomPage(page, allPages) {
+  const slug = page['URL Slug'];
+  const key = slug.split('/')[2];
+  const def = CUSTOM[key];
+  if (!def) throw new Error(`No custom template registered for ${slug}`);
+  const txt = pageText(page);
+  const C = L.cat[catBase(page)];
+  const parentPage = allPages.find(p => p['URL Slug'] === page['Parent Hub']);
+
+  let main = fs.readFileSync(path.join(ROOT, 'templates', key + '.html'), 'utf8');
+  const css = fs.readFileSync(path.join(ROOT, 'templates', key + '.css'), 'utf8');
+
+  // OCR page: default the language dropdown to the page language
+  if (key === 'pdf-to-searchable') {
+    main = main.replace('<option value="eng" selected>', '<option value="eng">')
+      .replace(`<option value="${L.meta.ocr}">`, `<option value="${L.meta.ocr}" selected>`);
+  }
+
+  if (LANG !== DEFAULT_LANG) {
+    const r = tpl.translate(main, L.tpl);
+    if (r.missing.length) {
+      throw new Error(`${slug} [${LANG}]: ${r.missing.length} untranslated text unit(s) in i18n/${LANG}/tpl.js:\n  - ` + r.missing.join('\n  - '));
+    }
+    main = r.html;
+  }
+
+  // default watermark word (input value + live preview) in the page language
+  if (key === 'pdf-edit' && L.tpl.CONFIDENTIAL) {
+    main = main.replace('value="CONFIDENTIAL"', `value="${esc(L.tpl.CONFIDENTIAL)}"`).replace('>CONFIDENTIAL</span>', `>${esc(L.tpl.CONFIDENTIAL)}</span>`);
+  }
+
+  // internal links → language-prefixed; link labels follow the localised page names
+  main = main.replace(/href="\/(?!assets\/|\/)([^"]*)"/g, (m, rest) => `href="/${LANG}/${rest}"`);
+  main = main.replace(/(<a href="\/[a-z]{2}(\/[^"]*)" class="converter-card-link">\s*<span class="converter-card-link__label">)([^<]*)(<\/span>)/g, (m, a, target, _t, z) => {
+    const p = allPages.find(x => x['URL Slug'] === target);
+    return p ? a + esc(nameOf(p)) + z : m;
+  });
+
+  // FAQ structured data from the (translated) accordion
+  const faqs = [...main.matchAll(/<button class="accordion-button[^"]*"[^>]*>\s*([\s\S]*?)\s*<\/button>[\s\S]*?<div class="accordion-body">([\s\S]*?)<\/div>/g)]
+    .map(m => ({ q: stripTags(m[1]), a: stripTags(m[2]) }));
+  const faqSchema = {
+    '@context': 'https://schema.org', '@type': 'FAQPage', inLanguage: L.meta.htmlLang,
+    mainEntity: faqs.map(f => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  };
+  main = main.replace('<section class="section-faq"', `<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>\n  <section class="section-faq"`);
+  // open-online callout before the privacy block
+  main = main.replace('<div class="privacy-block">', `${openOnlineBox(null)}\n  <div class="privacy-block">`);
+
+  const schema = {
+    '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: txt.name,
+    applicationCategory: 'UtilitiesApplication', operatingSystem: 'Web browser', inLanguage: L.meta.htmlLang,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, description: txt.meta, url: abs(slug),
+  };
+
+  const crumbs = [{ label: C.converter, href: categoryHub(catBase(page)) }];
+  if (parentPage) crumbs.push({ label: nameOf(parentPage), href: parentPage['URL Slug'] });
+  crumbs.push({ label: txt.name, href: slug });
+
+  return head({ title: txt.title, desc: txt.meta, slug, robots: robotsFor(page), schema, extraHead: `  <style>\n${css}  </style>` })
+    + skipLink() + navbar(slug)
+    + breadcrumbs(crumbs)
+    + main + '\n'
+    + footer(slug, crumbs.slice(0, -1).map(c => ({ label: c.label, href: c.href })), [...def.libs, ...def.scripts]);
+}
+
+// ─── Legal pages ──────────────────────────────────────────────────────────────
 function buildPrivacyPage() {
-  return head({
-    title: 'Privacy Policy | AintoB.com',
-    desc: 'AintoB privacy policy. Learn how we handle your data — spoiler: we barely do. No file uploads, no tracking without consent.',
-    canonical: '/privacy/',
-    robots: 'index, follow',
-  }) + skipLink() + navbar()
-  + breadcrumbs([{ label: 'Privacy Policy', href: '/privacy/' }])
-  + `<main id="main-content">
+  const slug = '/privacy/';
+  const P = L.legal.privacy;
+  const date = new Date().toLocaleDateString(L.meta.dateLocale, { day: 'numeric', month: 'long', year: 'numeric' });
+  return head({ title: P.title, desc: P.desc, slug, robots: 'index, follow' })
+    + skipLink() + navbar(slug)
+    + breadcrumbs([{ label: P.h1, href: slug }])
+    + `<main id="main-content">
   <section class="section-hero">
     <div class="container" style="max-width:800px;">
-      <h1 class="hero-title">Privacy Policy</h1>
-      <p class="text-muted">Last updated: ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}</p>
+      <h1 class="hero-title">${esc(P.h1)}</h1>
+      <p class="text-muted">${esc(P.updated.replace('{date}', date))}</p>
     </div>
   </section>
   <section class="section-content">
     <div class="container" style="max-width:800px;">
-      <h2>1. What data do we collect?</h2>
-      <p>AintoB.com is a browser-based file conversion tool. <strong>Files you convert are never uploaded to our servers.</strong> All conversion processing happens locally in your browser using JavaScript.</p>
-      <p>We may collect basic anonymised analytics data (pages viewed, approximate location by country, browser type) when you consent to analytics cookies. This data is never linked to personal identifiers.</p>
-
-      <h2>2. Cookies</h2>
-      <p>We use essential cookies only by default. Essential cookies enable basic site functionality (e.g. cookie consent preference storage). We do not use tracking cookies without your explicit consent.</p>
-      <p>You can change your cookie preferences at any time using the cookie banner.</p>
-
-      <h2>3. File handling</h2>
-      <p>Files you select for conversion are processed entirely in your browser. They are <strong>never transmitted to our servers</strong>. We have no technical ability to access the content of your files.</p>
-
-      <h2>4. Third-party services</h2>
-      <p>We load Bootstrap CSS and JavaScript from a CDN (cdn.jsdelivr.net). The CDN may log request metadata (IP address, timestamp) as per its own privacy policy. We do not share any personal data with CDN providers.</p>
-
-      <h2>5. Your rights (GDPR)</h2>
-      <p>If you are in the EU/EEA, you have rights to access, correct, or delete personal data held about you. Since we collect minimal personal data, most requests will be straightforward. Contact us via the Imprint page for any data requests.</p>
-
-      <h2>6. Contact</h2>
-      <p>For privacy-related questions, see our <a href="/imprint/">Imprint</a> page for contact details.</p>
+      ${P.sections.map(sec => `<h2>${esc(sec.h)}</h2>\n      ${sec.html.replace('{imprintUrl}', u('/imprint/'))}`).join('\n\n      ')}
     </div>
   </section>
 </main>
-` + footer();
+` + footer(slug);
 }
 
 function buildImprintPage() {
-  return head({
-    title: 'Imprint | AintoB.com',
-    desc: 'Legal imprint and contact information for AintoB.com.',
-    canonical: '/imprint/',
-    robots: 'noindex, follow',
-  }) + skipLink() + navbar()
-  + breadcrumbs([{ label: 'Imprint', href: '/imprint/' }])
-  + `<main id="main-content">
+  const slug = '/imprint/';
+  const I = L.legal.imprint;
+  return head({ title: I.title, desc: I.desc, slug, robots: 'noindex, follow' })
+    + skipLink() + navbar(slug)
+    + breadcrumbs([{ label: I.h1, href: slug }])
+    + `<main id="main-content">
   <section class="section-hero">
     <div class="container" style="max-width:800px;">
-      <h1 class="hero-title">Imprint</h1>
+      <h1 class="hero-title">${esc(I.h1)}</h1>
     </div>
   </section>
   <section class="section-content">
     <div class="container" style="max-width:800px;">
-      <p>This website is operated by the owner of AintoB.com. For legal and GDPR-related inquiries, please use the contact form or reach out via email.</p>
-      <p>AintoB.com is a free, browser-based file conversion service. No files are stored on our servers.</p>
-      <h2>Disclaimer</h2>
-      <p>AintoB.com provides file conversion tools for informational and productivity purposes. We make no guarantees regarding the accuracy or completeness of converted output. Use converted files at your own discretion.</p>
+      ${I.html}
     </div>
   </section>
 </main>
-` + footer();
+` + footer(slug);
 }
 
-// ─── Sitemap Generator ────────────────────────────────────────────────────────
-function buildSitemap(allPages) {
-  const now = new Date().toISOString().split('T')[0];
-  const indexable = allPages.filter(p => p['Indexation'] === 'Index now');
+// ─── Language router (/) and redirect stubs for the pre-i18n URLs ─────────────
+const DETECT_JS = `var P=${JSON.stringify(LANGS.map(l => l.code))},l='${DEFAULT_LANG}';try{var v=localStorage.getItem('aintob_lang');if(P.indexOf(v)>-1){l=v}else{var n=navigator.languages||[navigator.language||l];for(var i=0;i<n.length;i++){var c=String(n[i]).slice(0,2).toLowerCase();if(P.indexOf(c)>-1){l=c;break}}}}catch(e){}`;
 
-  const urls = [
-    { loc: '/', priority: '1.0', freq: 'weekly' },
-    ...indexable.map(p => ({
-      loc: p['URL Slug'],
+function buildRouterPage() {
+  const names = LANGS.map(l => LOCALES[l.code].s.routerChoose).join(' · ');
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AintoB – File Converter · Dateikonverter · Převodník souborů · Konwerter plików</title>
+  <meta name="description" content="${esc(LANGS.map(l => LOCALES[l.code].s.routerSub).join(' '))}">
+  <link rel="canonical" href="${DOMAIN}/">
+  <style>
+    :root{--accent:#3b5bdb;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--bg:#f9fafb}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;padding:1.5rem 1rem;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.5}
+    main{width:100%;max-width:30rem;background:#fff;border:1px solid var(--border);border-radius:1rem;padding:2rem 1.5rem;text-align:center}
+    h1{font-size:1.75rem;margin:.25rem 0 .5rem;letter-spacing:-.02em}
+    p{margin:0 0 1.5rem;color:var(--muted)}
+    ul{list-style:none;margin:0;padding:0;display:grid;gap:.75rem}
+    a{display:block;padding:.9rem 1rem;border:1px solid var(--border);border-radius:.75rem;color:var(--text);text-decoration:none;font-weight:600;text-align:left}
+    a:hover,a:focus-visible{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px rgba(59,91,219,.15)}
+    a small{display:block;font-weight:400;color:var(--muted)}
+  </style>
+  <script>${DETECT_JS}if(location.hash!=='#choose'){location.replace('/'+l+'/'+location.search)}</script>
+</head>
+<body>
+  <main>
+    <div aria-hidden="true" style="font-size:2rem">🅰️➡️🅱️</div>
+    <h1>AintoB</h1>
+    <p>${esc(names)}</p>
+    <ul>
+      ${LANGS.map(l => `<li><a href="/${l.code}/" hreflang="${l.htmlLang}" lang="${l.htmlLang}" data-lang="${l.code}">${l.name}<small>${esc(LOCALES[l.code].s.routerSub)}</small></a></li>`).join('\n      ')}
+    </ul>
+  </main>
+  <script>document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[data-lang]');if(a){try{localStorage.setItem('aintob_lang',a.getAttribute('data-lang'))}catch(x){}}})</script>
+</body>
+</html>`;
+}
+
+function buildRedirectStub(slug) {
+  const target = `/${DEFAULT_LANG}${slug}`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AintoB</title>
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="${DOMAIN}${target}">
+  <noscript><meta http-equiv="refresh" content="0; url=${target}"></noscript>
+  <script>${DETECT_JS}location.replace('/'+l+'${slug}'+location.search+location.hash)</script>
+</head>
+<body>
+  <p>This page has moved / Diese Seite ist umgezogen / Stránka byla přesunuta / Strona została przeniesiona:</p>
+  <ul>${LANGS.map(l => `<li><a href="/${l.code}${slug}" hreflang="${l.htmlLang}">${l.name}</a></li>`).join('')}</ul>
+</body>
+</html>`;
+}
+
+// ─── Sitemap / robots / redirects / runtime dictionaries ──────────────────────
+function buildSitemap(allPages) {
+  const entries = [
+    { slug: '/', priority: '1.0', freq: 'weekly' },
+    ...allPages.filter(p => p['Indexation'] === 'Index now').map(p => ({
+      slug: p['URL Slug'],
       priority: p['Priority'] === 'P1' ? '0.9' : p['Page Type'] === 'Format Hub' ? '0.8' : p['Page Type'] === 'Category Hub' ? '0.9' : '0.7',
       freq: p['Page Type'] === 'Pair' ? 'monthly' : 'weekly',
     })),
-    { loc: '/privacy/', priority: '0.3', freq: 'yearly' },
+    { slug: '/privacy/', priority: '0.3', freq: 'yearly' },
   ];
-
+  const alts = slug => LANGS.map(l => `    <xhtml:link rel="alternate" hreflang="${l.htmlLang}" href="${DOMAIN}/${l.code}${slug}"/>`).join('\n')
+    + `\n    <xhtml:link rel="alternate" hreflang="x-default" href="${DOMAIN}/${DEFAULT_LANG}${slug}"/>`;
+  const urls = [];
+  for (const e of entries) {
+    for (const l of LANGS) {
+      urls.push(`  <url>
+    <loc>${DOMAIN}/${l.code}${e.slug}</loc>
+    <lastmod>${TODAY}</lastmod>
+    <changefreq>${e.freq}</changefreq>
+    <priority>${e.priority}</priority>
+${alts(e.slug)}
+  </url>`);
+    }
+  }
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map(u => `  <url>
-    <loc>${DOMAIN}${u.loc}</loc>
-    <lastmod>${now}</lastmod>
-    <changefreq>${u.freq}</changefreq>
-    <priority>${u.priority}</priority>
-  </url>`).join('\n')}
-</urlset>`;
-}
-
-function buildRobots() {
-  return `User-agent: *
-Allow: /
-
-Sitemap: ${DOMAIN}/sitemap.xml
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${urls.join('\n')}
+</urlset>
 `;
 }
 
-// ─── Main Build ───────────────────────────────────────────────────────────────
+const buildRobots = () => `User-agent: *\nAllow: /\n\nSitemap: ${DOMAIN}/sitemap.xml\n`;
+
+// ─── Main build ───────────────────────────────────────────────────────────────
 function build() {
-  console.log('🏗️  AintoB Static Site Generator\n');
+  console.log('🏗️  AintoB multilingual static site generator\n');
+  const allPages = parseCSV(fs.readFileSync(path.join(ROOT, 'page_map.csv'), 'utf8'));
+  console.log(`📄 ${allPages.length} pages in page_map.csv × ${LANGS.length} languages (${LANGS.map(l => l.code).join(', ')})`);
 
-  // Read CSV
-  const csvContent = fs.readFileSync(path.join(ROOT, 'page_map.csv'), 'utf8');
-  const allPages   = parseCSV(csvContent);
-  console.log(`📄 Loaded ${allPages.length} pages from CSV`);
-
-  let count = 0;
-
-  // Homepage
-  writeFile('index.html', buildHomepage(allPages));
-  console.log('  ✓ /index.html (homepage)');
-  count++;
-
-  // All pages from CSV
-  for (const page of allPages) {
-    const slug = page['URL Slug'];
-    if (!slug) continue;
-
-    let html;
-    try {
-      switch (page['Page Type']) {
-        case 'Master Hub':   html = buildMasterHub(page, allPages);   break;
-        case 'Category Hub': html = buildCategoryHub(page, allPages); break;
-        case 'Format Hub':   html = buildFormatHub(page, allPages);   break;
-        case 'Pair':         html = buildPairPage(page, allPages);    break;
-        case 'Custom':
-          // Hand-built page (e.g. /document/pdf-edit/) — not regenerated, but
-          // the CSV row keeps it in the sitemap and internal link graph.
-          console.log(`  ○ ${slug} (custom page, kept as-is)`);
-          continue;
-        default:
-          console.warn(`  ⚠ Unknown page type "${page['Page Type']}" for ${slug}`);
-          continue;
-      }
-    } catch (err) {
-      console.error(`  ✗ Error building ${slug}: ${err.message}`);
-      continue;
-    }
-
-    const outPath = slugToPath(slug);
-    writeFile(outPath, html);
-    console.log(`  ✓ ${slug}`);
-    count++;
+  // Fail fast on incomplete translations
+  const toolSlugs = allPages.filter(p => p['Page Type'] === 'Custom' || (p['Page Type'] === 'Pair' && (p['URL Slug'].startsWith('/data/') || p['Source Format'] === p['Target Format']))).map(p => p['URL Slug']);
+  const problems = checkI18n(LOCALES, toolSlugs, LOCALES[DEFAULT_LANG]);
+  if (problems.length) {
+    console.error(`\n✗ ${problems.length} i18n problem(s):\n` + problems.slice(0, 60).map(x => '  ' + x).join('\n') + (problems.length > 60 ? `\n  … and ${problems.length - 60} more` : ''));
+    process.exit(1);
   }
 
-  // Static pages
-  writeFile('privacy/index.html', buildPrivacyPage());
-  writeFile('imprint/index.html', buildImprintPage());
-  console.log('  ✓ /privacy/ + /imprint/');
-  count += 2;
+  const builders = {
+    'Master Hub': buildMasterHub, 'Category Hub': buildCategoryHub, 'Format Hub': buildFormatHub,
+    Pair: buildPairPage, Custom: buildCustomPage,
+  };
+  let count = 0;
+  const failures = [];
 
-  // Sitemap + robots
+  for (const l of LANGS) {
+    setLang(l.code);
+    let n = 0;
+    const put = (slug, html) => { writeFile(`${l.code}/${slugToPath(slug)}`, html); n++; };
+    try { put('/', buildHomepage(allPages)); } catch (e) { failures.push(`[${l.code}] /: ${e.message}`); }
+    for (const page of allPages) {
+      const slug = page['URL Slug'];
+      const fn = builders[page['Page Type']];
+      if (!slug || !fn) { console.warn(`  ⚠ skipping ${slug} (${page['Page Type']})`); continue; }
+      try { put(slug, fn(page, allPages)); } catch (e) { failures.push(`[${l.code}] ${slug}: ${e.message}`); }
+    }
+    try { put('/privacy/', buildPrivacyPage()); put('/imprint/', buildImprintPage()); } catch (e) { failures.push(`[${l.code}] legal: ${e.message}`); }
+
+    // runtime dictionary for scripts (English strings are the keys)
+    if (l.code !== DEFAULT_LANG) {
+      writeFile(`assets/js/lang/${l.code}.js`, `/* generated by build.js from i18n/${l.code}/js.js */\nwindow.AINTOB_DICT=${JSON.stringify(L.js)};\n`);
+    }
+    console.log(`  ✓ /${l.code}/  ${n} pages`);
+    count += n;
+  }
+
+  if (failures.length) {
+    console.error(`\n✗ ${failures.length} page(s) failed:\n` + failures.slice(0, 20).map(f => '  ' + f).join('\n'));
+    process.exit(1);
+  }
+
+  // Root router + redirect stubs for every pre-i18n URL (GitHub Pages cannot send real 301s)
+  writeFile('index.html', buildRouterPage());
+  const oldSlugs = [...allPages.map(p => p['URL Slug']), '/privacy/', '/imprint/'];
+  for (const slug of oldSlugs) writeFile(slugToPath(slug), buildRedirectStub(slug));
+  // Same mapping as real 301s for hosts that support a _redirects file (Netlify, Cloudflare Pages)
+  writeFile('_redirects', '# Generated by build.js — old (pre-i18n) URLs → English pages\n' +
+    oldSlugs.map(slug => `${slug} /${DEFAULT_LANG}${slug} 301`).join('\n') + '\n');
+
   fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), buildSitemap(allPages), 'utf8');
   fs.writeFileSync(path.join(ROOT, 'robots.txt'), buildRobots(), 'utf8');
-  console.log('  ✓ sitemap.xml');
-  console.log('  ✓ robots.txt');
-
-  console.log(`\n✅ Build complete — ${count} pages generated.\n`);
-  console.log('To regenerate: node build.js');
+  console.log(`  ✓ / (language router) + ${oldSlugs.length} redirect stubs + _redirects`);
+  console.log('  ✓ sitemap.xml, robots.txt');
+  console.log(`\n✅ Build complete — ${count} localised pages.\n`);
 }
 
 build();

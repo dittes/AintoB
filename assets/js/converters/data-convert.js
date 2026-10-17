@@ -11,6 +11,7 @@
  */
 (function () {
   'use strict';
+  var __t = window.__t || function (s) { return s; };
 
   var TOOL = (location.pathname.match(/\/data\/([a-z0-9-]+)\/?/) || [])[1] || '';
 
@@ -284,19 +285,19 @@
   document.addEventListener('DOMContentLoaded', function () {
     if (TOOL === 'json-formatter') {
       injectOptions(
-        '<label class="converter-label">Output style</label>' +
+        '<label class="converter-label">' + __t('Output style') + '</label>' +
         '<div class="d-flex gap-4">' +
-        '<label style="cursor:pointer;"><input type="radio" name="jsonMode" value="pretty" checked class="me-2">Pretty-print (2-space indent)</label>' +
-        '<label style="cursor:pointer;"><input type="radio" name="jsonMode" value="minify" class="me-2">Minify</label>' +
+        '<label style="cursor:pointer;"><input type="radio" name="jsonMode" value="pretty" checked class="me-2">' + __t('Pretty-print (2-space indent)') + '</label>' +
+        '<label style="cursor:pointer;"><input type="radio" name="jsonMode" value="minify" class="me-2">' + __t('Minify') + '</label>' +
         '</div>'
       );
     }
     if (TOOL === 'case-converter') {
       var opts = Object.keys(CASE_MODES).map(function (k) {
-        return '<option value="' + k + '">' + CASE_MODES[k].label + '</option>';
+        return '<option value="' + k + '">' + __t(CASE_MODES[k].label) + '</option>';
       }).join('');
       injectOptions(
-        '<label class="converter-label" for="caseMode">Convert to</label>' +
+        '<label class="converter-label" for="caseMode">' + __t('Convert to') + '</label>' +
         '<select data-option="caseMode" class="form-select">' + opts + '</select>'
       );
     }

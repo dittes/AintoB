@@ -10,6 +10,7 @@
  */
 (function () {
   'use strict';
+  var __t = window.__t || function (s, v) { return v ? s.replace(/\{(\w+)\}/g, function (m, k) { return v[k] !== undefined ? v[k] : m; }) : s; };
 
   var FFMPEG_VERSION = '0.12.10';
   var CORE_VERSION   = '0.12.6';
@@ -83,10 +84,10 @@
     });
     ffmpeg.on('progress', function (e) {
       var pct = Math.round((e.progress || 0) * 100);
-      if (pct > 0 && pct <= 100) setButtonText('Converting… ' + pct + '%');
+      if (pct > 0 && pct <= 100) setButtonText(__t('Converting…') + ' ' + pct + '%');
     });
 
-    setButtonText('Loading engine (~31 MB, first time only)…');
+    setButtonText(__t('Loading engine (~31 MB, first time only)…'));
     enginePromise = Promise.all([
       toBlobURL(CORE_BASE + '/ffmpeg-core.js', 'text/javascript'),
       toBlobURL(CORE_BASE + '/ffmpeg-core.wasm', 'application/wasm'),
@@ -123,7 +124,7 @@
     var inFile  = 'input.' + inExt;
     var outFile = 'output.' + outExt;
 
-    setButtonText('Converting…');
+    setButtonText(__t('Converting…'));
     logTail = [];
     var data = new Uint8Array(await input.arrayBuffer());
     await ffmpeg.writeFile(inFile, data);

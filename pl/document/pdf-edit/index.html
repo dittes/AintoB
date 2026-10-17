@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edytor PDF online – łączenie, dzielenie, obracanie, znak wodny</title>
+  <meta name="description" content="Darmowy edytor PDF w przeglądarce: łącz pliki PDF, dziel według zakresu stron, obracaj lub usuwaj strony i dodawaj tekstowe znaki wodne – wszystko lokalnie, bez przesyłania.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://aintob.com/pl/document/pdf-edit/">
+  <link rel="alternate" hreflang="en" href="https://aintob.com/en/document/pdf-edit/">
+  <link rel="alternate" hreflang="de" href="https://aintob.com/de/document/pdf-edit/">
+  <link rel="alternate" hreflang="cs" href="https://aintob.com/cs/document/pdf-edit/">
+  <link rel="alternate" hreflang="pl" href="https://aintob.com/pl/document/pdf-edit/">
+  <link rel="alternate" hreflang="x-default" href="https://aintob.com/en/document/pdf-edit/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Edytor PDF online – łączenie, dzielenie, obracanie, znak wodny">
+  <meta property="og:description" content="Darmowy edytor PDF w przeglądarce: łącz pliki PDF, dziel według zakresu stron, obracaj lub usuwaj strony i dodawaj tekstowe znaki wodne – wszystko lokalnie, bez przesyłania.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://aintob.com/pl/document/pdf-edit/">
+  <meta property="og:locale" content="pl_PL">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:locale:alternate" content="de_DE">
+  <meta property="og:locale:alternate" content="cs_CZ">
+  <meta property="og:image" content="https://aintob.com/assets/img/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Edytor PDF online – łączenie, dzielenie, obracanie, znak wodny">
+  <meta name="twitter:description" content="Darmowy edytor PDF w przeglądarce: łącz pliki PDF, dziel według zakresu stron, obracaj lub usuwaj strony i dodawaj tekstowe znaki wodne – wszystko lokalnie, bez przesyłania.">
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <style>
+    /* ── Tool tab nav ──────────────────────────────────────────── */
+    .pdf-tool-nav {
+      display: flex;
+      gap: .375rem;
+      flex-wrap: wrap;
+      border-bottom: 2px solid var(--color-border);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0;
+    }
+    .pdf-tool-tab {
+      padding: .5rem 1.1rem;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      background: transparent;
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--ease-fast), color var(--ease-fast);
+      margin-bottom: -2px;
+    }
+    .pdf-tool-tab:hover { color: var(--color-accent); background: var(--color-accent-light); }
+    .pdf-tool-tab.active {
+      background: var(--color-surface);
+      color: var(--color-accent);
+      border-color: var(--color-border);
+      border-bottom-color: var(--color-surface);
+    }
+
+    /* ── Tool panels ───────────────────────────────────────────── */
+    .tool-panel { animation: fadeUp .2s ease; }
+
+    /* ── File upload rows ─────────────────────────────────────── */
+    .tool-file-label {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: .4rem;
+    }
+
+    /* ── Result / error cards ─────────────────────────────────── */
+    .tool-result {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      margin-top: 1rem;
+    }
+    .tool-result .result-msg { font-weight: 600; margin-bottom: .75rem; }
+    .tool-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-md);
+      padding: .75rem 1rem;
+      font-size: var(--text-sm);
+      color: #991b1b;
+      margin-top: .75rem;
+    }
+
+    /* ── Page thumbnails (rotate/delete tool) ─────────────────── */
+    .page-thumbs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: .75rem;
+      max-height: 480px;
+      overflow-y: auto;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: .75rem;
+      background: var(--color-bg);
+    }
+    .page-thumb {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: .75rem;
+      transition: border-color var(--ease-fast);
+    }
+    .page-thumb:hover { border-color: var(--color-accent); }
+    .page-thumb__num {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      margin-bottom: .5rem;
+      color: var(--color-text);
+    }
+    .page-thumb__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .3rem;
+    }
+    .page-thumb__actions .btn { font-size: .75rem; padding: .2rem .5rem; }
+
+    /* ── Watermark preview ─────────────────────────────────────── */
+    .wm-preview {
+      background: #fff;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    #wmPreviewText {
+      font-size: 2rem;
+      font-weight: 900;
+      transform: rotate(-35deg);
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+    }
+  </style>
+  <!-- Schema -->
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Edytor PDF",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Web browser",
+  "inLanguage": "pl",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "description": "Darmowy edytor PDF w przeglądarce: łącz pliki PDF, dziel według zakresu stron, obracaj lub usuwaj strony i dodawaj tekstowe znaki wodne – wszystko lokalnie, bez przesyłania.",
+  "url": "https://aintob.com/pl/document/pdf-edit/"
+}</script>
+</head>
+<body><a class="skip-link" href="#main-content">Przejdź do głównej treści</a><nav class="navbar-aintob" aria-label="Nawigacja główna">
+  <div class="container navbar-inner" style="max-width:var(--max-width);">
+    <a href="/pl/" class="navbar-logo" aria-label="AintoB – strona główna">🅰️➡️🅱️ <span style="font-size:1rem; font-weight:500; color:var(--color-text-muted);">AintoB</span></a>
+    <div class="navbar-actions">
+      <a href="https://open-online.com/" class="navbar-tools-link navbar-open" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <span class="nav-label">Otwórz pliki</span><span class="visually-hidden"> (otwiera się w nowej karcie)</span></a>
+      <a href="/pl/file-converter/" class="navbar-tools-link"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> <span class="nav-label">Wszystkie konwertery</span></a>
+      <details class="lang-switch">
+        <summary aria-label="Język"><i class="bi bi-translate" aria-hidden="true"></i> <span>PL</span></summary>
+        <ul><li><a href="/en/document/pdf-edit/" hreflang="en" lang="en" data-lang="en">English</a></li><li><a href="/de/document/pdf-edit/" hreflang="de" lang="de" data-lang="de">Deutsch</a></li><li><a href="/cs/document/pdf-edit/" hreflang="cs" lang="cs" data-lang="cs">Čeština</a></li><li><a href="/pl/document/pdf-edit/" hreflang="pl" lang="pl" data-lang="pl" aria-current="true">Polski</a></li></ul>
+      </details>
+    </div>
+  </div>
+</nav><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Strona główna","item":"https://aintob.com/pl/"},{"@type":"ListItem","position":2,"name":"Konwerter dokumentów","item":"https://aintob.com/pl/document-converter/"},{"@type":"ListItem","position":3,"name":"Konwerter PDF","item":"https://aintob.com/pl/document/pdf-converter/"},{"@type":"ListItem","position":4,"name":"Edytor PDF","item":"https://aintob.com/pl/document/pdf-edit/"}]}</script>
+<nav aria-label="Ścieżka nawigacji" class="breadcrumb-nav">
+  <div class="container" style="max-width:var(--max-width);">
+    <ol class="breadcrumb mb-0" style="padding: 0.625rem 0; font-size: var(--text-sm);">
+      <li class="breadcrumb-item"><a href="/pl/">Strona główna</a></li>
+      <li class="breadcrumb-item"><a href="/pl/document-converter/">Konwerter dokumentów</a></li>
+      <li class="breadcrumb-item"><a href="/pl/document/pdf-converter/">Konwerter PDF</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Edytor PDF</li>
+    </ol>
+  </div>
+</nav><main id="main-content">
+
+  <!-- Hero -->
+  <section class="section-hero" aria-labelledby="hero-h1">
+    <div class="container" style="max-width:860px; text-align:center;">
+      <h1 class="hero-title" id="hero-h1">Edytor PDF</h1>
+      <p class="hero-subtitle mx-auto">Łącz, dziel, obracaj, usuwaj strony i dodawaj znaki wodne – wszystko w Twojej przeglądarce. Bez konta, bez przesyłania, w pełni prywatnie.</p>
+      <div class="d-flex justify-content-center flex-wrap gap-2 mt-3">
+        <span class="format-badge" style="background:var(--color-border);color:var(--color-text-muted);">Połącz</span>
+        <span class="format-badge" style="background:var(--color-border);color:var(--color-text-muted);">Podziel</span>
+        <span class="format-badge" style="background:var(--color-border);color:var(--color-text-muted);">Obróć</span>
+        <span class="format-badge" style="background:var(--color-border);color:var(--color-text-muted);">Usuń strony</span>
+        <span class="format-badge format-badge--to">Znak wodny</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main tool section -->
+  <section class="section-converter" id="converter" aria-labelledby="tool-heading">
+    <div class="container" style="max-width:900px;">
+      <div class="converter-card">
+        <h2 class="visually-hidden" id="tool-heading">Narzędzia edytora PDF</h2>
+
+        <!-- Tool tab nav -->
+        <div class="pdf-tool-nav" role="tablist" aria-label="Narzędzia do edycji PDF">
+          <button class="pdf-tool-tab active" role="tab" aria-selected="true"
+                  data-pdf-tool-tab="merge" aria-controls="panel-merge">
+            <i class="bi bi-files me-1" aria-hidden="true"></i> Połącz
+          </button>
+          <button class="pdf-tool-tab" role="tab" aria-selected="false"
+                  data-pdf-tool-tab="split" aria-controls="panel-split">
+            <i class="bi bi-scissors me-1" aria-hidden="true"></i> Podziel
+          </button>
+          <button class="pdf-tool-tab" role="tab" aria-selected="false"
+                  data-pdf-tool-tab="rotate" aria-controls="panel-rotate">
+            <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i> Obróć &amp; usuń
+          </button>
+          <button class="pdf-tool-tab" role="tab" aria-selected="false"
+                  data-pdf-tool-tab="watermark" aria-controls="panel-watermark">
+            <i class="bi bi-droplet me-1" aria-hidden="true"></i> Znak wodny
+          </button>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════
+             PANEL 1: MERGE
+             ════════════════════════════════════════════════════════ -->
+        <div id="panel-merge" role="tabpanel" data-pdf-tool-panel="merge" class="tool-panel">
+          <h3 class="fw-600 mb-1" style="font-size:var(--text-lg);">Połącz pliki PDF</h3>
+          <p class="text-muted mb-3" style="font-size:var(--text-sm);">Połącz dwa lub więcej plików PDF w jeden dokument w kolejności, w jakiej je wybierzesz.</p>
+
+          <div class="mb-3">
+            <label class="tool-file-label" for="mergeFiles">Wybierz pliki PDF <span class="text-muted fw-normal">(kilka naraz lub pojedynczo)</span></label>
+            <input type="file" id="mergeFiles" class="form-control" accept=".pdf" multiple aria-describedby="mergeFileCount">
+            <p id="mergeFileCount" class="text-muted mt-1 mb-0" style="font-size:var(--text-xs);">Nie wybrano plików</p>
+          </div>
+
+          <div class="explainer-note mb-3">
+            <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+            Pliki są łączone w pokazanej kolejności. Aby ją zmienić, wybierz je ponownie w żądanej kolejności.
+          </div>
+
+          <button class="btn btn-primary btn-lg w-100" id="mergePDFBtn">
+            <i class="bi bi-files me-2" aria-hidden="true"></i>Połącz pliki PDF
+          </button>
+
+          <div id="mergeError"  class="tool-error"  hidden></div>
+          <div id="mergeResult" class="tool-result"  hidden>
+            <p class="result-msg"></p>
+            <button class="btn btn-primary result-download-btn" hidden>
+              <i class="bi bi-download me-2" aria-hidden="true"></i>Pobierz połączony PDF
+            </button>
+            <p class="text-muted mt-2 mb-0" style="font-size:var(--text-xs);">Plik został też pobrany automatycznie.</p>
+          </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════
+             PANEL 2: SPLIT
+             ════════════════════════════════════════════════════════ -->
+        <div id="panel-split" role="tabpanel" data-pdf-tool-panel="split" class="tool-panel" hidden>
+          <h3 class="fw-600 mb-1" style="font-size:var(--text-lg);">Podziel PDF</h3>
+          <p class="text-muted mb-3" style="font-size:var(--text-sm);">Wyodrębnij określony zakres stron z pliku PDF do nowego pliku.</p>
+
+          <div class="mb-3">
+            <label class="tool-file-label" for="splitFile">Wybierz PDF</label>
+            <input type="file" id="splitFile" class="form-control" accept=".pdf">
+          </div>
+
+          <div class="mb-3">
+            <label class="converter-label" for="splitRange">
+              Strony do wyodrębnienia <span id="splitPageCount" class="text-muted fw-normal ms-1" style="font-size:var(--text-xs);"></span>
+            </label>
+            <input type="text" id="splitRange" class="form-control" placeholder="e.g. 1-3, 5, 7-9"
+                   aria-describedby="splitRangeHelp">
+            <p id="splitRangeHelp" class="text-muted mt-1 mb-0" style="font-size:var(--text-xs);">
+              Zakresy oddzielone przecinkami. Przykłady: <code>1-5</code> · <code>2,4,6</code> · <code>1-3,7-10</code>
+            </p>
+          </div>
+
+          <button class="btn btn-primary btn-lg w-100" id="splitPDFBtn">
+            <i class="bi bi-scissors me-2" aria-hidden="true"></i>Wyodrębnij strony
+          </button>
+
+          <div id="splitError"  class="tool-error"  hidden></div>
+          <div id="splitResult" class="tool-result"  hidden>
+            <p class="result-msg"></p>
+            <button class="btn btn-primary result-download-btn" hidden>
+              <i class="bi bi-download me-2" aria-hidden="true"></i>Pobierz podzielony PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════
+             PANEL 3: ROTATE & DELETE
+             ════════════════════════════════════════════════════════ -->
+        <div id="panel-rotate" role="tabpanel" data-pdf-tool-panel="rotate" class="tool-panel" hidden>
+          <h3 class="fw-600 mb-1" style="font-size:var(--text-lg);">Obróć &amp; usuń strony</h3>
+          <p class="text-muted mb-3" style="font-size:var(--text-sm);">Obracaj pojedyncze strony o 90° w prawo lub w lewo albo usuń strony, których nie potrzebujesz. Wszystkie zmiany zostaną zastosowane naraz.</p>
+
+          <div class="mb-3">
+            <label class="tool-file-label" for="rotateFile">Wybierz PDF</label>
+            <input type="file" id="rotateFile" class="form-control" accept=".pdf">
+          </div>
+
+          <!-- Page list (injected by JS after file loads) -->
+          <div id="rotatePanel" hidden>
+            <p class="converter-label mb-2">Strony – klikaj akcje, aby oznaczyć obroty i usunięcia:</p>
+            <div id="pageThumbs" class="page-thumbs-grid mb-3"></div>
+
+            <button class="btn btn-primary btn-lg w-100" id="rotateApplyBtn">
+              <i class="bi bi-check-circle me-2" aria-hidden="true"></i>Zastosuj &amp; pobierz
+            </button>
+          </div>
+
+          <div id="rotateError"  class="tool-error"  hidden></div>
+          <div id="rotateResult" class="tool-result"  hidden>
+            <p class="result-msg"></p>
+            <button class="btn btn-primary result-download-btn" hidden>
+              <i class="bi bi-download me-2" aria-hidden="true"></i>Pobierz edytowany PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════════════════
+             PANEL 4: WATERMARK
+             ════════════════════════════════════════════════════════ -->
+        <div id="panel-watermark" role="tabpanel" data-pdf-tool-panel="watermark" class="tool-panel" hidden>
+          <h3 class="fw-600 mb-1" style="font-size:var(--text-lg);">Dodaj tekstowy znak wodny</h3>
+          <p class="text-muted mb-3" style="font-size:var(--text-sm);">Nałóż ukośny tekstowy znak wodny na każdą stronę pliku PDF.</p>
+
+          <div class="mb-3">
+            <label class="tool-file-label" for="watermarkFile">Wybierz PDF</label>
+            <input type="file" id="watermarkFile" class="form-control" accept=".pdf">
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="converter-label" for="watermarkText">Tekst znaku wodnego</label>
+              <input type="text" id="watermarkText" class="form-control" value="POUFNE" maxlength="40">
+            </div>
+            <div class="col-sm-3">
+              <label class="converter-label" for="watermarkColor">Kolor</label>
+              <input type="color" id="watermarkColor" class="form-control form-control-color w-100" value="#cc0000" title="Kolor znaku wodnego">
+            </div>
+            <div class="col-sm-3">
+              <label class="converter-label" for="watermarkOpacity">Krycie</label>
+              <input type="range" id="watermarkOpacity" class="form-range" min="0.05" max="0.6" step="0.05" value="0.25">
+              <p class="text-muted text-center mb-0" style="font-size:var(--text-xs);" id="watermarkOpacityLabel">25%</p>
+            </div>
+          </div>
+
+          <!-- Live preview -->
+          <div class="mb-3">
+            <label class="converter-label">Podgląd</label>
+            <div class="wm-preview" aria-hidden="true">
+              <span id="wmPreviewText" style="color:#cc0000; opacity:0.25;">POUFNE</span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-lg w-100" id="watermarkBtn">
+            <i class="bi bi-droplet me-2" aria-hidden="true"></i>Zastosuj znak wodny
+          </button>
+
+          <div id="watermarkError"  class="tool-error"  hidden></div>
+          <div id="watermarkResult" class="tool-result"  hidden>
+            <p class="result-msg"></p>
+            <button class="btn btn-primary result-download-btn" hidden>
+              <i class="bi bi-download me-2" aria-hidden="true"></i>Pobierz PDF ze znakiem wodnym
+            </button>
+          </div>
+        </div>
+
+        <!-- Privacy note -->
+        <p class="mode-desc mt-3">
+          <i class="bi bi-shield-lock-fill text-accent" aria-hidden="true"></i>
+          Całe przetwarzanie odbywa się lokalnie w Twojej przeglądarce – żadne pliki nie są nigdzie przesyłane.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- What this tool does -->
+  <section class="section-content" aria-labelledby="about-h2">
+    <div class="container" style="max-width:800px;">
+      <h2 class="section-title" id="about-h2">Co potrafi edytor PDF</h2>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="format-explainer-card">
+            <div class="format-explainer-card__header">
+              <span class="format-explainer-card__icon" aria-hidden="true">📂</span>
+              <h3 class="format-explainer-card__name">Połącz</h3>
+            </div>
+            <p>Połącz dowolną liczbę plików PDF w jeden plik w kolejności, w jakiej je wybierzesz. Przydatne do składania raportów, umów lub dokumentów wieloczęściowych.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="format-explainer-card">
+            <div class="format-explainer-card__header">
+              <span class="format-explainer-card__icon" aria-hidden="true">✂️</span>
+              <h3 class="format-explainer-card__name">Podziel</h3>
+            </div>
+            <p>Wyodrębnij określony zakres stron do osobnego pliku PDF. Wpisz dowolny zakres, na przykład <code>1-5</code> lub <code>2,4,7-10</code>, aby otrzymać dokładnie te strony, których potrzebujesz.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="format-explainer-card">
+            <div class="format-explainer-card__header">
+              <span class="format-explainer-card__icon" aria-hidden="true">🔄</span>
+              <h3 class="format-explainer-card__name">Obróć &amp; usuń</h3>
+            </div>
+            <p>Popraw strony leżące bokiem lub do góry nogami, obracając je za każdym razem o 90°. Przed udostępnieniem usuń zbędne strony. Zmiany są stosowane razem w jednym przebiegu.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="format-explainer-card">
+            <div class="format-explainer-card__header">
+              <span class="format-explainer-card__icon" aria-hidden="true">💧</span>
+              <h3 class="format-explainer-card__name">Znak wodny</h3>
+            </div>
+            <p>Dodaj ukośną pieczątkę tekstową – na przykład POUFNE, SZKIC lub nazwę firmy – na każdej stronie. Kolorem i kryciem decydujesz o widoczności.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="section-how-it-works" aria-labelledby="how-h2">
+    <div class="container" style="max-width:800px;">
+      <h2 class="section-title" id="how-h2">Jak edytować PDF</h2>
+      <ol class="how-it-works-list">
+        <li>Wybierz potrzebne narzędzie: Połącz, Podziel, Obróć &amp; usuń lub Znak wodny.</li>
+        <li>Wybierz plik PDF (lub kilka plików do połączenia).</li>
+        <li>Ustaw opcje – zakresy stron, obrót, tekst znaku wodnego i tak dalej.</li>
+        <li>Kliknij przycisk akcji i od razu pobierz gotowy plik PDF.</li>
+      </ol>
+    </div>
+  </section>
+
+  <aside class="open-online" aria-label="open-online.com">
+  <div class="container" style="max-width:800px;">
+    <div class="open-online__inner">
+      <span class="open-online__icon" aria-hidden="true">📂</span>
+      <div class="open-online__text">
+        <strong>Chcesz tylko otworzyć plik, a nie go konwertować?</strong>
+        <p>Na open-online.com otworzysz wiele różnych typów plików online – bez wcześniejszej konwersji.</p>
+      </div>
+      <a class="btn btn-outline-secondary open-online__btn" href="https://open-online.com/" target="_blank" rel="noopener">Otwórz pliki na open-online.com <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i><span class="visually-hidden"> (otwiera się w nowej karcie)</span></a>
+    </div>
+  </div>
+</aside>
+  <div class="privacy-block">
+    <div class="privacy-block__inner">
+      <span class="privacy-icon" aria-hidden="true">🔒</span>
+      <div>
+        <strong>100% prywatnie, w przeglądarce</strong>
+        <p>Każda operacja korzysta z pdf-lib działającego lokalnie w Twojej przeglądarce. Twoje pliki PDF nigdy nie opuszczają urządzenia – bez przesyłania, bez kont, bez logów.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related -->
+  <section class="related-section" aria-labelledby="related-h2">
+    <div class="container" style="max-width:var(--max-width);">
+      <h2 class="section-title mb-4" id="related-h2">Więcej narzędzi PDF</h2>
+      <div class="converter-grid">
+        <a href="/pl/document/pdf-to-txt/" class="converter-card-link">
+          <span class="converter-card-link__label">Konwerter PDF na TXT</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/pl/document/pdf-to-jpg/" class="converter-card-link">
+          <span class="converter-card-link__label">Konwerter PDF na JPG</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/pl/document/pdf-to-png/" class="converter-card-link">
+          <span class="converter-card-link__label">Konwerter PDF na PNG</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/pl/document/pdf-to-searchable/" class="converter-card-link">
+          <span class="converter-card-link__label">PDF z możliwością wyszukiwania (OCR)</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/pl/document/word-to-pdf/" class="converter-card-link">
+          <span class="converter-card-link__label">Konwerter Word na PDF</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/pl/document/markdown-to-pdf/" class="converter-card-link">
+          <span class="converter-card-link__label">Konwerter Markdown na PDF</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+  <!-- FAQ -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","inLanguage":"pl","mainEntity":[{"@type":"Question","name":"Czy mogę połączyć więcej niż dwa pliki PDF?","acceptedAnswer":{"@type":"Answer","text":"Tak – wybierz tyle plików PDF, ile chcesz. Zostaną połączone w wybranej przez Ciebie kolejności."}},{"@type":"Question","name":"Czy podział pliku PDF zmienia oryginał?","acceptedAnswer":{"@type":"Answer","text":"Nie. Tworzony jest nowy plik PDF tylko z wyodrębnionymi stronami. Oryginał nigdy nie jest modyfikowany."}},{"@type":"Question","name":"Czy moje pliki PDF są przesyłane na serwer?","acceptedAnswer":{"@type":"Answer","text":"Nie. Cała edycja korzysta z pdf-lib działającego w całości w Twojej przeglądarce. Twoje pliki nigdy nie opuszczają urządzenia."}},{"@type":"Question","name":"Czy mogę usunąć znak wodny z pliku PDF?","acceptedAnswer":{"@type":"Answer","text":"To narzędzie dodaje znaki wodne, ale nie usuwa ich z istniejących plików PDF. Usuwanie znaków wodnych osadzonych w treści PDF nie jest obsługiwane w narzędziu działającym wyłącznie w przeglądarce."}},{"@type":"Question","name":"Jaki jest limit rozmiaru pliku?","acceptedAnswer":{"@type":"Answer","text":"Nie ma sztywnego limitu, ale bardzo duże pliki PDF (ponad 100 MB) mogą działać wolno lub obciążać pamięć przeglądarki. Najlepsze wyniki daje trzymanie się plików poniżej 50 MB."}}]}</script>
+  <section class="section-faq" aria-labelledby="faq-heading">
+    <div class="container" style="max-width:800px;">
+      <div class="text-center mb-5">
+        <p class="section-label">FAQ</p>
+        <h2 class="section-title" id="faq-heading">Najczęściej zadawane pytania</h2>
+      </div>
+      <div class="accordion" id="faqAccordion">
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq0" aria-expanded="true">
+              Czy mogę połączyć więcej niż dwa pliki PDF?
+            </button>
+          </h3>
+          <div id="faq0" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">Tak – wybierz tyle plików PDF, ile chcesz. Zostaną połączone w wybranej przez Ciebie kolejności.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" aria-expanded="false">
+              Czy podział pliku PDF zmienia oryginał?
+            </button>
+          </h3>
+          <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">Nie. Tworzony jest nowy plik PDF tylko z wyodrębnionymi stronami. Oryginał nigdy nie jest modyfikowany.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" aria-expanded="false">
+              Czy moje pliki PDF są przesyłane na serwer?
+            </button>
+          </h3>
+          <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">Nie. Cała edycja korzysta z pdf-lib działającego w całości w Twojej przeglądarce. Twoje pliki nigdy nie opuszczają urządzenia.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" aria-expanded="false">
+              Czy mogę usunąć znak wodny z pliku PDF?
+            </button>
+          </h3>
+          <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">To narzędzie dodaje znaki wodne, ale nie usuwa ich z istniejących plików PDF. Usuwanie znaków wodnych osadzonych w treści PDF nie jest obsługiwane w narzędziu działającym wyłącznie w przeglądarce.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4" aria-expanded="false">
+              Jaki jest limit rozmiaru pliku?
+            </button>
+          </h3>
+          <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">Nie ma sztywnego limitu, ale bardzo duże pliki PDF (ponad 100 MB) mogą działać wolno lub obciążać pamięć przeglądarki. Najlepsze wyniki daje trzymanie się plików poniżej 50 MB.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer-main" role="contentinfo">
+  <div class="container" style="max-width:var(--max-width);">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-4">
+      <div>
+        <a href="/pl/" class="footer-logo" aria-label="AintoB – strona główna">🅰️➡️🅱️ AintoB</a>
+        <p class="footer-copy">© 2026 AintoB.com – Wszelkie prawa zastrzeżone.</p>
+        <p class="footer-gdpr-badge"><i class="bi bi-shield-check" aria-hidden="true"></i> Prywatność przede wszystkim · Tylko w przeglądarce · Bez przesyłania plików</p>
+        <p class="footer-langs"><span>Języki:</span> <a href="/en/document/pdf-edit/" hreflang="en" lang="en" data-lang="en">English</a> · <a href="/de/document/pdf-edit/" hreflang="de" lang="de" data-lang="de">Deutsch</a> · <a href="/cs/document/pdf-edit/" hreflang="cs" lang="cs" data-lang="cs">Čeština</a> · <a href="/pl/document/pdf-edit/" hreflang="pl" lang="pl" data-lang="pl" aria-current="true">Polski</a></p>
+      </div>
+      <nav aria-label="Nawigacja w stopce">
+        <ul class="footer-links">
+          <li><a href="/pl/file-converter/">Wszystkie konwertery</a></li>
+          <li><a href="/pl/image-converter/">Konwertery obrazów</a></li>
+          <li><a href="/pl/document-converter/">Konwertery dokumentów</a></li>
+          <li><a href="/pl/spreadsheet-converter/">Konwertery arkuszy</a></li>
+          <li><a href="/pl/audio-converter/">Konwertery audio</a></li>
+          <li><a href="/pl/video-converter/">Konwertery wideo</a></li>
+          <li><a href="/pl/data-converter/">Narzędzia do danych i tekstu</a></li>
+          <li><a href="/pl/document-converter/">Konwerter dokumentów</a></li>
+          <li><a href="/pl/document/pdf-converter/">Konwerter PDF</a></li>
+          <li><a href="/pl/privacy/">Polityka prywatności</a></li>
+          <li><a href="/pl/imprint/">Informacje prawne</a></li>
+          <li><a href="https://open-online.com/" target="_blank" rel="noopener">Otwieranie plików online</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<!-- Cookie Banner -->
+<div id="cookie-banner" role="dialog" aria-label="Ustawienia plików cookie" aria-live="polite">
+  <div class="container" style="max-width:var(--max-width); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem;">
+    <p class="cookie-text mb-0">Używamy wyłącznie niezbędnych plików cookie. Bez śledzenia bez Twojej zgody. <a href="/pl/privacy/">Polityka prywatności</a></p>
+    <div style="display:flex; gap:.5rem;">
+      <button class="btn btn-primary btn-sm" onclick="acceptCookies('all')">Zaakceptuj wszystkie</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="acceptCookies('essential')">Tylko niezbędne</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+<script src="/assets/js/lang/pl.js" defer></script>
+<script src="/assets/js/site.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js" defer></script>
+<script src="/assets/js/converters/pdf-edit.js" defer></script>
+<script src="/assets/js/converters/pdf-edit-preview.js" defer></script>
+</body>
+</html>

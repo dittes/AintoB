@@ -9,6 +9,7 @@
 
 (function () {
   'use strict';
+  var __t = window.__t || function (s, v) { return v ? s.replace(/\{(\w+)\}/g, function (m, k) { return v[k] !== undefined ? v[k] : m; }) : s; };
 
   // ── Shared helpers ─────────────────────────────────────────────────────────
 
@@ -54,7 +55,7 @@
     if (loading) {
       btn._orig = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing…';
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + __t('Processing…');
     } else {
       btn.disabled = false;
       if (btn._orig) btn.innerHTML = btn._orig;
@@ -74,11 +75,11 @@
     for (var i = 0; i < parts.length; i++) {
       var part  = parts[i].trim();
       var match = part.match(/^(\d+)(?:-(\d+))?$/);
-      if (!match) throw new Error('Invalid page range: "' + part + '". Use e.g. "1-3,5,7".');
+      if (!match) throw new Error(__t('Invalid page range: "{part}". Use e.g. "1-3,5,7".', { part: part }));
       var from = parseInt(match[1]);
       var to   = match[2] ? parseInt(match[2]) : from;
       if (from < 1 || to > numPages || from > to) {
-        throw new Error('Page range "' + part + '" is out of bounds (1–' + numPages + ').');
+        throw new Error(__t('Page range "{part}" is out of bounds (1–{n}).', { part: part, n: numPages }));
       }
       for (var p = from; p <= to; p++) {
         if (!seen[p]) { result.push(p - 1); seen[p] = true; } // convert to 0-indexed
@@ -101,7 +102,7 @@
     if (resultEl) resultEl.hidden = true;
 
     if (!input || !input.files || input.files.length < 2) {
-      showToolError('mergeError', 'Please select at least 2 PDF files to merge.');
+      showToolError('mergeError', __t('Please select at least 2 PDF files to merge.'));
       return;
     }
 
@@ -119,10 +120,10 @@
 
       var bytes = await merged.save();
       var blob  = new Blob([bytes], { type: 'application/pdf' });
-      showResult('mergeResult', 'Merged ' + input.files.length + ' PDFs into one file.', blob, 'merged.pdf');
+      showResult('mergeResult', __t('Merged {n} PDFs into one file.', { n: input.files.length }), blob, 'merged.pdf');
 
     } catch (err) {
-      showToolError('mergeError', 'Merge failed: ' + err.message);
+      showToolError('mergeError', __t('Merge failed: {msg}', { msg: __t(err.message) }));
     } finally {
       setBtn(btn, false);
     }
@@ -143,12 +144,12 @@
     if (resultEl) resultEl.hidden = true;
 
     if (!fileInput || !fileInput.files || !fileInput.files[0]) {
-      showToolError('splitError', 'Please upload a PDF first.');
+      showToolError('splitError', __t('Please upload a PDF first.'));
       return;
     }
     var rangeStr = rangeInput ? rangeInput.value.trim() : '';
     if (!rangeStr) {
-      showToolError('splitError', 'Please enter a page range (e.g. "1-3,5").');
+      showToolError('splitError', __t('Please enter a page range (e.g. "1-3,5").'));
       return;
     }
 
@@ -159,7 +160,7 @@
       var srcDoc = await PDFLib.PDFDocument.load(ab);
       var total  = srcDoc.numPages;
 
-      if (pageCount) pageCount.textContent = '(' + total + ' pages total)';
+      if (pageCount) pageCount.textContent = __t('({n} pages total)', { n: total });
 
       var indices = parsePageRange(rangeStr, total);
       var newDoc  = await PDFLib.PDFDocument.create();
@@ -168,10 +169,10 @@
 
       var bytes   = await newDoc.save();
       var blob    = new Blob([bytes], { type: 'application/pdf' });
-      showResult('splitResult', 'Extracted ' + indices.length + ' page(s) into a new PDF.', blob, 'split.pdf');
+      showResult('splitResult', __t('Extracted {n} page(s) into a new PDF.', { n: indices.length }), blob, 'split.pdf');
 
     } catch (err) {
-      showToolError('splitError', 'Split failed: ' + err.message);
+      showToolError('splitError', __t('Split failed: {msg}', { msg: __t(err.message) }));
     } finally {
       setBtn(btn, false);
     }
@@ -198,11 +199,11 @@
       thumb.className = 'page-thumb';
       thumb.dataset.pageIndex = i;
       thumb.innerHTML = [
-        '<span class="page-thumb__num">Page ' + (i + 1) + '</span>',
+        '<span class="page-thumb__num">' + __t('Page {n}', { n: i + 1 }) + '</span>',
         '<div class="page-thumb__actions">',
-        '  <button class="btn btn-sm btn-outline-secondary" data-action="ccw" data-page="' + i + '" title="Rotate 90° CCW">↺ 90°</button>',
-        '  <button class="btn btn-sm btn-outline-secondary" data-action="cw"  data-page="' + i + '" title="Rotate 90° CW">↻ 90°</button>',
-        '  <button class="btn btn-sm btn-outline-danger"    data-action="del" data-page="' + i + '" title="Delete page">✕ Delete</button>',
+        '  <button class="btn btn-sm btn-outline-secondary" data-action="ccw" data-page="' + i + '" title="' + __t('Rotate 90° CCW') + '">↺ 90°</button>',
+        '  <button class="btn btn-sm btn-outline-secondary" data-action="cw"  data-page="' + i + '" title="' + __t('Rotate 90° CW') + '">↻ 90°</button>',
+        '  <button class="btn btn-sm btn-outline-danger"    data-action="del" data-page="' + i + '" title="' + __t('Delete page') + '">✕ ' + __t('Delete') + '</button>',
         '</div>'
       ].join('');
       thumbContainer.appendChild(thumb);
@@ -222,7 +223,7 @@
     if (resultEl) resultEl.hidden = true;
 
     if (!rotatePdfDoc) {
-      showToolError('rotateError', 'Please upload a PDF first.');
+      showToolError('rotateError', __t('Please upload a PDF first.'));
       return;
     }
 
@@ -264,7 +265,7 @@
         var kept  = srcDoc.numPages - Object.keys(deleted).length;
         showResult('rotateResult', 'Done — ' + kept + ' page(s) saved.', blob, 'edited.pdf');
       } catch (err) {
-        showToolError('rotateError', 'Processing failed: ' + err.message);
+        showToolError('rotateError', __t('Processing failed: {msg}', { msg: __t(err.message) }));
       } finally {
         setBtn(btn, false);
       }
@@ -274,6 +275,23 @@
   // ═══════════════════════════════════════════════════════════════
   // TOOL 4: WATERMARK
   // ═══════════════════════════════════════════════════════════════
+  // The built-in PDF fonts only cover Western-European (WinAnsi) characters. Rather than failing on
+  // letters such as ů, ě, ł or ą, fold each unsupported character to its base letter.
+  var FOLD = { 'ł': 'l', 'Ł': 'L', 'đ': 'd', 'Đ': 'D', 'ø': 'o', 'Ø': 'O', 'ı': 'i', 'ħ': 'h', 'Ħ': 'H' };
+  function canEncode(font, s) {
+    try { font.widthOfTextAtSize(s, 10); return true; } catch (e) { return false; }
+  }
+  function foldUnsupported(font, str) {
+    var out = '', changed = false;
+    Array.from(str).forEach(function (ch) {
+      if (canEncode(font, ch)) { out += ch; return; }
+      var f = FOLD[ch] || ch.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      out += (f && canEncode(font, f)) ? f : '?';
+      changed = true;
+    });
+    return { text: out, changed: changed };
+  }
+
   async function runWatermark() {
     var fileInput  = document.getElementById('watermarkFile');
     var textInput  = document.getElementById('watermarkText');
@@ -287,7 +305,7 @@
     if (resultEl) resultEl.hidden = true;
 
     if (!fileInput || !fileInput.files || !fileInput.files[0]) {
-      showToolError('watermarkError', 'Please upload a PDF first.');
+      showToolError('watermarkError', __t('Please upload a PDF first.'));
       return;
     }
     var text = textInput ? textInput.value.trim() : 'CONFIDENTIAL';
@@ -309,6 +327,8 @@
       var ab     = await fileInput.files[0].arrayBuffer();
       var pdfDoc = await PDFLib.PDFDocument.load(ab);
       var font   = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+      var folded = foldUnsupported(font, text);
+      text = folded.text;
       var pages  = pdfDoc.getPages();
       var FONT_SIZE = 56;
 
@@ -333,9 +353,10 @@
 
       var bytes = await pdfDoc.save();
       var blob  = new Blob([bytes], { type: 'application/pdf' });
-      showResult('watermarkResult', 'Watermark "' + text + '" applied to ' + pages.length + ' page(s).', blob, 'watermarked.pdf');
+      showResult('watermarkResult', __t('Watermark "{text}" applied to {n} page(s).', { text: text, n: pages.length }) +
+        (folded.changed ? ' ' + __t('Some characters are not available in the standard PDF font and were simplified (for example "Ł" became "L").') : ''), blob, 'watermarked.pdf');
     } catch (err) {
-      showToolError('watermarkError', 'Watermark failed: ' + err.message);
+      showToolError('watermarkError', __t('Watermark failed: {msg}', { msg: __t(err.message) }));
     } finally {
       setBtn(btn, false);
     }
@@ -371,8 +392,8 @@
         var label = document.getElementById('mergeFileCount');
         if (label) {
           label.textContent = this.files.length
-            ? this.files.length + ' file(s) selected'
-            : 'No files selected';
+            ? __t('{n} file(s) selected', { n: this.files.length })
+            : __t('No files selected');
         }
       });
     }
@@ -391,7 +412,7 @@
           var ab     = await this.files[0].arrayBuffer();
           var doc    = await PDFLib.PDFDocument.load(ab);
           var el     = document.getElementById('splitPageCount');
-          if (el) el.textContent = '(' + doc.numPages + ' pages total)';
+          if (el) el.textContent = __t('({n} pages total)', { n: doc.numPages });
         } catch (e) { /* ignore */ }
       });
     }
@@ -402,7 +423,7 @@
       rotateFile.addEventListener('change', async function () {
         if (!this.files || !this.files[0]) return;
         try { await loadRotateFile(this.files[0]); } catch (e) {
-          showToolError('rotateError', 'Failed to load PDF: ' + e.message);
+          showToolError('rotateError', __t('Failed to load PDF: {msg}', { msg: __t(e.message) }));
         }
       });
     }
@@ -422,17 +443,17 @@
           thumb.dataset.deleted = 'true';
           thumb.style.opacity   = '0.35';
           thumb.style.textDecoration = 'line-through';
-          btn.textContent = '✓ Deleted';
+          btn.textContent = '✓ ' + __t('Deleted');
           btn.disabled    = true;
           // Add undo button
           var undo = document.createElement('button');
           undo.className   = 'btn btn-sm btn-outline-secondary ms-1';
-          undo.textContent = 'Undo';
+          undo.textContent = __t('Undo');
           undo.addEventListener('click', function () {
             thumb.dataset.deleted = 'false';
             thumb.style.opacity   = '';
             thumb.style.textDecoration = '';
-            btn.textContent = '✕ Delete';
+            btn.textContent = '✕ ' + __t('Delete');
             btn.disabled    = false;
             undo.remove();
           });

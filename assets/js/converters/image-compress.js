@@ -5,6 +5,7 @@
  */
 (function () {
   'use strict';
+  var __t = window.__t || function (s, v) { return v ? s.replace(/\{(\w+)\}/g, function (m, k) { return v[k] !== undefined ? v[k] : m; }) : s; };
 
   function el(id) { return document.getElementById(id); }
 
@@ -23,18 +24,18 @@
     ctrl.id = 'compressControls';
     ctrl.className = 'mb-3';
     ctrl.innerHTML =
-      '<label class="converter-label" for="compressQ">Quality: <span id="compressQVal">70</span>%</label>' +
+      '<label class="converter-label" for="compressQ">' + __t('Quality') + ': <span id="compressQVal">70</span>%</label>' +
       '<input type="range" id="compressQ" class="form-range" min="10" max="95" step="5" value="70">' +
       '<div class="row g-2 mt-1">' +
       '  <div class="col-6">' +
-      '    <label class="converter-label" for="compressFormat">Output format</label>' +
+      '    <label class="converter-label" for="compressFormat">' + __t('Output format') + '</label>' +
       '    <select id="compressFormat" class="form-select">' +
-      '      <option value="jpg" selected>JPG (most compatible)</option>' +
-      '      <option value="webp">WebP (smallest)</option>' +
+      '      <option value="jpg" selected>' + __t('JPG (most compatible)') + '</option>' +
+      '      <option value="webp">' + __t('WebP (smallest)') + '</option>' +
       '    </select></div>' +
       '  <div class="col-6">' +
-      '    <label class="converter-label" for="compressMaxW">Max width (optional)</label>' +
-      '    <input type="number" id="compressMaxW" class="form-control" placeholder="e.g. 1920" min="1" max="20000"></div>' +
+      '    <label class="converter-label" for="compressMaxW">' + __t('Max width (optional)') + '</label>' +
+      '    <input type="number" id="compressMaxW" class="form-control" placeholder="' + __t('e.g. 1920') + '" min="1" max="20000"></div>' +
       '</div>';
 
     settings.insertBefore(ctrl, el('convertBtn'));
@@ -93,7 +94,7 @@
       }
       var saved = input.size > 0 ? Math.round((1 - blob.size / input.size) * 100) : 0;
       info.textContent = formatBytes(input.size) + ' → ' + formatBytes(blob.size) +
-        (saved > 0 ? ' (' + saved + '% smaller)' : ' (no size reduction — try a lower quality)');
+        ' ' + (saved > 0 ? __t('({n}% smaller)', { n: saved }) : __t('(no size reduction — try a lower quality)'));
     }
 
     var base = (input.name || 'image').replace(/\.[^.]+$/, '');

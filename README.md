@@ -1,100 +1,145 @@
-# AintoB.com — Browser-Based File Converter Suite
+# AintoB.com — Multilingual, Browser-Based File Converter Suite
 
-**210 static pages** generated from `page_map.csv` · Pure HTML/CSS/JS · No backend · No uploads
+**212 pages × 4 languages (English, Deutsch, Čeština, Polski)** · generated from `page_map.csv` + locale files ·
+pure HTML/CSS/JS · no backend · no uploads
 
-Every conversion runs entirely in the visitor's browser (Canvas, File API, Web Workers,
-WASM). Nothing is ever sent to a server, which makes the site private by design and free
-to host on any static host (currently GitHub Pages, see `CNAME`).
+Every conversion runs in the visitor's browser (Canvas, File API, Web Workers, WASM). Nothing is sent to a
+server, so the site is private by design and free to host on any static host (currently GitHub Pages, see `CNAME`).
 
-## Architecture
-
-```
-/
-├── build.js            ← Static site generator (plain Node.js, no dependencies)
-├── page_map.csv        ← Source of truth: one row per page (SEO copy, formats, priority)
-├── assets/
-│   ├── css/
-│   │   ├── base.css    ← Design tokens + Bootstrap overrides
-│   │   └── site.css    ← Component styles (grids, cards, converter widget)
-│   └── js/
-│       ├── site.js     ← Shared widget logic: drag-drop, tabs, convert/download flow
-│       └── converters/ ← One script per converter (loaded only on pages that need it)
-├── sitemap.xml         ← Generated (166 indexable URLs)
-├── robots.txt          ← Generated
-└── image/ document/ spreadsheet/ audio/ video/ data/ …   ← Generated pages
-```
-
-### Rebuild
+## URL structure
 
 ```
-node build.js
+/                         language router (picks /en/ /de/ /cs/ /pl/ from the saved choice or browser language)
+/en/…  /de/…  /cs/…  /pl/…   the site, one subfolder per language, identical slugs in every language
+/image/png-to-jpg/ …      OLD (pre-i18n) URLs → redirect stubs pointing at /en/…  (see "URL migration")
 ```
 
-Reads `page_map.csv`, writes every page to the repo root, regenerates `sitemap.xml` and
-`robots.txt`. Pages with Page Type `Custom` (hand-built tools like `/document/pdf-edit/`)
-are left untouched but stay in the sitemap.
+`/en/image/png-to-jpg/` ⇄ `/de/image/png-to-jpg/` ⇄ `/cs/…` ⇄ `/pl/…`. Slugs stay English on purpose: it keeps
+hreflang mapping trivial and every translation reachable with a one-segment swap. Titles, H1s and body copy are
+localised per language.
 
-### How a converter page works
+## Repository layout
 
-1. `build.js` → `getConverterConfig(from, to, slug)` maps each page to a converter script
-   plus any CDN libraries it needs. These are appended as `<script defer>` tags.
-2. The page's converter script sets `window.performConversion(input)` where `input` is a
-   `File` (upload) or `string` (paste mode). It returns `{ blob, filename }` — or
-   `{ printMode: true, printFn }` for print-based PDF output.
-3. `assets/js/site.js` wires the widget UI (drop zone, paste tab, convert button,
-   download button) around that contract.
+```
+build.js                  generator (plain Node, no dependencies):  node build.js
+page_map.csv              page list + English SEO copy (source of truth for structure)
+i18n/
+  index.js                language list + locale loader
+  en/ de/ cs/ pl/
+    ui.js                 UI strings, title/meta templates, category copy, tool pages, FAQs, legal text
+    formats.js            per-format description / use cases / limitation / compatibility
+    tpl.js                English → translation for the hand-written PDF page templates   (not en)
+    js.js                 English → translation for messages shown by browser scripts       (not en)
+templates/                hand-written tool pages (pdf-edit, pdf-to-searchable): English HTML + page CSS
+lib/
+  converters.js           page → converter script + CDN libs mapping
+  tpl.js                  build-time HTML translator used for templates/
+  check-i18n.js           completeness checks (run on every build)
+  csv.js
+scripts/verify.js         post-build checks (hreflang, sitemap, links, redirects, lengths)
+assets/
+  css/                    base.css (tokens) + site.css (components)
+  js/site.js              shared widget + __t() runtime translation helper
+  js/converters/          one script per converter, loaded only on pages that need it
+  js/lang/<code>.js       GENERATED runtime dictionaries (do not edit; edit i18n/<code>/js.js)
+en/ de/ cs/ pl/           GENERATED pages
+index.html                GENERATED language router
+_redirects                GENERATED 301 map for hosts that support it (Netlify, Cloudflare Pages)
+sitemap.xml robots.txt    GENERATED
+```
 
-Converter scripts can inject extra controls into `#converterSettings` / `#panelPaste`
-(see `image-resize.js` or `data-convert.js` for the pattern).
+Everything marked GENERATED is rewritten by `node build.js`; commit the output (GitHub Pages serves the repo root).
 
-### Adding a new converter
+## Build and verify
 
-1. Add a row to `page_map.csv` (copy a similar row; unique ID, slug, SEO title/meta/H1,
-   keywords, `Parent Hub`, Priority). If the format is new, add it to the `FMT`
-   knowledge base in `build.js`.
-2. Map the page to a script in `getConverterConfig()` in `build.js`.
-3. Write the script in `assets/js/converters/` implementing `window.performConversion`.
-4. `node build.js`, then test with a real file at `npx serve -p 4200 .`.
+```
+node build.js            # builds all languages; fails if any translation is missing
+node scripts/verify.js   # checks the generated site
+AINTOB_LANGS=en,de node build.js   # dev shortcut: only some languages (never deploy a filtered build)
+```
 
-## Converter engines
+`build.js` refuses to build if a locale lacks a string/placeholder/format/tool page that English has, or if the
+runtime dictionary misses a message that a browser script can show (it scans `assets/js` for `__t('…')` calls and
+`new Error('…')` messages). `scripts/verify.js` then checks all 848 pages: `<html lang>`, self-canonical,
+title/description length and uniqueness, hreflang reciprocity, sitemap ↔ page agreement, every internal link and
+asset, and the old-URL redirects.
 
-| Engine | Used for | Loaded |
-|--------|----------|--------|
-| Canvas API | Image ↔ image (PNG, JPG, WebP, AVIF, BMP, ICO), resize, compress | native |
-| ffmpeg.wasm (~31 MB, single-thread core) | All audio & video pages, TIFF pairs, X→GIF | lazily on first conversion, cached |
-| pdf.js / pdf-lib / jsPDF | PDF read, edit, create | CDN per page |
-| mammoth / markdown-it / turndown / html-docx | Word, Markdown, HTML documents | CDN per page |
-| SheetJS (xlsx) | CSV, TSV, Excel, ODS | CDN per page |
-| js-yaml | JSON ↔ YAML | CDN per page |
-| Tesseract.js | OCR (searchable PDF) | lazily |
-| heic2any | HEIC decode | CDN per page |
-| Native JS | JSON/CSV/XML/Base64/URL/case text tools | — |
+## SEO setup
 
-"To PDF" text converters use a print-window flow (`window.print()` → Save as PDF) for
-honest, high-fidelity output instead of a lossy client-side PDF renderer.
+- `<link rel="alternate" hreflang>` for en/de/cs/pl plus `x-default` → `/en/…` on every indexable page; `noindex`
+  pages carry none. `og:locale` + `og:locale:alternate`, `inLanguage` in JSON-LD, localised breadcrumbs/FAQ schema.
+- `sitemap.xml` lists every indexable page in every language with `xhtml:link` alternates.
+- Language switcher (plain `<details>` links, crawlable) in the nav and a language row in the footer.
+- Unique, keyword-targeted title/meta/H1 per page and language, e.g. *PNG in JPG umwandeln* (de),
+  *Převodník PNG na JPG* (cs), *Konwerter PNG na JPG* (pl).
 
-## Tool categories (210 pages)
+## URL migration (301-equivalent notes)
 
-- **Image**: AVIF, BMP, GIF, HEIC, ICO, JPG, PNG, SVG, TIFF, WebP conversions, plus
-  Image Resizer and Image Compressor.
-- **Document**: PDF, Word, HTML, Markdown, RTF, TXT — plus the hand-built PDF Editor
-  (merge/split/rotate/watermark) and PDF OCR (searchable PDF) tools.
-- **Spreadsheet**: CSV, TSV, Excel, ODS.
-- **Audio**: MP3, WAV, M4A, OGG + audio extraction from MP4/MOV/AVI/WebM — via ffmpeg.wasm.
-- **Video**: MP4, MOV, AVI, WebM, GIF — via ffmpeg.wasm.
-- **Data & Text**: JSON↔CSV, JSON↔YAML, XML→JSON, JSON Formatter & Minifier,
-  Base64 encode/decode, URL encode/decode, Case Converter.
+Moving the site into language subfolders changed every URL. GitHub Pages cannot send HTTP 301s, so:
 
-## SEO
+1. Every old URL (`/image/png-to-jpg/`, `/document/pdf-edit/`, `/image-converter/`, `/privacy/`, … 211 in total) is now a
+   small redirect stub: `canonical` → the `/en/` page, `noindex`, and a script that forwards to the visitor's saved or
+   browser language (default `/en/`), with a `<noscript>` meta-refresh fallback and visible links.
+2. `_redirects` contains the same mapping as real `301`s (`/image/png-to-jpg/ /en/image/png-to-jpg/ 301`). It is ignored
+   on GitHub Pages but works unchanged if the site ever moves to Netlify or Cloudflare Pages.
+3. English page copy is unchanged except for the fixes listed below, so existing rankings carry over to `/en/`.
+   After deploying, submit the new `sitemap.xml` in Search Console and watch its page-indexing report for the old URLs
+   until Google has picked up the `/en/` equivalents.
 
-- Unique `<title>`, meta description, H1, and format-specific body copy per page
-- Canonical, Open Graph, and Twitter card tags on every page
-- JSON-LD: SoftwareApplication + FAQPage on tool pages, CollectionPage + BreadcrumbList
-  on hubs, WebSite + SearchAction on the homepage
-- Internal linking: breadcrumbs, related-converter grids, reverse-conversion links,
-  format hubs, category hubs
-- `sitemap.xml` (priorities + change frequencies) and `robots.txt` generated on build
-- Skip-to-content link, semantic HTML, WCAG-AA-minded markup
+Fixed while migrating: pair pages previously printed template instructions as body text ("…Add 2–3 concrete use cases and
+one honest limitation."); intros are now built from the format facts. The homepage no longer advertises a `SearchAction`
+for a `/search/` page that does not exist.
+
+## open-online.com
+
+The sister site for *opening* (not converting) files is linked from the navigation, the footer, a callout on every
+converter / format / category page, and the homepage. The URL lives in one constant, `OPEN_ONLINE_URL` in `build.js`
+(currently the site's homepage — it has no sub-pages yet; point it at per-format URLs once they exist).
+
+## How a converter page works
+
+1. `lib/converters.js` → `getConverterConfig(from, to, slug)` maps a page to a converter script plus CDN libraries.
+2. The script sets `window.performConversion(input)` (`File` for uploads, `string` for pasted text) and returns
+   `{ blob, filename }`, or `{ printMode: true, printFn }` for print-based PDF output.
+3. `assets/js/site.js` wires the widget (drop zone, paste tab, convert/download) around that contract.
+4. User-visible strings in scripts go through `__t('English text', {vars})`; error messages thrown with
+   `new Error('English text')` are translated automatically where they are shown. Add the translations to
+   `i18n/<code>/js.js` (a trailing `*` in a key matches a message with a variable tail).
+
+Engines: Canvas (images), ffmpeg.wasm (audio/video/TIFF/GIF, ~31 MB, loaded lazily on first conversion), pdf.js,
+pdf-lib, jsPDF, mammoth, markdown-it, turndown, SheetJS, js-yaml, heic2any, Tesseract.js (OCR).
+
+## Adding a converter
+
+1. Add a row to `page_map.csv` (unique ID, slug, English title/meta/H1, formats, priority, `Parent Hub`).
+2. Map it to a script in `lib/converters.js`; write the script in `assets/js/converters/`.
+3. New format? Add it to `i18n/en/formats.js` **and** to `i18n/de|cs|pl/formats.js`.
+4. Pages that are not an ordinary "A to B" pair (same source and target, or anything under `/data/`) need an entry in
+   `tools{}` in every locale's `ui.js` (name, title, meta, h1, optional button label `action` and intro `value`).
+5. `node build.js && node scripts/verify.js`, then test with a real file (`npx serve -p 4200 .`).
+
+Ordinary pairs need no translation work: their titles, descriptions and copy come from the locale templates.
+
+## Adding a language
+
+1. Create `i18n/<code>/` with `ui.js`, `formats.js`, `tpl.js` and `js.js`. Start by copying the German files
+   (`i18n/de/`) — English has no `tpl.js`/`js.js` because it needs no translation. Mind plurals: the existing locales
+   phrase counts as "label: number", so one string works for 1, 2–4 and 5+.
+2. Add `{ code, name, short, htmlLang, ogLocale, dateLocale, ocr }` to `ALL_LANGS` in `i18n/index.js` (`ocr` is the
+   Tesseract language code used as the OCR dropdown default).
+3. `node build.js` tells you exactly which strings are still missing. `scripts/verify.js` checks the rest.
+4. Nothing else to wire up: the language switcher, hreflang tags, sitemap, router and old-URL redirects all read the
+   language list.
+
+## Known limitations
+
+- **Imprint / legal copy** is a translation of the existing short texts. A commercial site operated from Germany or
+  Austria needs the operator's name and address in the *Impressum*; that information is not in the repository.
+- Browser-native parse errors (e.g. the tail of `Invalid JSON: …`) stay in the browser's own language.
+- PDF watermarks use PDF's built-in font, which cannot draw letters like ů, ě, ł, ą; those are folded to base letters
+  and the user is told.
+- HEIC *encoding* needs Safari 17+ (no browser encoder exists elsewhere); the pages say so.
+- `assets/img/og-image.png` is referenced by every page's Open Graph tags but does not exist yet.
 
 ## Deployment
 

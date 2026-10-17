@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prohledávatelné PDF – bezplatné OCR v prohlížeči</title>
+  <meta name="description" content="Udělejte z naskenovaných PDF prohledávatelné pomocí bezplatného OCR v prohlížeči. Bez nahrávání a bez serveru – Tesseract OCR přidá textovou vrstvu přímo ve vašem prohlížeči.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://aintob.com/cs/document/pdf-to-searchable/">
+  <link rel="alternate" hreflang="en" href="https://aintob.com/en/document/pdf-to-searchable/">
+  <link rel="alternate" hreflang="de" href="https://aintob.com/de/document/pdf-to-searchable/">
+  <link rel="alternate" hreflang="cs" href="https://aintob.com/cs/document/pdf-to-searchable/">
+  <link rel="alternate" hreflang="pl" href="https://aintob.com/pl/document/pdf-to-searchable/">
+  <link rel="alternate" hreflang="x-default" href="https://aintob.com/en/document/pdf-to-searchable/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Prohledávatelné PDF – bezplatné OCR v prohlížeči">
+  <meta property="og:description" content="Udělejte z naskenovaných PDF prohledávatelné pomocí bezplatného OCR v prohlížeči. Bez nahrávání a bez serveru – Tesseract OCR přidá textovou vrstvu přímo ve vašem prohlížeči.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://aintob.com/cs/document/pdf-to-searchable/">
+  <meta property="og:locale" content="cs_CZ">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:locale:alternate" content="de_DE">
+  <meta property="og:locale:alternate" content="pl_PL">
+  <meta property="og:image" content="https://aintob.com/assets/img/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Prohledávatelné PDF – bezplatné OCR v prohlížeči">
+  <meta name="twitter:description" content="Udělejte z naskenovaných PDF prohledávatelné pomocí bezplatného OCR v prohlížeči. Bez nahrávání a bez serveru – Tesseract OCR přidá textovou vrstvu přímo ve vašem prohlížeči.">
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <style>
+    /* ── Progress & result sections ─────────────────────────────── */
+    .ocr-progress-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+    }
+    .ocr-status {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      margin-top: .5rem;
+      min-height: 1.4em;
+    }
+    .ocr-result-card {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+    }
+    .ocr-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-md);
+      padding: .75rem 1rem;
+      font-size: var(--text-sm);
+      color: #991b1b;
+    }
+    .lang-select-row {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      flex-wrap: wrap;
+    }
+  </style>
+  <!-- Schema -->
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Prohledávatelné PDF (OCR)",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Web browser",
+  "inLanguage": "cs",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "description": "Udělejte z naskenovaných PDF prohledávatelné pomocí bezplatného OCR v prohlížeči. Bez nahrávání a bez serveru – Tesseract OCR přidá textovou vrstvu přímo ve vašem prohlížeči.",
+  "url": "https://aintob.com/cs/document/pdf-to-searchable/"
+}</script>
+</head>
+<body><a class="skip-link" href="#main-content">Přejít na hlavní obsah</a><nav class="navbar-aintob" aria-label="Hlavní navigace">
+  <div class="container navbar-inner" style="max-width:var(--max-width);">
+    <a href="/cs/" class="navbar-logo" aria-label="AintoB – domovská stránka">🅰️➡️🅱️ <span style="font-size:1rem; font-weight:500; color:var(--color-text-muted);">AintoB</span></a>
+    <div class="navbar-actions">
+      <a href="https://open-online.com/" class="navbar-tools-link navbar-open" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <span class="nav-label">Otevřít soubory</span><span class="visually-hidden"> (otevře se v nové záložce)</span></a>
+      <a href="/cs/file-converter/" class="navbar-tools-link"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> <span class="nav-label">Všechny převodníky</span></a>
+      <details class="lang-switch">
+        <summary aria-label="Jazyk"><i class="bi bi-translate" aria-hidden="true"></i> <span>CS</span></summary>
+        <ul><li><a href="/en/document/pdf-to-searchable/" hreflang="en" lang="en" data-lang="en">English</a></li><li><a href="/de/document/pdf-to-searchable/" hreflang="de" lang="de" data-lang="de">Deutsch</a></li><li><a href="/cs/document/pdf-to-searchable/" hreflang="cs" lang="cs" data-lang="cs" aria-current="true">Čeština</a></li><li><a href="/pl/document/pdf-to-searchable/" hreflang="pl" lang="pl" data-lang="pl">Polski</a></li></ul>
+      </details>
+    </div>
+  </div>
+</nav><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Domů","item":"https://aintob.com/cs/"},{"@type":"ListItem","position":2,"name":"Převodník dokumentů","item":"https://aintob.com/cs/document-converter/"},{"@type":"ListItem","position":3,"name":"Převodník PDF","item":"https://aintob.com/cs/document/pdf-converter/"},{"@type":"ListItem","position":4,"name":"Prohledávatelné PDF (OCR)","item":"https://aintob.com/cs/document/pdf-to-searchable/"}]}</script>
+<nav aria-label="Drobečková navigace" class="breadcrumb-nav">
+  <div class="container" style="max-width:var(--max-width);">
+    <ol class="breadcrumb mb-0" style="padding: 0.625rem 0; font-size: var(--text-sm);">
+      <li class="breadcrumb-item"><a href="/cs/">Domů</a></li>
+      <li class="breadcrumb-item"><a href="/cs/document-converter/">Převodník dokumentů</a></li>
+      <li class="breadcrumb-item"><a href="/cs/document/pdf-converter/">Převodník PDF</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Prohledávatelné PDF (OCR)</li>
+    </ol>
+  </div>
+</nav><main id="main-content">
+
+  <!-- Hero -->
+  <section class="section-hero section-hero--pair" aria-labelledby="pair-h1">
+    <div class="container" style="max-width:800px; text-align:center;">
+      <div class="format-badge-row">
+        <span class="format-badge format-badge--from">PDF</span>
+        <span class="format-badge-arrow" aria-hidden="true">→</span>
+        <span class="format-badge format-badge--to">Prohledávatelné PDF</span>
+      </div>
+      <h1 class="hero-title" id="pair-h1">Prohledávatelné PDF (OCR)</h1>
+      <p class="hero-subtitle mx-auto">Přidejte naskenovaným PDF nebo PDF tvořeným obrázky prohledávatelnou textovou vrstvu pomocí Tesseract OCR – celé ve vašem prohlížeči. Bez nahrávání souboru, bez serveru, bez účtu.</p>
+    </div>
+  </section>
+
+  <!-- Converter -->
+  <section class="section-converter" id="converter" aria-labelledby="converter-heading">
+    <div class="container" style="max-width:800px;">
+      <div class="converter-card">
+        <h2 class="visually-hidden" id="converter-heading">Vytvořit prohledávatelné PDF</h2>
+
+        <!-- Drop Zone -->
+        <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="Klikněte nebo sem přetáhněte soubor PDF">
+          <i class="bi bi-cloud-upload drop-zone__icon" aria-hidden="true"></i>
+          <p class="drop-zone__text">Přetáhněte sem soubor <strong>PDF</strong></p>
+          <p class="drop-zone__sub">nebo</p>
+          <label class="btn btn-primary px-4" for="fileInput">
+            <i class="bi bi-folder2-open me-2" aria-hidden="true"></i>Vybrat soubor
+          </label>
+          <input type="file" id="fileInput" class="visually-hidden" accept=".pdf" aria-label="Vybrat soubor PDF">
+          <p class="drop-zone__limit">Max. cca 50 MB · Doba zpracování závisí na počtu stran a kvalitě skenu</p>
+        </div>
+
+        <!-- Settings (shown after file selected) -->
+        <div class="converter-settings mt-3" id="converterSettings" hidden>
+          <div class="d-flex align-items-center gap-3 mb-3 file-selected-row">
+            <i class="bi bi-file-earmark-check-fill text-accent" style="font-size:1.5rem;" aria-hidden="true"></i>
+            <div class="flex-grow-1">
+              <p class="mb-0 fw-600" id="selectedFileName">soubor.pdf</p>
+              <p class="text-muted mb-0" style="font-size:var(--text-sm);" id="selectedFileSize"></p>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" id="clearFileBtn" aria-label="Odebrat soubor">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <!-- OCR Language -->
+          <div class="mb-3">
+            <label class="converter-label" for="ocrLang">Jazyk OCR</label>
+            <div class="lang-select-row">
+              <select id="ocrLang" class="form-select" style="max-width:220px;">
+                <option value="eng">Angličtina</option>
+                <option value="deu">Němčina (Deutsch)</option>
+                <option value="fra">Francouzština (Français)</option>
+                <option value="spa">Španělština (Español)</option>
+                <option value="por">Portugalština (Português)</option>
+                <option value="ita">Italština (Italiano)</option>
+                <option value="nld">Nizozemština (Nederlands)</option>
+                <option value="ces" selected>Čeština</option>
+                <option value="pol">Polština (Polski)</option>
+                <option value="rus">Ruština (Русский)</option>
+                <option value="chi_sim">Čínština (zjednodušená)</option>
+                <option value="jpn">Japonština (日本語)</option>
+                <option value="ara">Arabština (عربي)</option>
+              </select>
+              <span class="text-muted" style="font-size:var(--text-xs);">Vyberte hlavní jazyk PDF pro vyšší přesnost.</span>
+            </div>
+          </div>
+
+          <div class="explainer-note mb-3">
+            <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+            <strong>Jak to funguje:</strong> Každá strana se vykreslí jako obrázek a ve vašem prohlížeči ji zpracuje Tesseract OCR. Poté se vloží neviditelná textová vrstva, takže PDF je prohledávatelné a funguje kopírování a vkládání. OCR trvá 3–15 sekund na stranu.
+          </div>
+
+          <button class="btn btn-primary btn-lg w-100" id="convertBtn">
+            <i class="bi bi-search me-2" aria-hidden="true"></i>Vytvořit prohledávatelné PDF
+          </button>
+        </div>
+
+        <!-- Progress -->
+        <div id="ocrProgress" class="mt-3" hidden>
+          <div class="ocr-progress-card">
+            <p class="fw-600 mb-2">OCR probíhá…</p>
+            <div class="progress mb-1" role="progressbar" aria-label="Průběh OCR"
+                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="height:10px;">
+              <div id="ocrProgressBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                   style="width:0%">0%</div>
+            </div>
+            <p id="ocrStatus" class="ocr-status">Inicializace…</p>
+            <p class="text-muted mb-0" style="font-size:var(--text-xs);">
+              OCR běží lokálně ve vašem prohlížeči. Velké nebo složité skeny trvají déle. Nezavírejte tuto záložku.
+            </p>
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div id="ocrResult" class="mt-3" hidden>
+          <div class="ocr-result-card d-flex align-items-start gap-3 mb-3">
+            <i class="bi bi-check-circle-fill text-success" style="font-size:1.5rem; flex-shrink:0;" aria-hidden="true"></i>
+            <p id="ocrResultMsg" class="mb-0 fw-600"></p>
+          </div>
+          <button id="downloadBtn" class="btn btn-primary btn-lg w-100 mb-2" hidden>
+            <i class="bi bi-download me-2" aria-hidden="true"></i>Stáhnout prohledávatelné PDF
+          </button>
+          <button id="convertAnotherBtn" class="btn btn-outline-secondary w-100">Zpracovat další soubor</button>
+        </div>
+
+        <!-- Error -->
+        <div id="ocrError" class="ocr-error mt-3" hidden></div>
+
+        <!-- Privacy note -->
+        <p class="mode-desc mt-2">
+          <i class="bi bi-shield-lock-fill text-accent" aria-hidden="true"></i>
+          Soubor se zpracovává lokálně ve vašem prohlížeči – nic se nenahrává.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Intro & Why -->
+  <section class="section-content" aria-labelledby="intro-h2">
+    <div class="container" style="max-width:800px;">
+      <h2 class="section-title" id="intro-h2">Proč dělat PDF prohledávatelné?</h2>
+      <p>Naskenované dokumenty, vyfotografované strany a PDF tvořená obrázky vypadají jako PDF, ale ve skutečnosti jsou to jen obrázky. Nelze v nich hledat text, zvýrazňovat slova ani kopírovat obsah. OCR (optické rozpoznávání znaků) obrázek přečte a přidá neviditelnou textovou vrstvu, aby byl dokument skutečně použitelný.</p>
+      <h3 class="explainer-subtitle">Typické využití</h3>
+      <ul class="explainer-list">
+        <li><i class="bi bi-check-circle-fill text-accent me-2" aria-hidden="true"></i>Naskenované smlouvy, faktury nebo účtenky, ve kterých potřebujete hledat.</li>
+        <li><i class="bi bi-check-circle-fill text-accent me-2" aria-hidden="true"></i>Digitalizované knihy, články nebo historické dokumenty.</li>
+        <li><i class="bi bi-check-circle-fill text-accent me-2" aria-hidden="true"></i>Zpřístupnění archivovaných dokumentů čtečkám obrazovky.</li>
+      </ul>
+      <div class="explainer-note">
+        <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+        <strong>Upřímné omezení:</strong> Přesnost Tesseract OCR silně závisí na kvalitě skenu. Rozmazaný, zkosený nebo velmi malý text dá nedokonalé výsledky. Nástroj je nejlepší pro čisté, rovné skeny s rozlišením alespoň 150 dpi. Rukopis se nerozpoznává spolehlivě.
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="section-how-it-works" aria-labelledby="how-h2">
+    <div class="container" style="max-width:800px;">
+      <h2 class="section-title" id="how-h2">Jak udělat PDF prohledávatelné</h2>
+      <ol class="how-it-works-list">
+        <li>Vyberte naskenované PDF nebo PDF tvořené obrázky pomocí oblasti pro přetažení výše.</li>
+        <li>Vyberte hlavní jazyk dokumentu pro přesnější OCR.</li>
+        <li>Klikněte na <strong>Vytvořit prohledávatelné PDF</strong> a počkejte, než se zpracuje každá strana.</li>
+        <li>Stáhněte výsledné PDF – nyní má prohledávatelnou textovou vrstvu, ze které lze kopírovat text.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Format Explainer -->
+  <section class="section-formats-explainer" aria-labelledby="formats-h2">
+    <div class="container" style="max-width:var(--max-width);">
+      <h2 class="section-title mb-4" id="formats-h2">Co tento nástroj dělá</h2>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="format-explainer-card">
+            <div class="format-explainer-card__header">
+              <span class="format-explainer-card__icon" aria-hidden="true">🔍</span>
+              <h3 class="format-explainer-card__name">PDF tvořená jen obrázky</h3>
+            </div>
+            <p>Pokud bylo vaše PDF vytvořeno skenováním papíru nebo fotografováním stran, obsahuje jen obrázky. Nástroje pro hledání, kopírování a přístupnost v něm nenajdou žádný text – protože v souboru žádný text není, jen pixely.</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="format-explainer-card">
+            <div class="format-explainer-card__header">
+              <span class="format-explainer-card__icon" aria-hidden="true">📄</span>
+              <h3 class="format-explainer-card__name">Prohledávatelná PDF</h3>
+            </div>
+            <p>Prohledávatelné PDF ponechá původní obraz strany jako vizuální pozadí a přidá nad něj neviditelnou textovou vrstvu. Prohlížeče PDF ji používají pro hledání, výběr i kopírování – a dokument přitom vypadá přesně tak, jak byl naskenován.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="open-online" aria-label="open-online.com">
+  <div class="container" style="max-width:800px;">
+    <div class="open-online__inner">
+      <span class="open-online__icon" aria-hidden="true">📂</span>
+      <div class="open-online__text">
+        <strong>Potřebujete soubor jen otevřít, ne převádět?</strong>
+        <p>Na open-online.com otevřete mnoho různých typů souborů online – bez předchozího převodu.</p>
+      </div>
+      <a class="btn btn-outline-secondary open-online__btn" href="https://open-online.com/" target="_blank" rel="noopener">Otevřít soubory na open-online.com <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i><span class="visually-hidden"> (otevře se v nové záložce)</span></a>
+    </div>
+  </div>
+</aside>
+  <div class="privacy-block">
+    <div class="privacy-block__inner">
+      <span class="privacy-icon" aria-hidden="true">🔒</span>
+      <div>
+        <strong>100 % soukromé a v prohlížeči</strong>
+        <p>Vaše PDF nikdy neopustí vaše zařízení. Tesseract OCR běží celý ve vašem prohlížeči jako modul WebAssembly. Nic se nikam nenahrává. Žádný účet není potřeba.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related -->
+  <section class="related-section" aria-labelledby="related-more-pdf">
+    <div class="container" style="max-width:var(--max-width);">
+      <h2 class="section-title mb-4" id="related-more-pdf">Další nástroje pro PDF</h2>
+      <div class="converter-grid">
+        <a href="/cs/document/pdf-to-txt/" class="converter-card-link">
+          <span class="converter-card-link__label">Převodník PDF na TXT</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/cs/document/pdf-to-jpg/" class="converter-card-link">
+          <span class="converter-card-link__label">Převodník PDF na JPG</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/cs/document/pdf-to-png/" class="converter-card-link">
+          <span class="converter-card-link__label">Převodník PDF na PNG</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/cs/document/pdf-edit/" class="converter-card-link">
+          <span class="converter-card-link__label">Editor PDF</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/cs/document/pdf-to-txt/" class="converter-card-link">
+          <span class="converter-card-link__label">Převodník PDF na TXT</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+        <a href="/cs/document/pdf-converter/" class="converter-card-link">
+          <span class="converter-card-link__label">Převodník PDF</span>
+          <i class="bi bi-arrow-right converter-card-link__arrow" aria-hidden="true"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+  <!-- FAQ -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","inLanguage":"cs","mainEntity":[{"@type":"Question","name":"Funguje tento nástroj OCR na naskenovaných PDF?","acceptedAnswer":{"@type":"Answer","text":"Ano – tento nástroj je navržen právě pro PDF tvořená obrázky a naskenovaná PDF. Vykreslí každou stranu a ve vašem prohlížeči spustí Tesseract OCR, aby text extrahoval."}},{"@type":"Question","name":"Jak dlouho OCR trvá?","acceptedAnswer":{"@type":"Answer","text":"Přibližně 3–15 sekund na stranu podle velikosti strany, kvality skenu a rychlosti vašeho zařízení. Naskenované PDF o 10 stranách obvykle trvá 1–2 minuty."}},{"@type":"Question","name":"Nahrává se moje PDF někam?","acceptedAnswer":{"@type":"Answer","text":"Ne. Celý proces běží ve vašem prohlížeči pomocí Tesseract.js. Váš soubor nikdy neopustí vaše zařízení."}},{"@type":"Question","name":"Co když PDF už text obsahuje?","acceptedAnswer":{"@type":"Answer","text":"Nástroj nejprve zkontroluje existující text. Pokud vaše PDF už obsahuje vybíratelný text, oznámí vám to a umožní stáhnout originál bez zpracování OCR."}},{"@type":"Question","name":"Jaké jazyky OCR podporuje?","acceptedAnswer":{"@type":"Answer","text":"Angličtinu, němčinu, francouzštinu, španělštinu, portugalštinu, italštinu, nizozemštinu, češtinu, polštinu, ruštinu, zjednodušenou čínštinu, japonštinu a arabštinu. Před zpracováním vyberte správný jazyk pro nejlepší přesnost."}}]}</script>
+  <section class="section-faq" aria-labelledby="faq-heading">
+    <div class="container" style="max-width:800px;">
+      <div class="text-center mb-5">
+        <p class="section-label">Časté dotazy</p>
+        <h2 class="section-title" id="faq-heading">Často kladené otázky</h2>
+      </div>
+      <div class="accordion" id="faqAccordion">
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq0" aria-expanded="true">
+              Funguje tento nástroj OCR na naskenovaných PDF?
+            </button>
+          </h3>
+          <div id="faq0" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">Ano – tento nástroj je navržen právě pro PDF tvořená obrázky a naskenovaná PDF. Vykreslí každou stranu a ve vašem prohlížeči spustí Tesseract OCR, aby text extrahoval.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" aria-expanded="false">
+              Jak dlouho OCR trvá?
+            </button>
+          </h3>
+          <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">Přibližně 3–15 sekund na stranu podle velikosti strany, kvality skenu a rychlosti vašeho zařízení. Naskenované PDF o 10 stranách obvykle trvá 1–2 minuty.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" aria-expanded="false">
+              Nahrává se moje PDF někam?
+            </button>
+          </h3>
+          <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">Ne. Celý proces běží ve vašem prohlížeči pomocí Tesseract.js. Váš soubor nikdy neopustí vaše zařízení.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" aria-expanded="false">
+              Co když PDF už text obsahuje?
+            </button>
+          </h3>
+          <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">Nástroj nejprve zkontroluje existující text. Pokud vaše PDF už obsahuje vybíratelný text, oznámí vám to a umožní stáhnout originál bez zpracování OCR.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4" aria-expanded="false">
+              Jaké jazyky OCR podporuje?
+            </button>
+          </h3>
+          <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">Angličtinu, němčinu, francouzštinu, španělštinu, portugalštinu, italštinu, nizozemštinu, češtinu, polštinu, ruštinu, zjednodušenou čínštinu, japonštinu a arabštinu. Před zpracováním vyberte správný jazyk pro nejlepší přesnost.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer-main" role="contentinfo">
+  <div class="container" style="max-width:var(--max-width);">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-4">
+      <div>
+        <a href="/cs/" class="footer-logo" aria-label="AintoB – domovská stránka">🅰️➡️🅱️ AintoB</a>
+        <p class="footer-copy">© 2026 AintoB.com – Všechna práva vyhrazena.</p>
+        <p class="footer-gdpr-badge"><i class="bi bi-shield-check" aria-hidden="true"></i> Soukromí na prvním místě · Jen v prohlížeči · Bez nahrávání</p>
+        <p class="footer-langs"><span>Jazyky:</span> <a href="/en/document/pdf-to-searchable/" hreflang="en" lang="en" data-lang="en">English</a> · <a href="/de/document/pdf-to-searchable/" hreflang="de" lang="de" data-lang="de">Deutsch</a> · <a href="/cs/document/pdf-to-searchable/" hreflang="cs" lang="cs" data-lang="cs" aria-current="true">Čeština</a> · <a href="/pl/document/pdf-to-searchable/" hreflang="pl" lang="pl" data-lang="pl">Polski</a></p>
+      </div>
+      <nav aria-label="Navigace v patičce">
+        <ul class="footer-links">
+          <li><a href="/cs/file-converter/">Všechny převodníky</a></li>
+          <li><a href="/cs/image-converter/">Převodníky obrázků</a></li>
+          <li><a href="/cs/document-converter/">Převodníky dokumentů</a></li>
+          <li><a href="/cs/spreadsheet-converter/">Převodníky tabulek</a></li>
+          <li><a href="/cs/audio-converter/">Audio převodníky</a></li>
+          <li><a href="/cs/video-converter/">Video převodníky</a></li>
+          <li><a href="/cs/data-converter/">Nástroje pro data a text</a></li>
+          <li><a href="/cs/document-converter/">Převodník dokumentů</a></li>
+          <li><a href="/cs/document/pdf-converter/">Převodník PDF</a></li>
+          <li><a href="/cs/privacy/">Zásady ochrany osobních údajů</a></li>
+          <li><a href="/cs/imprint/">Impresum</a></li>
+          <li><a href="https://open-online.com/" target="_blank" rel="noopener">Otevírání souborů online</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<!-- Cookie Banner -->
+<div id="cookie-banner" role="dialog" aria-label="Nastavení cookies" aria-live="polite">
+  <div class="container" style="max-width:var(--max-width); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:1rem;">
+    <p class="cookie-text mb-0">Používáme pouze nezbytné cookies. Žádné sledování bez vašeho souhlasu. <a href="/cs/privacy/">Zásady ochrany osobních údajů</a></p>
+    <div style="display:flex; gap:.5rem;">
+      <button class="btn btn-primary btn-sm" onclick="acceptCookies('all')">Přijmout vše</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="acceptCookies('essential')">Jen nezbytné</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+<script src="/assets/js/lang/cs.js" defer></script>
+<script src="/assets/js/site.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js" defer></script>
+<script src="/assets/js/converters/pdf-to-searchable.js" defer></script>
+</body>
+</html>

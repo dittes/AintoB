@@ -4,6 +4,7 @@
  */
 (function () {
   'use strict';
+  var __t = window.__t || function (s, v) { return v ? s.replace(/\{(\w+)\}/g, function (m, k) { return v[k] !== undefined ? v[k] : m; }) : s; };
 
   var natural = { w: 0, h: 0 };
 
@@ -18,30 +19,30 @@
     ctrl.id = 'resizeControls';
     ctrl.className = 'mb-3';
     ctrl.innerHTML =
-      '<label class="converter-label">Resize mode</label>' +
+      '<label class="converter-label">' + __t('Resize mode') + '</label>' +
       '<div class="d-flex gap-4 mb-2">' +
-      '  <label style="cursor:pointer;"><input type="radio" name="resizeMode" value="px" checked class="me-2">Pixels</label>' +
-      '  <label style="cursor:pointer;"><input type="radio" name="resizeMode" value="pct" class="me-2">Percent</label>' +
+      '  <label style="cursor:pointer;"><input type="radio" name="resizeMode" value="px" checked class="me-2">' + __t('Pixels') + '</label>' +
+      '  <label style="cursor:pointer;"><input type="radio" name="resizeMode" value="pct" class="me-2">' + __t('Percent') + '</label>' +
       '</div>' +
       '<div id="resizePxRow" class="row g-2 align-items-end mb-2">' +
-      '  <div class="col-5"><label class="converter-label" for="resizeW">Width (px)</label>' +
+      '  <div class="col-5"><label class="converter-label" for="resizeW">' + __t('Width (px)') + '</label>' +
       '    <input type="number" id="resizeW" class="form-control" min="1" max="20000"></div>' +
-      '  <div class="col-5"><label class="converter-label" for="resizeH">Height (px)</label>' +
+      '  <div class="col-5"><label class="converter-label" for="resizeH">' + __t('Height (px)') + '</label>' +
       '    <input type="number" id="resizeH" class="form-control" min="1" max="20000"></div>' +
       '  <div class="col-2 text-center pb-2">' +
-      '    <label style="cursor:pointer;font-size:var(--text-sm);white-space:nowrap;" title="Keep aspect ratio">' +
+      '    <label style="cursor:pointer;font-size:var(--text-sm);white-space:nowrap;" title="' + __t('Keep aspect ratio') + '">' +
       '      <input type="checkbox" id="resizeLock" checked class="me-1">🔒</label></div>' +
       '</div>' +
       '<div id="resizePctRow" class="row g-2 mb-2" hidden>' +
-      '  <div class="col-6"><label class="converter-label" for="resizePct">Scale (%)</label>' +
+      '  <div class="col-6"><label class="converter-label" for="resizePct">' + __t('Scale (%)') + '</label>' +
       '    <input type="number" id="resizePct" class="form-control" value="50" min="1" max="500"></div>' +
       '</div>' +
-      '<label class="converter-label" for="resizeFormat">Output format</label>' +
+      '<label class="converter-label" for="resizeFormat">' + __t('Output format') + '</label>' +
       '<select id="resizeFormat" class="form-select">' +
-      '  <option value="auto" selected>Same as input (PNG for GIF/BMP)</option>' +
-      '  <option value="png">PNG (lossless)</option>' +
-      '  <option value="jpg">JPG (smaller)</option>' +
-      '  <option value="webp">WebP (modern)</option>' +
+      '  <option value="auto" selected>' + __t('Same as input (PNG for GIF/BMP)') + '</option>' +
+      '  <option value="png">' + __t('PNG (lossless)') + '</option>' +
+      '  <option value="jpg">' + __t('JPG (smaller)') + '</option>' +
+      '  <option value="webp">' + __t('WebP (modern)') + '</option>' +
       '</select>' +
       '<p class="text-muted mt-1 mb-0" style="font-size:var(--text-sm);" id="resizeDims"></p>';
 
@@ -86,7 +87,7 @@
       natural.h = img.naturalHeight;
       el('resizeW').value = natural.w;
       el('resizeH').value = natural.h;
-      el('resizeDims').textContent = 'Original size: ' + natural.w + ' × ' + natural.h + ' px';
+      el('resizeDims').textContent = __t('Original size: {w} × {h} px', { w: natural.w, h: natural.h });
       URL.revokeObjectURL(img.src);
     }).catch(function () { /* handled at convert time */ });
   }

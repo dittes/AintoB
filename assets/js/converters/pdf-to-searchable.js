@@ -27,6 +27,7 @@
 
 (function () {
   'use strict';
+  var __t = window.__t || function (s, v) { return v ? s.replace(/\{(\w+)\}/g, function (m, k) { return v[k] !== undefined ? v[k] : m; }) : s; };
 
   // ── UI element references (set in init) ───────────────────────────────────
   var ui = {};
@@ -85,19 +86,19 @@
       ui.progressBar.setAttribute('aria-valuenow', pct);
       ui.progressBar.textContent = pct + '%';
     }
-    if (ui.statusMsg) ui.statusMsg.textContent = msg || '';
+    if (ui.statusMsg) ui.statusMsg.textContent = msg ? __t(msg) : '';
   }
 
   function showError(msg) {
     if (ui.errorBox) {
-      ui.errorBox.textContent = msg;
+      ui.errorBox.textContent = __t(msg);
       ui.errorBox.hidden = false;
     }
     setProgress(0, '');
     if (ui.progressSection) ui.progressSection.hidden = true;
     if (ui.convertBtn) {
       ui.convertBtn.disabled = false;
-      ui.convertBtn.innerHTML = '<i class="bi bi-search me-2" aria-hidden="true"></i>Create Searchable PDF';
+      ui.convertBtn.innerHTML = '<i class="bi bi-search me-2" aria-hidden="true"></i>' + __t('Create Searchable PDF');
     }
   }
 
@@ -119,7 +120,7 @@
     if (ui.progressSection) ui.progressSection.hidden = false;
 
     ui.convertBtn.disabled = true;
-    ui.convertBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing…';
+    ui.convertBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + __t('Processing…');
 
     try {
       setProgress(5, 'Loading libraries…');
@@ -154,8 +155,7 @@
         if (ui.resultMsg) {
           ui.resultMsg.innerHTML =
             '<i class="bi bi-check-circle-fill text-success me-2" aria-hidden="true"></i>' +
-            'This PDF already has selectable text — no OCR needed. ' +
-            'You can download the original file.';
+            __t('This PDF already has selectable text — no OCR needed. You can download the original file.');
         }
         if (ui.downloadBtn) {
           var origBlob = new Blob([arrayBuffer], { type: 'application/pdf' });
@@ -163,7 +163,7 @@
           ui.downloadBtn.hidden = false;
         }
         ui.convertBtn.disabled = false;
-        ui.convertBtn.innerHTML = '<i class="bi bi-search me-2" aria-hidden="true"></i>Create Searchable PDF';
+        ui.convertBtn.innerHTML = '<i class="bi bi-search me-2" aria-hidden="true"></i>' + __t('Create Searchable PDF');
         return;
       }
 
@@ -174,7 +174,7 @@
       var langEl = ui.langSelect;
       var lang   = (langEl && langEl.value) ? langEl.value : 'eng';
 
-      setProgress(20, 'Initialising OCR for language: ' + lang + '…');
+      setProgress(20, __t('Initialising OCR for language: {lang}…', { lang: lang }));
 
       var worker = await Tesseract.createWorker([lang], 1, {
         // Quiet logging
@@ -188,7 +188,7 @@
 
       for (var i = 1; i <= numPages; i++) {
         var pct = Math.round(20 + (i / numPages) * 70);
-        setProgress(pct, 'OCR page ' + i + ' of ' + numPages + '…');
+        setProgress(pct, __t('OCR page {i} of {n}…', { i: i, n: numPages }));
 
         var pdfPage  = await srcPdf.getPage(i);
         var canvas   = await renderPageToCanvas(pdfPage, RENDER_SCALE);
@@ -246,7 +246,7 @@
       if (ui.resultMsg) {
         ui.resultMsg.innerHTML =
           '<i class="bi bi-check-circle-fill text-success me-2" aria-hidden="true"></i>' +
-          'Searchable PDF created — ' + numPages + ' page' + (numPages !== 1 ? 's' : '') + ' processed.';
+          (numPages === 1 ? __t('Searchable PDF created — 1 page processed.') : __t('Searchable PDF created — {n} pages processed.', { n: numPages }));
       }
 
       var baseName  = (file.name || 'document').replace(/\.pdf$/i, '');
@@ -265,7 +265,7 @@
     } finally {
       if (ui.convertBtn) {
         ui.convertBtn.disabled = false;
-        ui.convertBtn.innerHTML = '<i class="bi bi-search me-2" aria-hidden="true"></i>Create Searchable PDF';
+        ui.convertBtn.innerHTML = '<i class="bi bi-search me-2" aria-hidden="true"></i>' + __t('Create Searchable PDF');
       }
     }
   }

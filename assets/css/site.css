@@ -703,3 +703,100 @@
 
 /* ── fw-600 utility ─────────────────────────────────────────── */
 .fw-600 { font-weight: 600 !important; }
+
+/* ── Navbar: actions + language switcher ────────────────────── */
+.navbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.navbar-open { display: none; }
+@media (min-width: 768px) { .navbar-open { display: inline-flex; } }
+/* icon-only on very small screens (label stays available to screen readers) */
+@media (max-width: 479px) {
+  .navbar-tools-link .nav-label {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0, 0, 0, 0); white-space: nowrap;
+  }
+}
+
+.lang-switch { position: relative; }
+.lang-switch summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .4rem .8rem;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--ease-fast);
+}
+.lang-switch summary::-webkit-details-marker { display: none; }
+.lang-switch summary:hover,
+.lang-switch[open] summary { background: var(--color-bg); color: var(--color-text); border-color: #D1D5DB; }
+.lang-switch summary:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.lang-switch ul {
+  position: absolute;
+  right: 0;
+  top: calc(100% + .4rem);
+  z-index: 1050;
+  min-width: 10rem;
+  margin: 0;
+  padding: .35rem;
+  list-style: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+.lang-switch a {
+  display: block;
+  padding: .5rem .75rem;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+.lang-switch a:hover,
+.lang-switch a:focus-visible { background: var(--color-accent-light); color: var(--color-accent); outline: none; }
+.lang-switch a[aria-current] { font-weight: 700; color: var(--color-accent); }
+
+.footer-langs { margin: .5rem 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+.footer-langs a { color: var(--color-text-muted); text-decoration: none; }
+.footer-langs a:hover { color: var(--color-text); text-decoration: underline; }
+.footer-langs a[aria-current] { color: var(--color-text); font-weight: 600; }
+
+/* ── open-online.com callout ────────────────────────────────── */
+.open-online { padding: 2rem 0 0; }
+.open-online__inner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem 1.25rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.open-online__icon { font-size: 1.75rem; line-height: 1; }
+.open-online__text { flex: 1 1 15rem; min-width: 0; }
+.open-online__text strong { display: block; }
+.open-online__text p { margin: .25rem 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+.open-online__btn { white-space: normal; }
+
+/* ── Longer words in German / Czech / Polish ─────────────────── */
+.hero-title, .section-title, .category-card__title, .format-explainer-card__name {
+  overflow-wrap: break-word;
+  hyphens: auto;
+}

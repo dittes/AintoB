@@ -1,0 +1,115 @@
+    /* ── Tool tab nav ──────────────────────────────────────────── */
+    .pdf-tool-nav {
+      display: flex;
+      gap: .375rem;
+      flex-wrap: wrap;
+      border-bottom: 2px solid var(--color-border);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0;
+    }
+    .pdf-tool-tab {
+      padding: .5rem 1.1rem;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      background: transparent;
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--ease-fast), color var(--ease-fast);
+      margin-bottom: -2px;
+    }
+    .pdf-tool-tab:hover { color: var(--color-accent); background: var(--color-accent-light); }
+    .pdf-tool-tab.active {
+      background: var(--color-surface);
+      color: var(--color-accent);
+      border-color: var(--color-border);
+      border-bottom-color: var(--color-surface);
+    }
+
+    /* ── Tool panels ───────────────────────────────────────────── */
+    .tool-panel { animation: fadeUp .2s ease; }
+
+    /* ── File upload rows ─────────────────────────────────────── */
+    .tool-file-label {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: .4rem;
+    }
+
+    /* ── Result / error cards ─────────────────────────────────── */
+    .tool-result {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+      margin-top: 1rem;
+    }
+    .tool-result .result-msg { font-weight: 600; margin-bottom: .75rem; }
+    .tool-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-md);
+      padding: .75rem 1rem;
+      font-size: var(--text-sm);
+      color: #991b1b;
+      margin-top: .75rem;
+    }
+
+    /* ── Page thumbnails (rotate/delete tool) ─────────────────── */
+    .page-thumbs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: .75rem;
+      max-height: 480px;
+      overflow-y: auto;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: .75rem;
+      background: var(--color-bg);
+    }
+    .page-thumb {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: .75rem;
+      transition: border-color var(--ease-fast);
+    }
+    .page-thumb:hover { border-color: var(--color-accent); }
+    .page-thumb__num {
+      display: block;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      margin-bottom: .5rem;
+      color: var(--color-text);
+    }
+    .page-thumb__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .3rem;
+    }
+    .page-thumb__actions .btn { font-size: .75rem; padding: .2rem .5rem; }
+
+    /* ── Watermark preview ─────────────────────────────────────── */
+    .wm-preview {
+      background: #fff;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    #wmPreviewText {
+      font-size: 2rem;
+      font-weight: 900;
+      transform: rotate(-35deg);
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+    }

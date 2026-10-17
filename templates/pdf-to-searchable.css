@@ -1,0 +1,33 @@
+    /* ── Progress & result sections ─────────────────────────────── */
+    .ocr-progress-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+    }
+    .ocr-status {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+      margin-top: .5rem;
+      min-height: 1.4em;
+    }
+    .ocr-result-card {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+    }
+    .ocr-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-md);
+      padding: .75rem 1rem;
+      font-size: var(--text-sm);
+      color: #991b1b;
+    }
+    .lang-select-row {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      flex-wrap: wrap;
+    }

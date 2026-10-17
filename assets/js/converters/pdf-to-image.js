@@ -10,6 +10,7 @@
  */
 (function () {
   'use strict';
+  var __t = window.__t || function (s, v) { return v ? s.replace(/\{(\w+)\}/g, function (m, k) { return v[k] !== undefined ? v[k] : m; }) : s; };
 
   // ── Output format helpers ─────────────────────────────────────────────────
   var MIME_MAP = { JPG: 'image/jpeg', JPEG: 'image/jpeg', PNG: 'image/png', WEBP: 'image/webp' };
@@ -40,18 +41,18 @@
     ctrl.className = 'mb-3';
     ctrl.hidden    = true; // shown once a PDF is loaded
     ctrl.innerHTML = [
-      '<label class="converter-label">Pages to export</label>',
+      '<label class="converter-label">' + __t('Pages to export') + '</label>',
       '<div class="d-flex flex-wrap gap-3 mb-2">',
       '  <label class="d-flex align-items-center gap-2" style="cursor:pointer;font-size:var(--text-sm);">',
       '    <input type="radio" name="pdfPageMode" value="one" checked>',
-      '    Page <input type="number" id="pdfPageNum"',
+      '    ' + __t('Page') + ' <input type="number" id="pdfPageNum"',
       '      class="form-control form-control-sm d-inline-block ms-1" value="1" min="1"',
-      '      style="width:72px;" aria-label="Page number">',
+      '      style="width:72px;" aria-label="' + __t('Page number') + '">',
       '    <span id="pdfPageTotal" class="text-muted"></span>',
       '  </label>',
       '  <label class="d-flex align-items-center gap-2" style="cursor:pointer;font-size:var(--text-sm);">',
       '    <input type="radio" name="pdfPageMode" value="all">',
-      '    All pages <span class="text-muted" style="font-size:var(--text-xs);">(downloads as .zip)</span>',
+      '    ' + __t('All pages') + ' <span class="text-muted" style="font-size:var(--text-xs);">' + __t('(downloads as .zip)') + '</span>',
       '  </label>',
       '</div>'
     ].join('');
@@ -96,7 +97,7 @@
         var numEl    = document.getElementById('pdfPageNum');
         var ctrl     = document.getElementById('pdfPageControls');
 
-        if (totalEl) totalEl.textContent = 'of ' + numPages;
+        if (totalEl) totalEl.textContent = __t('of {n}', { n: numPages });
         if (numEl)   numEl.max = numPages;
         if (ctrl)    ctrl.hidden = false;
 
@@ -107,8 +108,8 @@
           var TO     = (widget && widget.dataset.to ? widget.dataset.to : 'PNG').toUpperCase();
           var ext    = EXT_MAP[TO] || 'png';
           dlBtn.innerHTML = numPages > 1
-            ? '<i class="bi bi-download me-2" aria-hidden="true"></i>Download Image(s)'
-            : '<i class="bi bi-download me-2" aria-hidden="true"></i>Download ' + ext.toUpperCase() + ' File';
+            ? '<i class="bi bi-download me-2" aria-hidden="true"></i>' + __t('Download Image(s)')
+            : '<i class="bi bi-download me-2" aria-hidden="true"></i>' + __t('Download {ext} File', { ext: ext.toUpperCase() });
         }
       } catch (e) {
         // Non-critical — page controls stay hidden, single-page export still works
@@ -122,10 +123,7 @@
     var TO     = (widget && widget.dataset.to ? widget.dataset.to : 'PNG').toUpperCase();
 
     if (TO === 'RTF' || TO === 'MARKDOWN' || TO === 'WORD' || TO === 'HTML') {
-      throw new Error(
-        'PDF to ' + TO + ' conversion is not supported in the browser. ' +
-        'Try PDF to Text for plain text extraction instead.'
-      );
+      throw new Error(__t('PDF to {to} conversion is not supported in the browser. Try PDF to Text for plain text extraction instead.', { to: TO }));
     }
     if (TO === 'TIFF') {
       // Warn but fall through — we'll save as PNG
