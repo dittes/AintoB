@@ -253,4 +253,46 @@ module.exports = {
     limitation: 'Mit DRM geschützte EPUB-Dateien lassen sich nicht umwandeln. Bücher mit festem Layout oder aufwendiger Gestaltung verlieren diese beim Umwandeln in einfache Formate.',
     compat: 'Apple Books, Kobo, Google Play Books, Calibre und die meisten E-Reader. Amazon Kindle braucht zuvor eine Umwandlung.',
   },
+  OPUS: {
+    description: 'Opus ist ein offener, lizenzfreier Audiocodec der IETF, der schon bei niedrigen Bitraten eine hervorragende Qualität liefert. Er steckt hinter WhatsApp-Sprachnachrichten, Discord und den meisten modernen Sprach- und Streaming-Anwendungen.',
+    useCases: ['Kompakte Sprachnachrichten und Podcasts', 'Musik-Streaming mit niedriger Bitrate', 'OGG Vorbis durch einen effizienteren Codec ersetzen'],
+    limitation: 'Ältere Player, Autoradios und manche Bearbeitungsprogramme verstehen Opus nicht, und das iPhone spielt es erst in neueren iOS-Versionen ab.',
+    compat: 'Chrome, Firefox, Edge, Safari 17+, Android 5+, VLC und die meisten modernen Player.',
+  },
+  WMA: {
+    description: 'WMA ist das Format Windows Media Audio, das Microsoft als Alternative zu MP3 eingeführt hat. Es war in Windows-Media-Player-Bibliotheken und auf frühen tragbaren Playern verbreitet und steckt noch in alten Musiksammlungen.',
+    useCases: ['Alte Windows-Musikbibliotheken auf dem Handy abspielbar machen', 'WMA-Aufnahmen zum Teilen in MP3 umwandeln', 'WMA für ältere reine Windows-Player erzeugen'],
+    limitation: 'Smartphones, Browser und die meisten Streaming-Geräte spielen WMA nicht nativ ab, und das Format gilt als veraltet.',
+    compat: 'Windows Media Player, VLC und die meisten Desktop-Player. Auf dem iPhone und in Browsern nicht nativ unterstützt.',
+  },
+  AAC: {
+    description: 'AAC ist der verlustbehaftete Audiocodec als Nachfolger von MP3 und liefert bei gleicher Bitrate eine bessere Qualität. Reine AAC-Dateien enthalten nur den Audiostrom, während dasselbe Audio meist in einem M4A- oder MP4-Container liegt.',
+    useCases: ['Kleinere Musikdateien als MP3 bei gleicher Qualität', 'Audio für Streaming und mobile Apps', 'Einen AAC-Strom für Player extrahieren, die .aac erwarten'],
+    limitation: 'Reine AAC-Dateien enthalten kaum Metadaten wie Cover oder Tags; für Musikbibliotheken ist M4A besser geeignet.',
+    compat: 'Unterstützt von iOS, Android, Windows, macOS, Browsern und nahezu allen aktuellen Playern.',
+  },
+  MKV: {
+    description: 'MKV ist der offene Matroska-Container, der beliebig viele Video-, Audio- und Untertitelspuren in einer Datei bündelt. Er ist beliebt für Filme, TV-Aufnahmen und Bildschirmaufnahmen mit Werkzeugen wie OBS.',
+    useCases: ['OBS-Aufnahmen auf Handys, Fernsehern und in Schnittprogrammen abspielen', 'Heruntergeladene Filme für mehr Geräte in MP4 umwandeln', 'MKV für Sammlungen erzeugen, die mehrere Ton- oder Untertitelspuren behalten'],
+    limitation: 'Hier werden nur die erste Video- und Tonspur umgewandelt, Untertitelspuren werden nicht übernommen. Viele Fernseher, Handys und Schnittprogramme spielen MKV nicht direkt ab.',
+    compat: 'VLC, MPV, Plex, Kodi und die meisten Desktop-Player; eingeschränkt auf dem iPhone, in QuickTime und in Browsern.',
+  },
+  MPEG: {
+    description: 'MPEG ist die Familie von Videoformaten hinter Video-CDs, DVDs und dem frühen Digitalfernsehen, meist als .mpeg- oder .mpg-Datei gespeichert. Hier erzeugte Dateien nutzen MPEG-2-Video mit MP2-Ton.',
+    useCases: ['Alte DVD- oder Camcorder-Clips in MP4 umwandeln', 'MPEG für ältere Player und Set-Top-Boxen erzeugen', 'Alte Digitalfernseh-Aufnahmen in einem modernen Format archivieren'],
+    limitation: 'MPEG-2 komprimiert deutlich weniger effizient als MP4, die Dateien sind größer, und Browser spielen es nicht nativ ab.',
+    compat: 'VLC, Windows Media Player, ältere DVD- und TV-Player. Von Browsern und Handys nicht nativ unterstützt.',
+  },
+  PPTX: {
+    description: 'PPTX ist das Präsentationsformat von Microsoft PowerPoint. Eine PPTX-Datei ist ein ZIP-Paket aus XML-Dateien mit Folien, Text, Bildern und Layouts.',
+    useCases: ['Den Text einer Präsentation für Notizen oder Übersetzung extrahieren', 'Folien als HTML oder Markdown veröffentlichen', 'Eine Präsentation zum Teilen als PDF speichern'],
+    limitation: 'Die Umwandlungen hier behalten Titel, Text, Aufzählungsebenen, Tabellen und Bilder in der Folienreihenfolge. Layout, Formen, Diagramme, Animationen und Notizen werden nicht übernommen.',
+    compat: 'Nativ in Microsoft PowerPoint; öffnet in Google Präsentationen, Keynote und LibreOffice Impress.',
+  },
+  IPYNB: {
+    description: 'IPYNB ist das Jupyter-Notebook-Format für Data Science und Lehre. Ein Notebook ist eine JSON-Datei, die Markdown-Text, Code-Zellen und gespeicherte Ausgaben wie Tabellen und Diagramme vereint.',
+    useCases: ['Analyseergebnisse mit Personen teilen, die kein Jupyter nutzen', 'Notebooks als Markdown für Blogs und Dokumentation veröffentlichen', 'Ein Notebook für Berichte als PDF drucken'],
+    limitation: 'Es wird nichts ausgeführt: Es erscheinen nur im Notebook gespeicherte Ausgaben, interaktive Widgets sind nicht enthalten.',
+    compat: 'Öffnet in JupyterLab, VS Code, Google Colab und der GitHub-Vorschau.',
+  },
 };

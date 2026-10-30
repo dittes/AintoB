@@ -153,4 +153,7 @@ module.exports = {
   [`This EPUB has no readable chapters.`]: `Tento EPUB neobsahuje žádné čitelné kapitoly.`,
   [`No text was found in this document.`]: `V tomto dokumentu nebyl nalezen žádný text.`,
   [`Open Print Dialog`]: `Otevřít dialog tisku`,
+  [`This is not a Jupyter notebook (no cells found).`]: `Toto není notebook Jupyter (nebyly nalezeny žádné buňky).`,
+  [`This is not a PowerPoint (.pptx) file.`]: `Toto není soubor PowerPoint (.pptx).`,
+  [`This presentation has no slides.`]: `Tato prezentace neobsahuje žádné snímky.`,
 };

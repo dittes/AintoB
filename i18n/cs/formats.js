@@ -252,4 +252,46 @@ module.exports = {
     limitation: 'Soubory EPUB chráněné DRM nelze převést. Knihy s pevným rozvržením nebo bohatým stylováním o ně při převodu do jednoduchých formátů přijdou.',
     compat: 'Apple Books, Kobo, Google Play Knihy, Calibre a většina čteček. Amazon Kindle vyžaduje předchozí převod.',
   },
+  OPUS: {
+    description: 'Opus je otevřený audiokodek bez licenčních poplatků od IETF, který nabízí výbornou kvalitu už při nízkých datových tocích. Stojí za hlasovými zprávami ve WhatsAppu, Discordem a většinou moderních hlasových a streamovacích aplikací.',
+    useCases: ['Kompaktní hlasové zprávy a podcasty', 'Streamování hudby při nízkém datovém toku', 'Náhrada OGG Vorbis efektivnějším kodekem'],
+    limitation: 'Starší přehrávače, autorádia a některé editační nástroje Opus neznají a iPhone ho přehraje až v novějších verzích iOS.',
+    compat: 'Chrome, Firefox, Edge, Safari 17+, Android 5+, VLC a většina moderních přehrávačů.',
+  },
+  WMA: {
+    description: 'WMA je formát Windows Media Audio, který Microsoft zavedl jako alternativu k MP3. Býval běžný v knihovnách Windows Media Playeru a na prvních přenosných přehrávačích a stále se objevuje ve starých hudebních sbírkách.',
+    useCases: ['Zpřístupnění starých hudebních knihoven z Windows v telefonu', 'Převod nahrávek WMA do MP3 pro sdílení', 'Vytvoření WMA pro starší přehrávače jen pro Windows'],
+    limitation: 'Telefony, prohlížeče a většina streamovacích zařízení WMA nativně nepřehraje a formát je považován za zastaralý.',
+    compat: 'Windows Media Player, VLC a většina desktopových přehrávačů. iPhone ani prohlížeče ho nativně nepodporují.',
+  },
+  AAC: {
+    description: 'AAC je ztrátový audiokodek navržený jako nástupce MP3, který při stejném datovém toku nabízí lepší kvalitu. Čisté soubory .aac obsahují jen zvukový proud, zatímco stejný zvuk bývá obvykle v kontejneru M4A nebo MP4.',
+    useCases: ['Menší hudební soubory než MP3 při stejné kvalitě', 'Zvuk pro streamování a mobilní aplikace', 'Získání proudu AAC pro přehrávače, které očekávají .aac'],
+    limitation: 'Čisté soubory AAC nesou jen málo metadat, například obal alba nebo štítky; pro hudební knihovny je lepší M4A.',
+    compat: 'Podporují ho iOS, Android, Windows, macOS, prohlížeče a téměř všechny současné přehrávače.',
+  },
+  MKV: {
+    description: 'MKV je otevřený kontejner Matroska, který v jednom souboru pojme libovolný počet video, audio a titulkových stop. Je oblíbený pro filmy, televizní nahrávky a záznamy obrazovky z nástrojů jako OBS.',
+    useCases: ['Přehrávání záznamů z OBS v telefonech, televizích a editorech', 'Převod stažených filmů do MP4 pro širší podporu zařízení', 'Vytvoření MKV pro sbírky, které uchovávají více zvukových nebo titulkových stop'],
+    limitation: 'Zde se převádí jen první video a zvuková stopa, titulky se nepřenášejí. Mnoho televizí, telefonů a editorů MKV přímo nepřehraje.',
+    compat: 'VLC, MPV, Plex, Kodi a většina desktopových přehrávačů; omezená podpora na iPhonu, v QuickTime a v prohlížečích.',
+  },
+  MPEG: {
+    description: 'MPEG je rodina video formátů za VCD, DVD a prvním digitálním televizním vysíláním, obvykle uložená jako soubory .mpeg nebo .mpg. Soubory vytvořené zde používají video MPEG-2 se zvukem MP2.',
+    useCases: ['Převod starých klipů z DVD nebo kamkordéru do MP4', 'Vytvoření MPEG pro starší přehrávače a set-top boxy', 'Archivace starých záznamů digitální televize v moderním formátu'],
+    limitation: 'MPEG-2 komprimuje mnohem méně účinně než MP4, soubory jsou větší a prohlížeče ho nativně nepřehrají.',
+    compat: 'VLC, Windows Media Player, starší přehrávače DVD a televizí. Prohlížeče ani telefony ho nativně nepodporují.',
+  },
+  PPTX: {
+    description: 'PPTX je formát prezentací Microsoft PowerPoint. Soubor PPTX je balíček ZIP se soubory XML, který obsahuje snímky, text, obrázky a rozvržení.',
+    useCases: ['Získání textu prezentace pro poznámky nebo překlad', 'Publikování snímků jako HTML nebo Markdown', 'Uložení prezentace jako PDF pro sdílení'],
+    limitation: 'Převody zde zachovají nadpisy, text, úrovně odrážek, tabulky a obrázky v pořadí snímků. Rozvržení, tvary, grafy, animace a poznámky řečníka se nepřenášejí.',
+    compat: 'Nativně v Microsoft PowerPointu; otevře se v Prezentacích Google, Keynote a LibreOffice Impress.',
+  },
+  IPYNB: {
+    description: 'IPYNB je formát Jupyter Notebook používaný v datové vědě a ve výuce. Notebook je soubor JSON, který spojuje text v Markdownu, buňky s kódem a uložené výstupy, například tabulky a grafy.',
+    useCases: ['Sdílení výsledků analýz s lidmi, kteří Jupyter nepoužívají', 'Publikování notebooků jako Markdown pro blogy a dokumentaci', 'Tisk notebooku do PDF pro zprávy'],
+    limitation: 'Nic se nespouští: zobrazí se jen výstupy uložené v notebooku a interaktivní widgety nejsou zahrnuty.',
+    compat: 'Otevře se v JupyterLab, VS Code, Google Colab a v náhledu na GitHubu.',
+  },
 };

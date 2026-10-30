@@ -252,4 +252,46 @@ module.exports = {
     limitation: 'Plików EPUB chronionych DRM nie można konwertować. Książki ze stałym układem lub bogatą stylizacją tracą ją po konwersji do prostych formatów.',
     compat: 'Apple Books, Kobo, Książki Google Play, Calibre i większość czytników. Amazon Kindle wymaga wcześniejszej konwersji.',
   },
+  OPUS: {
+    description: 'Opus to otwarty, wolny od opłat kodek audio standaryzowany przez IETF, który zapewnia świetną jakość już przy niskich przepływnościach. Stoi za wiadomościami głosowymi WhatsApp, Discordem i większością nowoczesnych aplikacji głosowych i streamingowych.',
+    useCases: ['Kompaktowe wiadomości głosowe i podcasty', 'Streaming muzyki przy niskiej przepływności', 'Zastąpienie OGG Vorbis wydajniejszym kodekiem'],
+    limitation: 'Starsze odtwarzacze, radia samochodowe i niektóre narzędzia do edycji nie znają Opusa, a iPhone odtwarza go dopiero w nowszych wersjach iOS.',
+    compat: 'Chrome, Firefox, Edge, Safari 17+, Android 5+, VLC i większość nowoczesnych odtwarzaczy.',
+  },
+  WMA: {
+    description: 'WMA to format Windows Media Audio, który Microsoft wprowadził jako alternatywę dla MP3. Był popularny w bibliotekach Windows Media Player i na pierwszych przenośnych odtwarzaczach, a wciąż trafia się w starych kolekcjach muzyki.',
+    useCases: ['Udostępnienie starych bibliotek muzycznych z Windows na telefonie', 'Konwersja nagrań WMA do MP3 w celu udostępnienia', 'Tworzenie WMA dla starszych odtwarzaczy tylko na Windows'],
+    limitation: 'Telefony, przeglądarki i większość urządzeń streamingowych nie odtwarza WMA natywnie, a format uchodzi za przestarzały.',
+    compat: 'Windows Media Player, VLC i większość odtwarzaczy na komputery. iPhone i przeglądarki nie obsługują go natywnie.',
+  },
+  AAC: {
+    description: 'AAC to stratny kodek audio zaprojektowany jako następca MP3, który przy tej samej przepływności daje lepszą jakość. Surowe pliki .aac zawierają sam strumień dźwięku, podczas gdy ten sam dźwięk zwykle znajduje się w kontenerze M4A lub MP4.',
+    useCases: ['Mniejsze pliki muzyczne niż MP3 przy tej samej jakości', 'Dźwięk do streamingu i aplikacji mobilnych', 'Wyodrębnienie strumienia AAC dla odtwarzaczy oczekujących .aac'],
+    limitation: 'Surowe pliki AAC niosą niewiele metadanych, takich jak okładka czy tagi; do bibliotek muzycznych lepszy jest M4A.',
+    compat: 'Obsługują go iOS, Android, Windows, macOS, przeglądarki i niemal wszystkie obecne odtwarzacze.',
+  },
+  MKV: {
+    description: 'MKV to otwarty kontener Matroska, który mieści dowolną liczbę ścieżek wideo, audio i napisów w jednym pliku. Jest popularny dla filmów, nagrań telewizyjnych i nagrań ekranu z narzędzi takich jak OBS.',
+    useCases: ['Odtwarzanie nagrań z OBS na telefonach, telewizorach i w edytorach', 'Konwersja pobranych filmów do MP4 dla szerszej obsługi urządzeń', 'Tworzenie MKV dla kolekcji zachowujących kilka ścieżek dźwiękowych lub napisów'],
+    limitation: 'Tutaj konwertowana jest tylko pierwsza ścieżka wideo i audio, a napisy nie są przenoszone. Wiele telewizorów, telefonów i edytorów nie odtwarza MKV bezpośrednio.',
+    compat: 'VLC, MPV, Plex, Kodi i większość odtwarzaczy na komputery; ograniczona obsługa na iPhonie, w QuickTime i w przeglądarkach.',
+  },
+  MPEG: {
+    description: 'MPEG to rodzina formatów wideo stojąca za VCD, DVD i wczesną telewizją cyfrową, zwykle zapisywana jako pliki .mpeg lub .mpg. Pliki tworzone tutaj używają wideo MPEG-2 z dźwiękiem MP2.',
+    useCases: ['Konwersja starych klipów z DVD lub kamer do MP4', 'Tworzenie MPEG dla starszych odtwarzaczy i dekoderów', 'Archiwizacja starych nagrań telewizji cyfrowej w nowoczesnym formacie'],
+    limitation: 'MPEG-2 kompresuje znacznie mniej wydajnie niż MP4, więc pliki są większe, a przeglądarki nie odtwarzają go natywnie.',
+    compat: 'VLC, Windows Media Player, starsze odtwarzacze DVD i telewizory. Przeglądarki i telefony nie obsługują go natywnie.',
+  },
+  PPTX: {
+    description: 'PPTX to format prezentacji Microsoft PowerPoint. Plik PPTX to pakiet ZIP z plikami XML zawierającymi slajdy, tekst, obrazy i układy.',
+    useCases: ['Wyodrębnienie tekstu prezentacji do notatek lub tłumaczenia', 'Publikowanie slajdów jako HTML lub Markdown', 'Zapis prezentacji jako PDF do udostępnienia'],
+    limitation: 'Konwersje tutaj zachowują tytuły, tekst, poziomy wypunktowań, tabele i obrazy w kolejności slajdów. Układ, kształty, wykresy, animacje i notatki prelegenta nie są odtwarzane.',
+    compat: 'Natywnie w Microsoft PowerPoint; otwiera się w Prezentacjach Google, Keynote i LibreOffice Impress.',
+  },
+  IPYNB: {
+    description: 'IPYNB to format Jupyter Notebook używany w data science i nauczaniu. Notebook to plik JSON łączący tekst Markdown, komórki z kodem i zapisane wyniki, takie jak tabele i wykresy.',
+    useCases: ['Udostępnianie wyników analiz osobom, które nie używają Jupytera', 'Publikowanie notebooków jako Markdown na blogach i w dokumentacji', 'Wydruk notebooka do PDF na potrzeby raportów'],
+    limitation: 'Nic nie jest uruchamiane: pojawiają się tylko wyniki zapisane w notebooku, a interaktywne widżety nie są uwzględniane.',
+    compat: 'Otwiera się w JupyterLab, VS Code, Google Colab i podglądzie na GitHubie.',
+  },
 };

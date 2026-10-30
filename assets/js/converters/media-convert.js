@@ -20,16 +20,16 @@
   var CORE_BASE   = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@' + CORE_VERSION + '/dist/esm';
 
   var EXT = {
-    MP3: 'mp3', WAV: 'wav', M4A: 'm4a', OGG: 'ogg', FLAC: 'flac',
-    MP4: 'mp4', MOV: 'mov', AVI: 'avi', WEBM: 'webm', WMV: 'wmv', FLV: 'flv',
+    MP3: 'mp3', WAV: 'wav', M4A: 'm4a', OGG: 'ogg', FLAC: 'flac', OPUS: 'opus', WMA: 'wma', AAC: 'aac',
+    MP4: 'mp4', MOV: 'mov', AVI: 'avi', WEBM: 'webm', WMV: 'wmv', FLV: 'flv', MKV: 'mkv', MPEG: 'mpeg',
     GIF: 'gif', PNG: 'png', JPG: 'jpg', JPEG: 'jpg',
     WEBP: 'webp', TIFF: 'tiff', BMP: 'bmp',
   };
 
   var MIME = {
-    mp3: 'audio/mpeg', wav: 'audio/wav', m4a: 'audio/mp4', ogg: 'audio/ogg', flac: 'audio/flac',
+    mp3: 'audio/mpeg', wav: 'audio/wav', m4a: 'audio/mp4', ogg: 'audio/ogg', flac: 'audio/flac', opus: 'audio/opus', wma: 'audio/x-ms-wma', aac: 'audio/aac',
     mp4: 'video/mp4', mov: 'video/quicktime', avi: 'video/x-msvideo', webm: 'video/webm',
-    wmv: 'video/x-ms-wmv', flv: 'video/x-flv',
+    wmv: 'video/x-ms-wmv', flv: 'video/x-flv', mkv: 'video/x-matroska', mpeg: 'video/mpeg',
     gif: 'image/gif', png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp',
     tiff: 'image/tiff', bmp: 'image/bmp',
   };
@@ -42,6 +42,9 @@
     m4a:  ['-vn', '-c:a', 'aac', '-b:a', '192k'],
     ogg:  ['-vn', '-c:a', 'libvorbis', '-q:a', '5'],
     flac: ['-vn', '-c:a', 'flac'],
+    opus: ['-vn', '-c:a', 'libopus', '-b:a', '128k'],
+    wma:  ['-vn', '-c:a', 'wmav2', '-b:a', '192k'],
+    aac:  ['-vn', '-c:a', 'aac', '-b:a', '192k'],
     // Video — dimensions forced even for yuv420p; veryfast keeps wasm times sane
     mp4:  ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23',
            '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2', '-pix_fmt', 'yuv420p',
@@ -52,6 +55,9 @@
     webm: ['-c:v', 'libvpx', '-b:v', '1M', '-deadline', 'realtime', '-cpu-used', '5',
            '-c:a', 'libvorbis', '-q:a', '4'],
     avi:  ['-c:v', 'mpeg4', '-q:v', '5', '-c:a', 'libmp3lame', '-q:a', '4'],
+    mkv:  ['-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23',
+           '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k'],
+    mpeg: ['-c:v', 'mpeg2video', '-b:v', '3M', '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2', '-c:a', 'mp2', '-b:a', '192k'],
     wmv:  ['-c:v', 'wmv2', '-b:v', '2M', '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2', '-c:a', 'wmav2', '-b:a', '128k'],
     flv:  ['-c:v', 'flv', '-b:v', '2M', '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2', '-c:a', 'libmp3lame', '-ar', '44100', '-b:a', '128k'],
     // Animated GIF — capped at 480px wide / 12 fps to keep sizes reasonable

@@ -198,7 +198,7 @@ function navbar(slug) {
   <div class="container navbar-inner" style="max-width:var(--max-width);">
     <a href="${u('/')}" class="navbar-logo" aria-label="${esc(s('logoAria'))}">${LOGO_MARK}<span class="logo-word">AintoB</span></a>
     <div class="navbar-actions">
-      <a href="${ooUrl()}" class="navbar-tools-link navbar-open" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <span class="nav-label">${esc(s('openFiles'))}</span><span class="visually-hidden"> ${esc(s('newTab'))}</span></a>
+      <a href="${ooCtx || ooUrl()}" class="navbar-tools-link navbar-open" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <span class="nav-label">${esc(s('openFiles'))}</span><span class="visually-hidden"> ${esc(s('newTab'))}</span></a>
       <a href="${u('/file-converter/')}" class="navbar-tools-link"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> <span class="nav-label">${esc(s('allConverters'))}</span></a>
       ${langSwitch(slug)}
     </div>
@@ -237,6 +237,16 @@ function privacyBlock() {
     </div>
   </div>
 </div>`;
+}
+
+/**
+ * The navigation and footer "Open files" links follow the page: a format page → that format on open-online.com,
+ * a category page → the category page, anything else → open-online.com's home. Builders call setOoContext()
+ * before rendering the navbar; footer() clears it again after the page is done.
+ */
+let ooCtx = null;
+function setOoContext(fmt, cat) {
+  ooCtx = (fmt && ooFormatUrl(fmt)) || (cat && OO_CATEGORY[cat] ? ooUrl(OO_CATEGORY[cat]) : null);
 }
 
 /**
@@ -326,13 +336,15 @@ function faqBlock(faqs) {
 }
 
 function footer(slug, extraLinks, extraScripts) {
+  const ooHref = ooCtx || ooUrl();
+  ooCtx = null;
   const links = [
     { label: s('allConverters'), href: u('/file-converter/') },
     ...CATS.map(c => ({ label: L.cat[c].converters, href: u(HUB[c]) })),
     ...(extraLinks || []).map(l => ({ label: l.label, href: u(l.href) })),
     { label: s('privacyPolicy'), href: u('/privacy/') },
     { label: s('imprint'), href: u('/imprint/') },
-    { label: s('footerOpenOnline'), href: ooUrl(), external: true },
+    { label: s('footerOpenOnline'), href: ooHref, external: true },
   ];
   const langLinks = LANGS.map(l => `<a href="/${l.code}${slug}" hreflang="${l.htmlLang}" lang="${l.htmlLang}" data-lang="${l.code}"${l.code === LANG ? ' aria-current="true"' : ''}>${l.name}</a>`).join(' · ');
   const dict = LANG === DEFAULT_LANG ? '' : `<script src="/assets/js/lang/${LANG}.js" defer></script>\n`;
@@ -709,6 +721,7 @@ function buildCategoryHub(page, allPages) {
   const C = L.cat[cb];
   const txt = pageText(page);
 
+  setOoContext(null, cb);
   const fmtHubs = allPages.filter(p => p['Page Type'] === 'Format Hub' && p['Category'] === cb);
   const pairPages = allPages.filter(p => p['Page Type'] === 'Pair' && catBase(p) === cb);
   const topPairs = pairPages.filter(p => p['Priority'] === 'P1');
@@ -778,6 +791,8 @@ function buildFormatHub(page, allPages) {
 
   const schema = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: txt.name, description: txt.meta, url: abs(slug), inLanguage: L.meta.htmlLang };
   const catHubHref = page['Parent Hub'] || categoryHub(cb);
+  setOoContext(fmt, info.category || cb);
+  const ooHubUrl = ooFormatUrl(fmt);
   const desc = info.description || s('fmtFallbackDesc', { fmt, full: info.fullName || fmt, cat: cb });
 
   const faqs = [
@@ -799,6 +814,7 @@ function buildFormatHub(page, allPages) {
       <p class="hero-subtitle mx-auto">${esc(txt.meta)}</p>
       <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
         ${fromPages.slice(0, 3).map(p => `<a href="${u(p['URL Slug'])}" class="btn btn-primary px-4">${esc(nameOf(p))}</a>`).join('\n        ')}
+        ${ooHubUrl ? `<a href="${ooHubUrl}" class="btn btn-outline-secondary px-4" target="_blank" rel="noopener"><i class="bi bi-folder2-open me-2" aria-hidden="true"></i>${esc(s('ooButtonFmt', { fmt: fname(fmt) }))}<span class="visually-hidden"> ${esc(s('newTab'))}</span></a>` : ''}
       </div>
     </div>
   </section>
@@ -857,6 +873,7 @@ function buildPairPage(page, allPages) {
   const sameTo = allPages.filter(p => p['Page Type'] === 'Pair' && p['Target Format'] === to && p['Source Format'] !== from).slice(0, 6);
   const reverse = sameFmt ? null : allPages.find(p => p['Page Type'] === 'Pair' && p['Source Format'] === to && p['Target Format'] === from);
 
+  setOoContext(from, cb);
   const cfg = getConverterConfig(from, to, slug);
   const robots = robotsFor(page);
   const action = (tool && tool.action) || (cfg && cfg.action) || undefined;
@@ -1019,6 +1036,7 @@ function buildCustomPage(page, allPages) {
   if (!def) throw new Error(`No custom template registered for ${slug}`);
   const txt = pageText(page);
   const C = L.cat[catBase(page)];
+  setOoContext('PDF', 'document');
   const parentPage = allPages.find(p => p['URL Slug'] === page['Parent Hub']);
 
   let main = fs.readFileSync(path.join(ROOT, 'templates', key + '.html'), 'utf8');
