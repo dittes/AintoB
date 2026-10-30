@@ -329,7 +329,7 @@ const legal = {
     title: 'Imprint | AintoB.com',
     desc: 'Legal imprint and contact information for AintoB.com.',
     h1: 'Imprint',
-    html: '<p>This website is operated by the owner of AintoB.com. For legal and GDPR-related inquiries, please use the contact form or reach out via email.</p><p>AintoB.com is a free, browser-based file conversion service. No files are stored on our servers.</p><h2>Disclaimer</h2><p>AintoB.com provides file conversion tools for informational and productivity purposes. We make no guarantees regarding the accuracy or completeness of converted output. Use converted files at your own discretion.</p>',
+    html: '<h2>Operator</h2><p>AintoB<br>c/o Andreas Dittes<br>Bautzener Str. 35<br>10829 Berlin<br>Germany</p><h2>Contact</h2><p>Email: <a href="mailto:aintob@dittes.info">aintob@dittes.info</a></p><p>AintoB.com is a free, browser-based file conversion service. No files are stored on our servers.</p><h2>Disclaimer</h2><p>AintoB.com provides file conversion tools for informational and productivity purposes. We make no guarantees regarding the accuracy or completeness of converted output. Use converted files at your own discretion.</p>',
   },
 };
 

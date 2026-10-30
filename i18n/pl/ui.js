@@ -527,7 +527,7 @@ const legal = {
     title: 'Informacje prawne | AintoB.com',
     desc: 'Informacje prawne i dane kontaktowe witryny AintoB.com wraz z zastrzeżeniami dotyczącymi korzystania z narzędzi.',
     h1: 'Informacje prawne',
-    html: '<p>Tę witrynę prowadzi właściciel AintoB.com. W sprawach prawnych i dotyczących RODO skorzystaj z formularza kontaktowego lub napisz e-mail.</p><p>AintoB.com to darmowa usługa konwersji plików działająca w przeglądarce. Na naszych serwerach nie są przechowywane żadne pliki.</p><h2>Wyłączenie odpowiedzialności</h2><p>AintoB.com udostępnia narzędzia do konwersji plików w celach informacyjnych i zwiększania produktywności. Nie gwarantujemy dokładności ani kompletności przekonwertowanych wyników. Z przekonwertowanych plików korzystasz na własną odpowiedzialność.</p>',
+    html: '<h2>Operator serwisu</h2><p>AintoB<br>c/o Andreas Dittes<br>Bautzener Str. 35<br>10829 Berlin<br>Niemcy</p><h2>Kontakt</h2><p>E-mail: <a href="mailto:aintob@dittes.info">aintob@dittes.info</a></p><p>AintoB.com to darmowa usługa konwersji plików działająca w przeglądarce. Na naszych serwerach nie są przechowywane żadne pliki.</p><h2>Wyłączenie odpowiedzialności</h2><p>AintoB.com udostępnia narzędzia do konwersji plików w celach informacyjnych i zwiększania produktywności. Nie gwarantujemy dokładności ani kompletności przekonwertowanych wyników. Z przekonwertowanych plików korzystasz na własną odpowiedzialność.</p>',
   },
 };
 

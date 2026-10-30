@@ -527,7 +527,7 @@ const legal = {
     title: 'Impresum | AintoB.com',
     desc: 'Impresum a kontaktní informace webu AintoB.com spolu s upozorněním k používání nástrojů pro převod souborů.',
     h1: 'Impresum',
-    html: '<p>Tento web provozuje majitel AintoB.com. S právními dotazy a dotazy týkajícími se GDPR se prosím obraťte přes kontaktní formulář nebo e-mailem.</p><p>AintoB.com je bezplatná služba pro převod souborů, která běží v prohlížeči. Na našich serverech se neukládají žádné soubory.</p><h2>Vyloučení odpovědnosti</h2><p>AintoB.com poskytuje nástroje pro převod souborů pro informační a produktivní účely. Za přesnost a úplnost převedeného výstupu neručíme. Převedené soubory používáte na vlastní odpovědnost.</p>',
+    html: '<h2>Provozovatel</h2><p>AintoB<br>c/o Andreas Dittes<br>Bautzener Str. 35<br>10829 Berlin<br>Německo</p><h2>Kontakt</h2><p>E-mail: <a href="mailto:aintob@dittes.info">aintob@dittes.info</a></p><p>AintoB.com je bezplatná služba pro převod souborů, která běží v prohlížeči. Na našich serverech se neukládají žádné soubory.</p><h2>Vyloučení odpovědnosti</h2><p>AintoB.com poskytuje nástroje pro převod souborů pro informační a produktivní účely. Za přesnost a úplnost převedeného výstupu neručíme. Převedené soubory používáte na vlastní odpovědnost.</p>',
   },
 };
 

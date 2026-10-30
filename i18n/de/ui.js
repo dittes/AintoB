@@ -526,7 +526,7 @@ const legal = {
     title: 'Impressum | AintoB.com',
     desc: 'Impressum und Kontaktinformationen von AintoB.com sowie Hinweise zur Nutzung der Konvertierungswerkzeuge.',
     h1: 'Impressum',
-    html: '<p>Diese Website wird vom Inhaber von AintoB.com betrieben. Für rechtliche und DSGVO-bezogene Anfragen nutzen Sie bitte das Kontaktformular oder schreiben Sie uns per E-Mail.</p><p>AintoB.com ist ein kostenloser, browserbasierter Dateikonvertierungsdienst. Auf unseren Servern werden keine Dateien gespeichert.</p><h2>Haftungsausschluss</h2><p>AintoB.com stellt Werkzeuge zur Dateiumwandlung zu Informations- und Produktivitätszwecken bereit. Für die Richtigkeit und Vollständigkeit der umgewandelten Ergebnisse übernehmen wir keine Gewähr. Die Nutzung umgewandelter Dateien erfolgt auf eigene Verantwortung.</p>',
+    html: '<h2>Angaben gemäß § 5 DDG</h2><p>AintoB<br>c/o Andreas Dittes<br>Bautzener Str. 35<br>10829 Berlin<br>Deutschland</p><h2>Kontakt</h2><p>E-Mail: <a href="mailto:aintob@dittes.info">aintob@dittes.info</a></p><p>AintoB.com ist ein kostenloser, browserbasierter Dateikonvertierungsdienst. Auf unseren Servern werden keine Dateien gespeichert.</p><h2>Haftungsausschluss</h2><p>AintoB.com stellt Werkzeuge zur Dateiumwandlung zu Informations- und Produktivitätszwecken bereit. Für die Richtigkeit und Vollständigkeit der umgewandelten Ergebnisse übernehmen wir keine Gewähr. Die Nutzung umgewandelter Dateien erfolgt auf eigene Verantwortung.</p>',
   },
 };
 

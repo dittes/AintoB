@@ -147,8 +147,8 @@ Ordinary pairs need no translation work: their titles, descriptions and copy com
 
 ## Known limitations
 
-- **Imprint / legal copy** is a translation of the existing short texts. A commercial site operated from Germany or
-  Austria needs the operator's name and address in the *Impressum*; that information is not in the repository.
+- **Imprint / legal copy** is a translation of short texts; the operator address and contact email live in each
+  locale's `legal.imprint.html` (`i18n/<lang>/ui.js`). The disclaimer and privacy text have not had a legal review.
 - Browser-native parse errors (e.g. the tail of `Invalid JSON: …`) stay in the browser's own language.
 - PDF watermarks use PDF's built-in font, which cannot draw letters like ů, ě, ł, ą; those are folded to base letters
   and the user is told.
