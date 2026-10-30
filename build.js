@@ -28,7 +28,7 @@ const OPEN_ONLINE = 'https://open-online.com';
 const OO_FORMATS = new Set(('pdf docx txt md rtf eml log tex srt ics vcf odt xlsx xls csv tsv ods pptx odp jpg png gif webp svg avif heic tiff psd bmp ' +
   'pnm tga ico zip tar gz 7z epub cbz fb2 json xml yaml ipynb npy crt geojson sqlite parquet dbf html css js ts py java c cpp go rs php sql sh ini toml ' +
   'ttf otf woff stl glb mp3 wav ogg m4a flac mp4 webm mov avi wmv flv mpeg wma').split(' '));
-const OO_CATEGORY = { image: 'images', document: 'documents', spreadsheet: 'spreadsheets', audio: 'media', video: 'media', data: 'data' };
+const OO_CATEGORY = { image: 'images', document: 'documents', spreadsheet: 'spreadsheets', audio: 'media', video: 'media', data: 'data', font: 'fonts' };
 const YEAR = new Date().getFullYear();
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -66,10 +66,10 @@ const firstSentence = t => { if (!t) return ''; const m = t.match(/^[\s\S]*?[.!?
 
 const HUB = {
   image: '/image-converter/', document: '/document-converter/', spreadsheet: '/spreadsheet-converter/',
-  audio: '/audio-converter/', video: '/video-converter/', data: '/data-converter/',
+  audio: '/audio-converter/', video: '/video-converter/', data: '/data-converter/', font: '/font-converter/',
 };
 const CATS = Object.keys(HUB);
-const ICON_BI = { image: 'bi-image', document: 'bi-file-earmark-text', spreadsheet: 'bi-table', audio: 'bi-music-note-beamed', video: 'bi-camera-video', data: 'bi-braces', all: 'bi-arrow-left-right' };
+const ICON_BI = { image: 'bi-image', document: 'bi-file-earmark-text', spreadsheet: 'bi-table', audio: 'bi-music-note-beamed', video: 'bi-camera-video', data: 'bi-braces', font: 'bi-fonts', all: 'bi-arrow-left-right' };
 /** Coloured icon tile used for category cards (colour per family, same scheme as open-online.com). */
 const catIcon = c => `<span class="cat-icon cat-icon--${c}"><i class="bi ${ICON_BI[c]}"></i></span>`;
 const catBase = page => (page['Category'] || '').split('→')[0];
@@ -88,7 +88,7 @@ const fname = f => (L.fmtNames && L.fmtNames[f]) || f;
 function ooFormatUrl(f) {
   const info = fmtInfo(f);
   const ext = (info.ext || '').split(',')[0].replace('.', '').toLowerCase();
-  if (!ext || (info.ext || '').includes(',') || info.category === 'data' && ext === 'txt' && f !== 'Text' && f !== 'TXT') return null;
+  if (!ext || f === 'Image' || info.category === 'data' && ext === 'txt' && f !== 'Text' && f !== 'TXT') return null;
   return OO_FORMATS.has(ext) ? ooUrl(ext) : null;
 }
 
@@ -198,7 +198,6 @@ function navbar(slug) {
   <div class="container navbar-inner" style="max-width:var(--max-width);">
     <a href="${u('/')}" class="navbar-logo" aria-label="${esc(s('logoAria'))}">${LOGO_MARK}<span class="logo-word">AintoB</span></a>
     <div class="navbar-actions">
-      <a href="${ooCtx || ooUrl()}" class="navbar-tools-link navbar-open" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <span class="nav-label">${esc(s('openFiles'))}</span><span class="visually-hidden"> ${esc(s('newTab'))}</span></a>
       <a href="${u('/file-converter/')}" class="navbar-tools-link"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> <span class="nav-label">${esc(s('allConverters'))}</span></a>
       ${langSwitch(slug)}
     </div>
@@ -251,12 +250,13 @@ function setOoContext(fmt, cat) {
 
 /**
  * Callout linking to open-online.com.
- *   fmt  – a real format key (opens that format's page), or null
- *   cat  – category key, used for the generic variant (opens /documents, /images, …)
+ *   fmt  – a real format key; the box is only shown when open-online.com has a page for it
+ *   cat  – unused (kept for call-site compatibility)
  *   to   – optional second format (the conversion target) that gets its own link
  */
 function openOnlineBox(fmt, cat, to) {
   const fmtUrl = fmt ? ooFormatUrl(fmt) : null;
+  if (!fmtUrl) return '';   // no page for this format on open-online.com → no box (the footer link is enough)
   const toUrl = to && to !== fmt ? ooFormatUrl(to) : null;
   const catUrl = cat && OO_CATEGORY[cat] ? ooUrl(OO_CATEGORY[cat]) : null;
   const title = fmtUrl ? s('ooTitleFmt', { fmt: esc(fname(fmt)) }) : s('ooTitleGeneric');

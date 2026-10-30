@@ -23,7 +23,7 @@
     MP3: 'mp3', WAV: 'wav', M4A: 'm4a', OGG: 'ogg', FLAC: 'flac', OPUS: 'opus', WMA: 'wma', AAC: 'aac',
     MP4: 'mp4', MOV: 'mov', AVI: 'avi', WEBM: 'webm', WMV: 'wmv', FLV: 'flv', MKV: 'mkv', MPEG: 'mpeg',
     GIF: 'gif', PNG: 'png', JPG: 'jpg', JPEG: 'jpg',
-    WEBP: 'webp', TIFF: 'tiff', BMP: 'bmp',
+    WEBP: 'webp', TIFF: 'tiff', BMP: 'bmp', TGA: 'tga', PNM: 'ppm', PSD: 'psd',
   };
 
   var MIME = {
@@ -31,7 +31,7 @@
     mp4: 'video/mp4', mov: 'video/quicktime', avi: 'video/x-msvideo', webm: 'video/webm',
     wmv: 'video/x-ms-wmv', flv: 'video/x-flv', mkv: 'video/x-matroska', mpeg: 'video/mpeg',
     gif: 'image/gif', png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp',
-    tiff: 'image/tiff', bmp: 'image/bmp',
+    tiff: 'image/tiff', bmp: 'image/bmp', tga: 'image/x-tga', ppm: 'image/x-portable-pixmap',
   };
 
   // Encoder arguments per output format (input format rarely matters to ffmpeg)
@@ -68,6 +68,8 @@
     webp: ['-q:v', '80'],
     tiff: [],
     bmp:  [],
+    tga:  ['-c:v', 'targa'],
+    ppm:  ['-c:v', 'ppm', '-pix_fmt', 'rgb24'],
   };
 
   var enginePromise = null;

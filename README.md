@@ -1,6 +1,6 @@
 # AintoB.com — Multilingual, Browser-Based File Converter Suite
 
-**337 pages × 4 languages (English, Deutsch, Čeština, Polski)** · generated from `page_map.csv` + locale files ·
+**383 pages × 4 languages (English, Deutsch, Čeština, Polski)** · generated from `page_map.csv` + locale files ·
 pure HTML/CSS/JS · no backend · no uploads
 
 Every conversion runs in the visitor's browser (Canvas, File API, Web Workers, WASM). Nothing is sent to a
@@ -60,7 +60,7 @@ AINTOB_LANGS=en,de node build.js   # dev shortcut: only some languages (never de
 
 `build.js` refuses to build if a locale lacks a string/placeholder/format/tool page that English has, or if the
 runtime dictionary misses a message that a browser script can show (it scans `assets/js` for `__t('…')` calls and
-`new Error('…')` messages). `scripts/verify.js` then checks all 1,348 pages: `<html lang>`, self-canonical,
+`new Error('…')` messages). `scripts/verify.js` then checks all 1,532 pages: `<html lang>`, self-canonical,
 title/description length and uniqueness, hreflang reciprocity, sitemap ↔ page agreement, every internal link and
 asset, and the old-URL redirects.
 
@@ -96,11 +96,12 @@ for a `/search/` page that does not exist.
 The sister site for *opening* (not converting) files has one page per format (`/<lang>/pdf`, `/<lang>/jpg`, …) and one per
 category (`/<lang>/documents`, `/images`, `/spreadsheets`, `/media`, `/data`) in the same four languages. AintoB links to it:
 
-- navigation and footer → the page that fits the current one (`/de/audio/m4a-converter/` → `open-online.com/de/m4a`,
-  category hubs → `/de/media` etc., everything else → `open-online.com/<lang>/`); format hubs also get a hero button
-- every converter page → a callout with *Open {source} files* **and** *Open {target} files* (deep links to the format pages)
+- footer → the page that fits the current one (`/de/audio/m4a-converter/` → `open-online.com/de/m4a`, everything else →
+  `open-online.com/<lang>/`); there is deliberately no link in the header
+- converter and format pages → a callout with *Open {source} files* **and** *Open {target} files* (deep links to the format
+  pages). It only appears when open-online.com has a page for the format; there is no generic callout any more
 - every converter widget → after a successful conversion, *Preview the {target} file on open-online.com*
-- category hubs → the matching category page; format hubs → that format's page
+- format hubs also get a hero button
 
 The set of format pages that exist is `OO_FORMATS` in `build.js` (checked against `open-online.com/en/formats`); a format
 without a page (Base64, "Image", …) falls back to the category page. `ooFormatUrl()` maps a format key to its page via the
@@ -123,7 +124,8 @@ pdf-lib, jsPDF, mammoth, markdown-it, turndown, SheetJS, js-yaml, JSZip, heic2an
 Shared converter scripts that pick their pair from the page URL: `data-convert.js` (`/data/`), `doc-convert.js`
 (RTF in/out, PDF → HTML/Markdown/Word/RTF, own RTF parser + writer), `zipdoc-convert.js` (ODT in/out, EPUB → text/HTML/Markdown/PDF),
 `sheet-to-doc.js` (CSV/TSV/Excel/ODS → HTML or Markdown table), `pptx-convert.js` (slides → text/HTML/Markdown/PDF),
-`ipynb-convert.js` (Jupyter notebooks → Markdown/HTML/PDF), `media-convert.js` (audio/video incl. FLAC, OPUS, WMA, AAC, WMV, FLV, MKV, MPEG).
+`ipynb-convert.js` (Jupyter notebooks → Markdown/HTML/PDF), `contacts-convert.js` (VCF/ICS ↔ CSV/Excel),
+`subtitle-convert.js` (SRT ↔ VTT, → text), `eml-convert.js` (e-mail → text/HTML/PDF), `font-convert.js` (TTF/OTF ↔ WOFF), `media-convert.js` (audio/video incl. FLAC, OPUS, WMA, AAC, WMV, FLV, MKV, MPEG, and TGA/PNM/PSD images).
 
 ## Adding a converter
 

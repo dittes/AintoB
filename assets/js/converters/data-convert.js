@@ -5,7 +5,8 @@
  *   json-to-csv, csv-to-json, json-to-yaml, yaml-to-json, xml-to-json,
  *   json-formatter, base64-encode, base64-decode, url-encode, url-decode,
  *   case-converter, json-to-xml, csv-to-xml, xml-to-csv, xml-to-yaml,
- *   excel-to-json, json-to-excel
+ *   excel-to-json, json-to-excel, toml-to-json, json-to-toml, toml-to-yaml, yaml-to-toml,
+ *   tsv-to-json, json-to-tsv
  *
  * YAML pages additionally load js-yaml from CDN (window.jsyaml).
  * All processing is local; input may be a File/Blob (upload) or a string (paste).
@@ -35,7 +36,8 @@
 
   // ── CSV ────────────────────────────────────────────────────────────────────
   // Full CSV parser: quoted fields, embedded commas, quotes, and newlines.
-  function parseCSV(text) {
+  function parseCSV(text, sep) {
+    sep = sep || ',';
     var rows = [], row = [], cur = '', inQ = false, i = 0;
     text = text.replace(/^﻿/, '');
     while (i < text.length) {
@@ -48,7 +50,7 @@
         cur += c; i++; continue;
       }
       if (c === '"') { inQ = true; i++; continue; }
-      if (c === ',') { row.push(cur); cur = ''; i++; continue; }
+      if (c === sep) { row.push(cur); cur = ''; i++; continue; }
       if (c === '\r') { i++; continue; }
       if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; i++; continue; }
       cur += c; i++;
@@ -59,15 +61,17 @@
     return rows;
   }
 
-  function csvField(v) {
+  function csvField(v, sep) {
     if (v == null) v = '';
     if (typeof v === 'object') v = JSON.stringify(v);
     v = String(v);
-    if (/[",\n\r]/.test(v)) return '"' + v.replace(/"/g, '""') + '"';
+    if (v.indexOf(sep || ',') > -1 || /["\n\r]/.test(v)) return '"' + v.replace(/"/g, '""') + '"';
     return v;
   }
 
-  function jsonToCsv(text) {
+  function jsonToCsv(text, sep) {
+    sep = sep || ',';
+    var cell = function (v) { return csvField(v, sep); };
     var data;
     try { data = JSON.parse(text); }
     catch (e) { throw new Error('Invalid JSON: ' + e.message); }
@@ -79,7 +83,7 @@
 
     // Array of arrays → rows as-is
     if (Array.isArray(data[0])) {
-      return data.map(function (r) { return r.map(csvField).join(','); }).join('\n');
+      return data.map(function (r) { return r.map(cell).join(sep); }).join('\n');
     }
 
     // Array of objects → union of keys as header
@@ -90,15 +94,15 @@
     });
     if (!keys.length) throw new Error('No object keys found — is this an array of objects?');
 
-    var lines = [keys.map(csvField).join(',')];
+    var lines = [keys.map(cell).join(sep)];
     data.forEach(function (o) {
-      lines.push(keys.map(function (k) { return csvField(o == null ? '' : o[k]); }).join(','));
+      lines.push(keys.map(function (k) { return cell(o == null ? '' : o[k]); }).join(sep));
     });
     return lines.join('\n');
   }
 
-  function csvToJson(text) {
-    var rows = parseCSV(text);
+  function csvToJson(text, sep) {
+    var rows = parseCSV(text, sep);
     if (rows.length < 2) throw new Error('Need a header row plus at least one data row.');
     var headers = rows[0].map(function (h, i) { return h.trim() || 'column_' + (i + 1); });
     var out = rows.slice(1).map(function (r) {
@@ -283,6 +287,32 @@
     var root = {};
     root[doc.documentElement.nodeName] = xmlNodeToJson(doc.documentElement);
     return needYaml().dump(root, { lineWidth: 120, noRefs: true });
+  }
+
+  // ── TOML (smol-toml, loaded on demand as an ES module from the CDN) ──────────
+  var tomlLib = null;
+  async function needToml() {
+    if (!tomlLib) {
+      try { tomlLib = await import('https://cdn.jsdelivr.net/npm/smol-toml@1.3.1/+esm'); }
+      catch (e) { throw new Error('TOML library not loaded. Reload the page and try again.'); }
+    }
+    return tomlLib;
+  }
+  async function tomlParse(text) {
+    var T = await needToml();
+    try { return T.parse(text); }
+    catch (e) { throw new Error('Invalid TOML: ' + (e.message || e).toString().split('\n')[0]); }
+  }
+  async function tomlDump(data) {
+    var T = await needToml();
+    if (data === null || typeof data !== 'object' || Array.isArray(data)) throw new Error('TOML needs a JSON object at the top level.');
+    try { return T.stringify(data); }
+    catch (e) { throw new Error('Cannot write this as TOML: ' + (e.message || e).toString().split('\n')[0]); }
+  }
+  function dropNulls(v) {   // TOML has no null
+    if (Array.isArray(v)) return v.filter(function (x) { return x !== null; }).map(dropNulls);
+    if (v && typeof v === 'object') { var o = {}; Object.keys(v).forEach(function (k) { if (v[k] !== null) o[k] = dropNulls(v[k]); }); return o; }
+    return v;
   }
 
   // ── Excel ↔ JSON (SheetJS) ─────────────────────────────────────────────────
@@ -489,6 +519,24 @@
         return textResult(xmlToCsv(text), baseName(input, 'converted') + '.csv', 'text/csv');
       case 'xml-to-yaml':
         return textResult(xmlToYaml(text), baseName(input, 'converted') + '.yaml', 'application/x-yaml');
+      case 'toml-to-json':
+        return textResult(JSON.stringify(await tomlParse(text), function (k, v) { return v instanceof Date ? v.toISOString() : v; }, 2), baseName(input, 'converted') + '.json', 'application/json');
+      case 'json-to-toml': {
+        var jd;
+        try { jd = JSON.parse(text); } catch (e) { throw new Error('Invalid JSON: ' + e.message); }
+        return textResult(await tomlDump(dropNulls(jd)), baseName(input, 'converted') + '.toml', 'application/toml');
+      }
+      case 'toml-to-yaml':
+        return textResult(needYaml().dump(await tomlParse(text), { lineWidth: 120, noRefs: true }), baseName(input, 'converted') + '.yaml', 'application/x-yaml');
+      case 'yaml-to-toml': {
+        var yd;
+        try { yd = needYaml().load(text); } catch (e) { throw new Error('Invalid YAML: ' + e.message); }
+        return textResult(await tomlDump(dropNulls(yd)), baseName(input, 'converted') + '.toml', 'application/toml');
+      }
+      case 'tsv-to-json':
+        return textResult(csvToJson(text, '\t'), baseName(input, 'converted') + '.json', 'application/json');
+      case 'json-to-tsv':
+        return textResult(jsonToCsv(text, '\t'), baseName(input, 'converted') + '.tsv', 'text/tab-separated-values');
       case 'json-to-excel':
         return jsonToExcel(text);
       case 'json-formatter':

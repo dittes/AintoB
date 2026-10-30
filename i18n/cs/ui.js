@@ -212,6 +212,7 @@ const benefit = {
   spreadsheet: 'Zachová řádky, sloupce i hodnoty',
   audio: 'Kodek, kvalitu i velikost souboru určíte sami',
   video: 'Kompatibilitu i velikost souboru určíte sami',
+  font: 'Všechny znaky a metriky zůstanou beze změny',
 };
 
 const cat = {
@@ -323,6 +324,24 @@ const cat = {
       { q: 'Je bezpečné vkládat citlivá data, například odpovědi API nebo tokeny?', a: 'Veškeré zpracování probíhá lokálně ve vašem prohlížeči v JavaScriptu – nic, co vložíte nebo nahrajete, se neodesílá na server. U velmi citlivých dat můžete stránku načíst, odpojit se od internetu a převod provést offline.' },
       { q: 'Jaký je rozdíl mezi JSON a YAML?', a: 'Oba představují stejný datový model. JSON používá závorky a uvozovky a je standardem pro API; YAML používá odsazení a dává se mu přednost u ručně upravovaných konfiguračních souborů, jako jsou manifesty Kubernetes a CI pipeline.' },
       { q: 'Je Base64 šifrování?', a: 'Ne – Base64 je kódování, nikoli šifrování. Umožní přenášet binární data jako text, ale kdokoli je může dekódovat. Nikdy se na Base64 nespoléhejte při ochraně tajemství.' },
+    ],
+  },
+  font: {
+    converter: 'Převodník písem', converters: 'Převodníky písem', eyebrow: 'Převodníky písem',
+    popularTitle: 'Nejoblíbenější převody písem', popularSub: 'Nejvyhledávanější převody formátů písem.',
+    allTitle: 'Všechny převodníky písem', relatedFormats: 'Související formáty písem',
+    homeDesc: 'TTF, OTF, WOFF a další.',
+    desc: 'Převodníky písem mění formáty mezi desktopovými a webovými písmy. Změňte písma TTF a OTF na kompaktní soubory WOFF pro weby nebo rozbalte WOFF zpět na instalovatelné písmo. Vše probíhá ve vašem prohlížeči, takže se licencované soubory písem nikdy nenahrávají.',
+    hub: {
+      name: 'Převodník písem',
+      title: 'Převodník písem – TTF, OTF, WOFF online',
+      meta: 'Převeďte písma přímo v prohlížeči: TTF a OTF na WOFF pro weby nebo WOFF zpět na TTF a OTF. Zdarma, soukromě a bez nahrávání souborů písem.',
+      h1: 'Převodník písem',
+    },
+    faqs: [
+      { q: 'Jsou převodníky písem zdarma?', a: 'Ano – všechny převodníky písem na AintoB jsou zcela zdarma. Bez účtu, bez předplatného, bez nahrávání.' },
+      { q: 'Mohu převést jakékoli písmo, které najdu online?', a: 'Převod nemění licenci písma. Před zveřejněním převedeného písma zkontrolujte, zda vaše licence povoluje použití na webu nebo úpravy.' },
+      { q: 'Proč neexistuje převodník WOFF2?', a: 'WOFF2 používá kompresi Brotli, kterou prohlížeče umějí rozbalit, ale nikoli vytvořit. WOFF (1.0) funguje v každém současném prohlížeči a zde se převádí vestavěnou kompresí prohlížeče.' },
     ],
   },
 };
@@ -480,6 +499,48 @@ const tools = {
     meta: 'Převeďte Excel na JSON přímo v prohlížeči: zdarma, soukromě a rychle. Z listů tabulky vzniknou objekty JSON – bez nahrávání na server.',
     h1: 'Převod Excelu na JSON',
     value: 'Změňte tabulku na JSON pro rozhraní API, skript nebo webovou aplikaci. První řádek poslouží jako klíče; sešit s více listy vytvoří objekt s jedním polem na list.',
+  },
+  '/data/toml-to-json/': {
+    name: 'Převod TOML na JSON',
+    title: 'Převod TOML na JSON online – zdarma, soukromě, v prohlížeči',
+    meta: 'Převeďte TOML na JSON přímo v prohlížeči: zdarma, soukromě a rychle. Konfigurační soubory se změní na odsazený JSON – bez nahrávání na server.',
+    h1: 'Převod TOML na JSON',
+    value: 'Konfigurační soubory TOML se snadno upravují, ale většina nástrojů a rozhraní API očekává JSON. Tento převodník načte TOML (včetně tabulek, polí tabulek a dat) a zapíše odsazený JSON.',
+  },
+  '/data/json-to-toml/': {
+    name: 'Převod JSON na TOML',
+    title: 'Převod JSON na TOML online – zdarma, soukromě, v prohlížeči',
+    meta: 'Převeďte JSON na TOML přímo v prohlížeči: zdarma, soukromě a rychle. Z JSON vznikne čistá konfigurace TOML – bez nahrávání na server.',
+    h1: 'Převod JSON na TOML',
+    value: 'Změňte objekt JSON na čistý soubor TOML pro Cargo, pyproject.toml nebo konfiguraci ve stylu Hugo. TOML nemá hodnotu null, proto se klíče s hodnotou null vynechají.',
+  },
+  '/data/toml-to-yaml/': {
+    name: 'Převod TOML na YAML',
+    title: 'Převod TOML na YAML online – zdarma, soukromě, v prohlížeči',
+    meta: 'Převeďte TOML na YAML přímo v prohlížeči: zdarma, soukromě a rychle. Stejná struktura jako čitelný YAML – bez nahrávání na server.',
+    h1: 'Převod TOML na YAML',
+    value: 'Přenášejte konfiguraci mezi ekosystémy: tento převodník načte TOML a zapíše čitelný YAML se stejnou strukturou.',
+  },
+  '/data/yaml-to-toml/': {
+    name: 'Převod YAML na TOML',
+    title: 'Převod YAML na TOML online – zdarma, soukromě, v prohlížeči',
+    meta: 'Převeďte YAML na TOML přímo v prohlížeči: zdarma, soukromě a rychle. Z YAML vznikne konfigurace TOML – bez nahrávání na server.',
+    h1: 'Převod YAML na TOML',
+    value: 'Převeďte konfiguraci YAML na TOML. Protože TOML vyžaduje na nejvyšší úrovni tabulku a nemá hodnotu null, seznamy na nejvyšší úrovni se odmítnou a hodnoty null se vynechají.',
+  },
+  '/data/tsv-to-json/': {
+    name: 'Převod TSV na JSON',
+    title: 'Převod TSV na JSON online – zdarma, soukromě, v prohlížeči',
+    meta: 'Převeďte TSV na JSON přímo v prohlížeči: zdarma, soukromě a rychle. Data oddělená tabulátory se změní na objekty JSON – bez nahrávání na server.',
+    h1: 'Převod TSV na JSON',
+    value: 'Exporty z tabulek a databází oddělené tabulátory se změní na pole objektů JSON. Záhlaví poslouží jako klíče; čísla a booleovské hodnoty zůstanou zachovány.',
+  },
+  '/data/json-to-tsv/': {
+    name: 'Převod JSON na TSV',
+    title: 'Převod JSON na TSV online – zdarma, soukromě, v prohlížeči',
+    meta: 'Převeďte JSON na TSV přímo v prohlížeči: zdarma, soukromě a rychle. Z JSON vzniknou hodnoty oddělené tabulátory – bez nahrávání na server.',
+    h1: 'Převod JSON na TSV',
+    value: 'Změňte pole objektů JSON na hodnoty oddělené tabulátory, které se čistě vloží do Excelu a Tabulek Google. Sjednocení všech klíčů tvoří záhlaví.',
   },
 };
 

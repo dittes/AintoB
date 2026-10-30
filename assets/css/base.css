@@ -28,6 +28,7 @@
   --fmt-audio:       #B23A6F;
   --fmt-video:       #B23A6F;
   --fmt-data:        #4A5568;
+  --fmt-font:        #7A4FB5;
   --fmt-all:         #2557D6;
 
   /* Typography — Inter (loaded from the CDN, see <head>) with the system stack as fallback */

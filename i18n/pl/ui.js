@@ -212,6 +212,7 @@ const benefit = {
   spreadsheet: 'Zachowuje wiersze, kolumny i wartości',
   audio: 'Kodek, jakość i rozmiar pliku ustawiasz sam',
   video: 'Zgodność i rozmiar pliku ustawiasz sam',
+  font: 'Wszystkie znaki i metryki pozostają bez zmian',
 };
 
 const cat = {
@@ -323,6 +324,24 @@ const cat = {
       { q: 'Czy bezpiecznie jest wklejać wrażliwe dane, takie jak odpowiedzi API lub tokeny?', a: 'Całe przetwarzanie odbywa się lokalnie w Twojej przeglądarce w JavaScripcie – nic, co wkleisz lub prześlesz, nie jest wysyłane na serwer. Przy bardzo wrażliwych danych możesz nawet załadować stronę, odłączyć się od internetu i wykonać konwersję offline.' },
       { q: 'Jaka jest różnica między JSON a YAML?', a: 'Oba odwzorowują ten sam model danych. JSON używa nawiasów i cudzysłowów i jest standardem dla API; YAML opiera się na wcięciach i jest preferowany w ręcznie edytowanych plikach konfiguracyjnych, takich jak manifesty Kubernetes i potoki CI.' },
       { q: 'Czy Base64 to szyfrowanie?', a: 'Nie – Base64 to kodowanie, a nie szyfrowanie. Pozwala przesyłać dane binarne jako tekst, ale każdy może je zdekodować. Nigdy nie polegaj na Base64 do ochrony tajemnic.' },
+    ],
+  },
+  font: {
+    converter: 'Konwerter czcionek', converters: 'Konwertery czcionek', eyebrow: 'Konwertery czcionek',
+    popularTitle: 'Najpopularniejsze konwersje czcionek', popularSub: 'Najczęściej wyszukiwane konwersje formatów czcionek.',
+    allTitle: 'Wszystkie konwertery czcionek', relatedFormats: 'Powiązane formaty czcionek',
+    homeDesc: 'TTF, OTF, WOFF i inne.',
+    desc: 'Konwertery czcionek zmieniają format między czcionkami na komputer i do sieci. Zamień czcionki TTF i OTF na kompaktowe pliki WOFF dla stron internetowych albo rozpakuj WOFF z powrotem do czcionki do zainstalowania. Wszystko działa w przeglądarce, więc Twoje licencjonowane pliki czcionek nigdy nie są wysyłane.',
+    hub: {
+      name: 'Konwerter czcionek',
+      title: 'Konwerter czcionek – TTF, OTF, WOFF online',
+      meta: 'Konwertuj czcionki bezpośrednio w przeglądarce: TTF i OTF na WOFF dla stron lub WOFF z powrotem na TTF i OTF. Za darmo, prywatnie i bez wysyłania plików czcionek.',
+      h1: 'Konwerter czcionek',
+    },
+    faqs: [
+      { q: 'Czy konwertery czcionek są darmowe?', a: 'Tak – wszystkie konwertery czcionek w AintoB są całkowicie darmowe. Bez konta, bez subskrypcji, bez wysyłania.' },
+      { q: 'Czy mogę skonwertować każdą czcionkę znalezioną w sieci?', a: 'Konwersja nie zmienia licencji czcionki. Przed opublikowaniem skonwertowanej czcionki sprawdź, czy licencja pozwala na użycie w sieci lub modyfikację.' },
+      { q: 'Dlaczego nie ma konwertera WOFF2?', a: 'WOFF2 używa kompresji Brotli, którą przeglądarki potrafią rozpakować, ale nie utworzyć. WOFF (1.0) działa w każdej obecnej przeglądarce i jest tu konwertowany wbudowaną kompresją przeglądarki.' },
     ],
   },
 };
@@ -480,6 +499,48 @@ const tools = {
     meta: 'Zamień Excela na JSON bezpośrednio w przeglądarce: za darmo, prywatnie i szybko. Z arkuszy powstają obiekty JSON – bez wysyłania na serwer.',
     h1: 'Konwerter Excela na JSON',
     value: 'Zamień arkusz na JSON dla API, skryptu lub aplikacji internetowej. Pierwszy wiersz staje się kluczami; skoroszyt z wieloma arkuszami daje obiekt z jedną tablicą na arkusz.',
+  },
+  '/data/toml-to-json/': {
+    name: 'Konwerter TOML na JSON',
+    title: 'Konwerter TOML na JSON online – za darmo i prywatnie',
+    meta: 'Zamień TOML na JSON bezpośrednio w przeglądarce: za darmo, prywatnie i szybko. Pliki konfiguracyjne stają się wciętym JSON – bez wysyłania na serwer.',
+    h1: 'Konwerter TOML na JSON',
+    value: 'Pliki konfiguracyjne TOML łatwo się edytuje, ale większość narzędzi i API oczekuje JSON. Ten konwerter odczytuje TOML (w tym tabele, tablice tabel i daty) i zapisuje wcięty JSON.',
+  },
+  '/data/json-to-toml/': {
+    name: 'Konwerter JSON na TOML',
+    title: 'Konwerter JSON na TOML online – za darmo i prywatnie',
+    meta: 'Zamień JSON na TOML bezpośrednio w przeglądarce: za darmo, prywatnie i szybko. Z JSON powstaje czysta konfiguracja TOML – bez wysyłania na serwer.',
+    h1: 'Konwerter JSON na TOML',
+    value: 'Zamień obiekt JSON na czysty plik TOML dla Cargo, pyproject.toml lub konfiguracji w stylu Hugo. TOML nie ma wartości null, więc klucze z null są pomijane.',
+  },
+  '/data/toml-to-yaml/': {
+    name: 'Konwerter TOML na YAML',
+    title: 'Konwerter TOML na YAML online – za darmo i prywatnie',
+    meta: 'Zamień TOML na YAML bezpośrednio w przeglądarce: za darmo, prywatnie i szybko. Ta sama struktura jako czytelny YAML – bez wysyłania na serwer.',
+    h1: 'Konwerter TOML na YAML',
+    value: 'Przenoś konfigurację między ekosystemami: ten konwerter odczytuje TOML i zapisuje czytelny YAML o tej samej strukturze.',
+  },
+  '/data/yaml-to-toml/': {
+    name: 'Konwerter YAML na TOML',
+    title: 'Konwerter YAML na TOML online – za darmo i prywatnie',
+    meta: 'Zamień YAML na TOML bezpośrednio w przeglądarce: za darmo, prywatnie i szybko. Z YAML powstaje konfiguracja TOML – bez wysyłania na serwer.',
+    h1: 'Konwerter YAML na TOML',
+    value: 'Zamień konfigurację YAML na TOML. Ponieważ TOML wymaga tabeli na najwyższym poziomie i nie ma wartości null, listy na najwyższym poziomie są odrzucane, a wartości null pomijane.',
+  },
+  '/data/tsv-to-json/': {
+    name: 'Konwerter TSV na JSON',
+    title: 'Konwerter TSV na JSON online – za darmo i prywatnie',
+    meta: 'Zamień TSV na JSON bezpośrednio w przeglądarce: za darmo, prywatnie i szybko. Dane rozdzielone tabulatorami stają się obiektami JSON – bez wysyłania na serwer.',
+    h1: 'Konwerter TSV na JSON',
+    value: 'Eksporty z arkuszy i baz danych rozdzielone tabulatorami zamieniają się w tablicę obiektów JSON. Wiersz nagłówka dostarcza klucze; liczby i wartości logiczne zostają zachowane.',
+  },
+  '/data/json-to-tsv/': {
+    name: 'Konwerter JSON na TSV',
+    title: 'Konwerter JSON na TSV online – za darmo i prywatnie',
+    meta: 'Zamień JSON na TSV bezpośrednio w przeglądarce: za darmo, prywatnie i szybko. Z JSON powstają wartości rozdzielone tabulatorami – bez wysyłania na serwer.',
+    h1: 'Konwerter JSON na TSV',
+    value: 'Zamień tablicę obiektów JSON na wartości rozdzielone tabulatorami, które czysto wklejają się do Excela i Arkuszy Google. Suma wszystkich kluczy tworzy wiersz nagłówka.',
   },
 };
 

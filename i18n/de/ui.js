@@ -211,6 +211,7 @@ const benefit = {
   spreadsheet: 'Zeilen, Spalten und Werte bleiben erhalten',
   audio: 'Codec, Qualität und Dateigröße bestimmen Sie selbst',
   video: 'Kompatibilität und Dateigröße bestimmen Sie selbst',
+  font: 'Alle Zeichen und Metriken bleiben unverändert',
 };
 
 const cat = {
@@ -322,6 +323,24 @@ const cat = {
       { q: 'Kann ich vertrauliche Daten wie API-Antworten oder Tokens bedenkenlos einfügen?', a: 'Die gesamte Verarbeitung läuft lokal in Ihrem Browser mit JavaScript – nichts, was Sie einfügen oder hochladen, wird an einen Server gesendet. Bei hochsensiblen Daten können Sie die Seite sogar laden, die Internetverbindung trennen und die Umwandlung offline ausführen.' },
       { q: 'Was ist der Unterschied zwischen JSON und YAML?', a: 'Beide bilden dasselbe Datenmodell ab. JSON nutzt Klammern und Anführungszeichen und ist der Standard für APIs; YAML arbeitet mit Einrückungen und wird für von Hand bearbeitete Konfigurationsdateien wie Kubernetes-Manifeste und CI-Pipelines bevorzugt.' },
       { q: 'Ist Base64 eine Verschlüsselung?', a: 'Nein – Base64 ist eine Kodierung, keine Verschlüsselung. Es macht Binärdaten als Text übertragbar, aber jeder kann es dekodieren. Verlassen Sie sich nie auf Base64, um Geheimnisse zu schützen.' },
+    ],
+  },
+  font: {
+    converter: 'Schrift-Konverter', converters: 'Schrift-Konverter', eyebrow: 'Schrift-Konverter',
+    popularTitle: 'Beliebteste Schrift-Umwandlungen', popularSub: 'Die am häufigsten gesuchten Schriftformat-Umwandlungen.',
+    allTitle: 'Alle Schrift-Konverter', relatedFormats: 'Verwandte Schriftformate',
+    homeDesc: 'TTF, OTF, WOFF und mehr.',
+    desc: 'Schrift-Konverter wechseln zwischen Desktop- und Webschriftformaten. Machen Sie aus TTF- und OTF-Schriften kompakte WOFF-Dateien für Websites oder entpacken Sie ein WOFF wieder zu einer installierbaren Schrift. Alles läuft in Ihrem Browser, Ihre lizenzierten Schriftdateien werden also nie hochgeladen.',
+    hub: {
+      name: 'Schrift-Konverter',
+      title: 'Schrift-Konverter – TTF, OTF, WOFF online umwandeln',
+      meta: 'Schriften direkt im Browser umwandeln: TTF und OTF in WOFF für Websites oder WOFF zurück in TTF und OTF. Kostenlos, privat und ohne Upload Ihrer Schriftdateien.',
+      h1: 'Schrift-Konverter',
+    },
+    faqs: [
+      { q: 'Sind die Schrift-Konverter kostenlos?', a: 'Ja – alle Schrift-Konverter von AintoB sind vollständig kostenlos. Kein Konto, kein Abo, kein Upload.' },
+      { q: 'Kann ich jede Schrift umwandeln, die ich online finde?', a: 'Das Umwandeln ändert nichts an der Lizenz einer Schrift. Prüfen Sie, ob Ihre Lizenz die Web-Nutzung oder Änderung erlaubt, bevor Sie eine umgewandelte Schrift veröffentlichen.' },
+      { q: 'Warum gibt es keinen WOFF2-Konverter?', a: 'WOFF2 nutzt Brotli-Kompression, die Browser zwar entpacken, aber nicht erzeugen können. WOFF (1.0) funktioniert in jedem aktuellen Browser und wird hier mit der eingebauten Browser-Kompression umgewandelt.' },
     ],
   },
 };
@@ -479,6 +498,48 @@ const tools = {
     meta: 'Excel in JSON umwandeln direkt im Browser: kostenlos, privat und schnell. Aus Tabellenblättern werden JSON-Objekte – ohne Upload.',
     h1: 'Excel in JSON umwandeln',
     value: 'Machen Sie aus einer Tabelle JSON für eine API, ein Skript oder eine Web-App. Die erste Zeile liefert die Schlüssel; eine Arbeitsmappe mit mehreren Blättern ergibt ein Objekt mit einem Array pro Blatt.',
+  },
+  '/data/toml-to-json/': {
+    name: 'TOML in JSON umwandeln',
+    title: 'TOML in JSON umwandeln – kostenlos, privat, im Browser',
+    meta: 'TOML in JSON umwandeln direkt im Browser: kostenlos, privat und schnell. Konfigurationsdateien werden zu eingerücktem JSON – ohne Upload.',
+    h1: 'TOML in JSON umwandeln',
+    value: 'TOML-Konfigurationsdateien sind leicht zu bearbeiten, aber die meisten Werkzeuge und APIs erwarten JSON. Dieser Konverter liest TOML (einschließlich Tabellen, Tabellen-Arrays und Datumswerten) und schreibt eingerücktes JSON.',
+  },
+  '/data/json-to-toml/': {
+    name: 'JSON in TOML umwandeln',
+    title: 'JSON in TOML umwandeln – kostenlos, privat, im Browser',
+    meta: 'JSON in TOML umwandeln direkt im Browser: kostenlos, privat und schnell. Aus JSON wird eine saubere TOML-Konfiguration – ohne Upload.',
+    h1: 'JSON in TOML umwandeln',
+    value: 'Machen Sie aus einem JSON-Objekt eine saubere TOML-Datei für Cargo, pyproject.toml oder Konfigurationen im Stil von Hugo. TOML kennt keinen Nullwert, daher werden Schlüssel mit null weggelassen.',
+  },
+  '/data/toml-to-yaml/': {
+    name: 'TOML in YAML umwandeln',
+    title: 'TOML in YAML umwandeln – kostenlos, privat, im Browser',
+    meta: 'TOML in YAML umwandeln direkt im Browser: kostenlos, privat und schnell. Dieselbe Struktur als lesbares YAML – ohne Upload.',
+    h1: 'TOML in YAML umwandeln',
+    value: 'Konfiguration zwischen Ökosystemen übertragen: Dieser Konverter liest TOML und schreibt gut lesbares YAML mit derselben Struktur.',
+  },
+  '/data/yaml-to-toml/': {
+    name: 'YAML in TOML umwandeln',
+    title: 'YAML in TOML umwandeln – kostenlos, privat, im Browser',
+    meta: 'YAML in TOML umwandeln direkt im Browser: kostenlos, privat und schnell. Aus YAML wird eine TOML-Konfiguration – ohne Upload.',
+    h1: 'YAML in TOML umwandeln',
+    value: 'Wandeln Sie eine YAML-Konfiguration in TOML um. Da TOML auf oberster Ebene eine Tabelle braucht und keinen Nullwert kennt, werden Listen auf oberster Ebene abgelehnt und Nullwerte weggelassen.',
+  },
+  '/data/tsv-to-json/': {
+    name: 'TSV in JSON umwandeln',
+    title: 'TSV in JSON umwandeln – kostenlos, privat, im Browser',
+    meta: 'TSV in JSON umwandeln direkt im Browser: kostenlos, privat und schnell. Tabulatorgetrennte Daten werden zu JSON-Objekten – ohne Upload.',
+    h1: 'TSV in JSON umwandeln',
+    value: 'Tabulatorgetrennte Exporte aus Tabellenkalkulationen und Datenbanken werden zu einem Array aus JSON-Objekten. Die Kopfzeile liefert die Schlüssel; Zahlen und Wahrheitswerte bleiben als solche erhalten.',
+  },
+  '/data/json-to-tsv/': {
+    name: 'JSON in TSV umwandeln',
+    title: 'JSON in TSV umwandeln – kostenlos, privat, im Browser',
+    meta: 'JSON in TSV umwandeln direkt im Browser: kostenlos, privat und schnell. Aus JSON werden tabulatorgetrennte Werte – ohne Upload.',
+    h1: 'JSON in TSV umwandeln',
+    value: 'Machen Sie aus einem Array von JSON-Objekten tabulatorgetrennte Werte, die sich sauber in Excel und Google Sheets einfügen lassen. Die Vereinigung aller Schlüssel bildet die Kopfzeile.',
   },
 };
 

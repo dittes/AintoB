@@ -275,6 +275,18 @@ const cat = {
       { q: 'Is Base64 encryption?', a: 'No — Base64 is an encoding, not encryption. It makes binary data safe to transmit as text, but anyone can decode it. Never rely on Base64 to protect secrets.' },
     ],
   },
+  font: {
+    converter: 'Font Converter', converters: 'Font Converters', eyebrow: 'Font Converters',
+    popularTitle: 'Most Popular Font Conversions', popularSub: 'The most searched font format conversions.',
+    allTitle: 'All Font Converters', relatedFormats: 'Related Font Formats',
+    homeDesc: 'TTF, OTF, WOFF and more.',
+    desc: 'Font converters change between desktop and web font formats. Turn TTF and OTF fonts into compact WOFF files for websites, or unpack a WOFF back into an installable font. Everything runs in your browser, so your licensed font files are never uploaded.',
+    faqs: [
+      { q: 'Are the font converters free?', a: 'Yes — all font converters on AintoB are completely free. No account, no subscription, no upload.' },
+      { q: 'Can I convert any font I find online?', a: 'Converting a font does not change its licence. Check that your licence allows web use or modification before publishing a converted font.' },
+      { q: 'Why is there no WOFF2 converter?', a: 'WOFF2 uses Brotli compression, which browsers can decompress but not create. WOFF (1.0) works in every current browser and is converted here with the browser\'s built-in compression.' },
+    ],
+  },
 };
 
 // Hand-built pages keep their existing live English copy; the CSV supplies the

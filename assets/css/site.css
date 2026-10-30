@@ -218,6 +218,11 @@
   background: var(--color-surface);
 }
 
+.related-section {
+  padding: 56px 0 8px;
+  background: var(--color-bg);
+}
+
 .section-from-to {
   padding: 64px 0;
   background: var(--color-surface);
@@ -716,8 +721,6 @@
   align-items: center;
   gap: .5rem;
 }
-.navbar-open { display: none; }
-@media (min-width: 768px) { .navbar-open { display: inline-flex; } }
 /* icon-only on very small screens (label stays available to screen readers) */
 @media (max-width: 479px) {
   .navbar-tools-link .nav-label {
@@ -823,6 +826,7 @@
 .cat-icon--audio,
 .cat-icon--video       { --cat: var(--fmt-audio); }
 .cat-icon--data        { --cat: var(--fmt-data); }
+.cat-icon--font        { --cat: var(--fmt-font); }
 .category-card--all .cat-icon { background: var(--color-accent); color: #fff; }
 .category-card:hover .cat-icon { background: var(--cat); color: #fff; }
 .eyebrow .bi { font-size: .95em; }
