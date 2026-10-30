@@ -196,7 +196,7 @@ function langSwitch(slug) {
 function navbar(slug) {
   return `<nav class="navbar-aintob" aria-label="${esc(s('navMain'))}">
   <div class="container navbar-inner" style="max-width:var(--max-width);">
-    <a href="${u('/')}" class="navbar-logo" aria-label="${esc(s('logoAria'))}">${LOGO_MARK}<span class="logo-word">AintoB</span></a>
+    <a href="${u('/')}" class="navbar-logo" aria-label="${esc(s('logoAria'))}">${LOGO_MARK}<span class="logo-word">A<span class="logo-into">into</span>B</span></a>
     <div class="navbar-actions">
       <a href="${u('/file-converter/')}" class="navbar-tools-link"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> <span class="nav-label">${esc(s('allConverters'))}</span></a>
       ${langSwitch(slug)}
@@ -352,7 +352,7 @@ function footer(slug, extraLinks, extraScripts) {
   <div class="container" style="max-width:var(--max-width);">
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-4">
       <div>
-        <a href="${u('/')}" class="footer-logo" aria-label="${esc(s('logoAria'))}">${LOGO_MARK}<span class="logo-word">AintoB</span></a>
+        <a href="${u('/')}" class="footer-logo" aria-label="${esc(s('logoAria'))}">${LOGO_MARK}<span class="logo-word">A<span class="logo-into">into</span>B</span></a>
         <p class="footer-copy">${esc(s('footerCopy', { year: YEAR }))}</p>
         <p class="footer-gdpr-badge"><i class="bi bi-shield-check" aria-hidden="true"></i> ${esc(s('footerBadge'))}</p>
         <p class="footer-langs"><span>${esc(s('langFooter'))}:</span> ${langLinks}</p>
