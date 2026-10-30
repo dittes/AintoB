@@ -27,12 +27,20 @@
   <meta name="twitter:title" content="AintoB – Kostenloser Online-Dateikonverter | Privat, im Browser">
   <meta name="twitter:description" content="Dateien kostenlos online umwandeln. Bilder, Dokumente, Tabellen, Audio und Video – alles in Ihrem Browser verarbeitet. Kein Upload, keine Anmeldung.">
 
+  <!-- Icons / PWA -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#2557d6">
+
   <!-- Preconnect -->
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
   <!-- Styles -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/inter@5.1.0/index.min.css">
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/site.css">
 
@@ -48,9 +56,9 @@
 </head>
 <body><a class="skip-link" href="#main-content">Zum Hauptinhalt springen</a><nav class="navbar-aintob" aria-label="Hauptnavigation">
   <div class="container navbar-inner" style="max-width:var(--max-width);">
-    <a href="/de/" class="navbar-logo" aria-label="AintoB Startseite">🅰️➡️🅱️ <span style="font-size:1rem; font-weight:500; color:var(--color-text-muted);">AintoB</span></a>
+    <a href="/de/" class="navbar-logo" aria-label="AintoB Startseite"><svg class="logo-mark" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8" fill="#2557D6"/><path d="M10.5 7.5h7.4l5.6 5.6v10.4a1.5 1.5 0 0 1-1.5 1.5H10.5A1.5 1.5 0 0 1 9 23.5v-14.5a1.5 1.5 0 0 1 1.5-1.5z" fill="#fff"/><path d="M17.9 7.5v4.1a1.5 1.5 0 0 0 1.5 1.5h4.1z" fill="#A9C0F2"/><g fill="none" stroke="#2557D6" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16.9h8.2M17.9 14.7l2.3 2.2-2.3 2.2"/><path d="M20 21.1h-8.2M14.1 18.9l-2.3 2.2 2.3 2.2" opacity=".55"/></g></svg><span class="logo-word">AintoB</span></a>
     <div class="navbar-actions">
-      <a href="https://open-online.com/" class="navbar-tools-link navbar-open" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <span class="nav-label">Dateien öffnen</span><span class="visually-hidden"> (öffnet in neuem Tab)</span></a>
+      <a href="https://open-online.com/de/" class="navbar-tools-link navbar-open" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <span class="nav-label">Dateien öffnen</span><span class="visually-hidden"> (öffnet in neuem Tab)</span></a>
       <a href="/de/file-converter/" class="navbar-tools-link"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> <span class="nav-label">Alle Konverter</span></a>
       <details class="lang-switch">
         <summary aria-label="Sprache"><i class="bi bi-translate" aria-hidden="true"></i> <span>DE</span></summary>
@@ -86,7 +94,7 @@
       <div class="row g-4">
         <div class="col-sm-6 col-lg-4">
           <a href="/de/image-converter/" class="category-card" aria-label="Bildkonverter">
-            <span class="category-card__icon" aria-hidden="true">🖼️</span>
+            <span class="category-card__icon" aria-hidden="true"><span class="cat-icon cat-icon--image"><i class="bi bi-image"></i></span></span>
             <h3 class="category-card__title">Bildkonverter</h3>
             <p class="category-card__desc">JPG, PNG, WebP, HEIC, AVIF, GIF, SVG, TIFF und mehr.</p>
             <span class="category-card__cta">Werkzeuge ansehen <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
@@ -94,7 +102,7 @@
         </div>
         <div class="col-sm-6 col-lg-4">
           <a href="/de/document-converter/" class="category-card" aria-label="Dokumentkonverter">
-            <span class="category-card__icon" aria-hidden="true">📄</span>
+            <span class="category-card__icon" aria-hidden="true"><span class="cat-icon cat-icon--document"><i class="bi bi-file-earmark-text"></i></span></span>
             <h3 class="category-card__title">Dokumentkonverter</h3>
             <p class="category-card__desc">PDF, Word, HTML, Markdown, RTF, TXT und mehr.</p>
             <span class="category-card__cta">Werkzeuge ansehen <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
@@ -102,7 +110,7 @@
         </div>
         <div class="col-sm-6 col-lg-4">
           <a href="/de/spreadsheet-converter/" class="category-card" aria-label="Tabellenkonverter">
-            <span class="category-card__icon" aria-hidden="true">📊</span>
+            <span class="category-card__icon" aria-hidden="true"><span class="cat-icon cat-icon--spreadsheet"><i class="bi bi-table"></i></span></span>
             <h3 class="category-card__title">Tabellenkonverter</h3>
             <p class="category-card__desc">CSV, Excel, ODS, TSV und mehr.</p>
             <span class="category-card__cta">Werkzeuge ansehen <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
@@ -110,7 +118,7 @@
         </div>
         <div class="col-sm-6 col-lg-4">
           <a href="/de/audio-converter/" class="category-card" aria-label="Audiokonverter">
-            <span class="category-card__icon" aria-hidden="true">🎵</span>
+            <span class="category-card__icon" aria-hidden="true"><span class="cat-icon cat-icon--audio"><i class="bi bi-music-note-beamed"></i></span></span>
             <h3 class="category-card__title">Audiokonverter</h3>
             <p class="category-card__desc">MP3, WAV, M4A, OGG und mehr.</p>
             <span class="category-card__cta">Werkzeuge ansehen <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
@@ -118,7 +126,7 @@
         </div>
         <div class="col-sm-6 col-lg-4">
           <a href="/de/video-converter/" class="category-card" aria-label="Videokonverter">
-            <span class="category-card__icon" aria-hidden="true">🎬</span>
+            <span class="category-card__icon" aria-hidden="true"><span class="cat-icon cat-icon--video"><i class="bi bi-camera-video"></i></span></span>
             <h3 class="category-card__title">Videokonverter</h3>
             <p class="category-card__desc">MP4, MOV, WebM, AVI, GIF und mehr.</p>
             <span class="category-card__cta">Werkzeuge ansehen <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
@@ -126,7 +134,7 @@
         </div>
         <div class="col-sm-6 col-lg-4">
           <a href="/de/data-converter/" class="category-card" aria-label="Daten- und Text-Konverter">
-            <span class="category-card__icon" aria-hidden="true">🧰</span>
+            <span class="category-card__icon" aria-hidden="true"><span class="cat-icon cat-icon--data"><i class="bi bi-braces"></i></span></span>
             <h3 class="category-card__title">Daten- und Text-Konverter</h3>
             <p class="category-card__desc">JSON, CSV, YAML, XML, Base64, URL-Kodierung und mehr.</p>
             <span class="category-card__cta">Werkzeuge ansehen <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
@@ -134,9 +142,9 @@
         </div>
         <div class="col-sm-6 col-lg-4">
           <a href="/de/file-converter/" class="category-card category-card--all" aria-label="Alle Konverter">
-            <span class="category-card__icon" aria-hidden="true">🔄</span>
+            <span class="category-card__icon" aria-hidden="true"><span class="cat-icon cat-icon--all"><i class="bi bi-arrow-left-right"></i></span></span>
             <h3 class="category-card__title">Alle Konverter</h3>
-            <p class="category-card__desc">Das vollständige Verzeichnis mit über 170 Konvertern, nach Format geordnet.</p>
+            <p class="category-card__desc">Das vollständige Verzeichnis mit über 230 Konvertern, nach Format geordnet.</p>
             <span class="category-card__cta">Alle ansehen <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
           </a>
         </div>
@@ -202,7 +210,7 @@
         </a>
       </div>
       <div class="text-center mt-4">
-        <a href="/de/file-converter/" class="btn btn-outline-secondary px-5">Alle über 170 Konverter ansehen</a>
+        <a href="/de/file-converter/" class="btn btn-outline-secondary px-5">Alle über 230 Konverter ansehen</a>
       </div>
     </div>
   </section>
@@ -270,12 +278,15 @@
   <aside class="open-online" aria-label="open-online.com">
   <div class="container" style="max-width:800px;">
     <div class="open-online__inner">
-      <span class="open-online__icon" aria-hidden="true">📂</span>
+      <span class="open-online__icon" aria-hidden="true"><i class="bi bi-folder2-open"></i></span>
       <div class="open-online__text">
         <strong>Sie möchten eine Datei nur öffnen, nicht umwandeln?</strong>
         <p>Auf open-online.com können Sie viele verschiedene Dateitypen online öffnen – ganz ohne vorherige Umwandlung.</p>
       </div>
-      <a class="btn btn-outline-secondary open-online__btn" href="https://open-online.com/" target="_blank" rel="noopener">Dateien auf open-online.com öffnen <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i><span class="visually-hidden"> (öffnet in neuem Tab)</span></a>
+      <div class="open-online__actions">
+        <a class="btn btn-outline-secondary open-online__btn" href="https://open-online.com/de/" target="_blank" rel="noopener">Dateien auf open-online.com öffnen <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i><span class="visually-hidden"> (öffnet in neuem Tab)</span></a>
+        
+      </div>
     </div>
   </div>
 </aside>
@@ -396,7 +407,7 @@
   <div class="container" style="max-width:var(--max-width);">
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-4">
       <div>
-        <a href="/de/" class="footer-logo" aria-label="AintoB Startseite">🅰️➡️🅱️ AintoB</a>
+        <a href="/de/" class="footer-logo" aria-label="AintoB Startseite"><svg class="logo-mark" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8" fill="#2557D6"/><path d="M10.5 7.5h7.4l5.6 5.6v10.4a1.5 1.5 0 0 1-1.5 1.5H10.5A1.5 1.5 0 0 1 9 23.5v-14.5a1.5 1.5 0 0 1 1.5-1.5z" fill="#fff"/><path d="M17.9 7.5v4.1a1.5 1.5 0 0 0 1.5 1.5h4.1z" fill="#A9C0F2"/><g fill="none" stroke="#2557D6" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16.9h8.2M17.9 14.7l2.3 2.2-2.3 2.2"/><path d="M20 21.1h-8.2M14.1 18.9l-2.3 2.2 2.3 2.2" opacity=".55"/></g></svg><span class="logo-word">AintoB</span></a>
         <p class="footer-copy">© 2026 AintoB.com – Alle Rechte vorbehalten.</p>
         <p class="footer-gdpr-badge"><i class="bi bi-shield-check" aria-hidden="true"></i> Datenschutz zuerst · Nur im Browser · Kein Upload</p>
         <p class="footer-langs"><span>Sprachen:</span> <a href="/en/" hreflang="en" lang="en" data-lang="en">English</a> · <a href="/de/" hreflang="de" lang="de" data-lang="de" aria-current="true">Deutsch</a> · <a href="/cs/" hreflang="cs" lang="cs" data-lang="cs">Čeština</a> · <a href="/pl/" hreflang="pl" lang="pl" data-lang="pl">Polski</a></p>
@@ -412,7 +423,7 @@
           <li><a href="/de/data-converter/">Daten- &amp; Text-Werkzeuge</a></li>
           <li><a href="/de/privacy/">Datenschutzerklärung</a></li>
           <li><a href="/de/imprint/">Impressum</a></li>
-          <li><a href="https://open-online.com/" target="_blank" rel="noopener">Dateien online öffnen</a></li>
+          <li><a href="https://open-online.com/de/" target="_blank" rel="noopener">Dateien online öffnen</a></li>
         </ul>
       </nav>
     </div>

@@ -1,6 +1,6 @@
 # AintoB.com — Multilingual, Browser-Based File Converter Suite
 
-**212 pages × 4 languages (English, Deutsch, Čeština, Polski)** · generated from `page_map.csv` + locale files ·
+**283 pages × 4 languages (English, Deutsch, Čeština, Polski)** · generated from `page_map.csv` + locale files ·
 pure HTML/CSS/JS · no backend · no uploads
 
 Every conversion runs in the visitor's browser (Canvas, File API, Web Workers, WASM). Nothing is sent to a
@@ -60,7 +60,7 @@ AINTOB_LANGS=en,de node build.js   # dev shortcut: only some languages (never de
 
 `build.js` refuses to build if a locale lacks a string/placeholder/format/tool page that English has, or if the
 runtime dictionary misses a message that a browser script can show (it scans `assets/js` for `__t('…')` calls and
-`new Error('…')` messages). `scripts/verify.js` then checks all 848 pages: `<html lang>`, self-canonical,
+`new Error('…')` messages). `scripts/verify.js` then checks all 1,132 pages: `<html lang>`, self-canonical,
 title/description length and uniqueness, hreflang reciprocity, sitemap ↔ page agreement, every internal link and
 asset, and the old-URL redirects.
 
@@ -77,7 +77,8 @@ asset, and the old-URL redirects.
 
 Moving the site into language subfolders changed every URL. GitHub Pages cannot send HTTP 301s, so:
 
-1. Every old URL (`/image/png-to-jpg/`, `/document/pdf-edit/`, `/image-converter/`, `/privacy/`, … 211 in total) is now a
+1. Every old URL (`/image/png-to-jpg/`, `/document/pdf-edit/`, `/image-converter/`, `/privacy/`, … 211 in total; pages added
+   later carry `Rollout Stage = Phase 4` in `page_map.csv` and get no stub) is now a
    small redirect stub: `canonical` → the `/en/` page, `noindex`, and a script that forwards to the visitor's saved or
    browser language (default `/en/`), with a `<noscript>` meta-refresh fallback and visible links.
 2. `_redirects` contains the same mapping as real `301`s (`/image/png-to-jpg/ /en/image/png-to-jpg/ 301`). It is ignored
@@ -92,9 +93,18 @@ for a `/search/` page that does not exist.
 
 ## open-online.com
 
-The sister site for *opening* (not converting) files is linked from the navigation, the footer, a callout on every
-converter / format / category page, and the homepage. The URL lives in one constant, `OPEN_ONLINE_URL` in `build.js`
-(currently the site's homepage — it has no sub-pages yet; point it at per-format URLs once they exist).
+The sister site for *opening* (not converting) files has one page per format (`/<lang>/pdf`, `/<lang>/jpg`, …) and one per
+category (`/<lang>/documents`, `/images`, `/spreadsheets`, `/media`, `/data`) in the same four languages. AintoB links to it:
+
+- navigation and footer → `open-online.com/<lang>/`
+- every converter page → a callout with *Open {source} files* **and** *Open {target} files* (deep links to the format pages)
+- every converter widget → after a successful conversion, *Preview the {target} file on open-online.com*
+- category hubs → the matching category page; format hubs → that format's page
+
+The set of format pages that exist is `OO_FORMATS` in `build.js` (checked against `open-online.com/en/formats`); a format
+without a page (Base64, "Image", …) falls back to the category page. `ooFormatUrl()` maps a format key to its page via the
+extension in `i18n/en/formats.js`, so a new format automatically gets a deep link as soon as its extension is in `OO_FORMATS`.
+In the other direction open-online.com links to AintoB (`src/formats/convert.ts` in that repo).
 
 ## How a converter page works
 
@@ -107,7 +117,11 @@ converter / format / category page, and the homepage. The URL lives in one const
    `i18n/<code>/js.js` (a trailing `*` in a key matches a message with a variable tail).
 
 Engines: Canvas (images), ffmpeg.wasm (audio/video/TIFF/GIF, ~31 MB, loaded lazily on first conversion), pdf.js,
-pdf-lib, jsPDF, mammoth, markdown-it, turndown, SheetJS, js-yaml, heic2any, Tesseract.js (OCR).
+pdf-lib, jsPDF, mammoth, markdown-it, turndown, SheetJS, js-yaml, JSZip, heic2any, Tesseract.js (OCR).
+
+Shared converter scripts that pick their pair from the page URL: `data-convert.js` (`/data/`), `doc-convert.js`
+(RTF in/out, PDF → HTML/Markdown/Word/RTF, own RTF parser + writer), `zipdoc-convert.js` (ODT in/out, EPUB → text/HTML/Markdown/PDF),
+`sheet-to-doc.js` (CSV/TSV/Excel/ODS → HTML or Markdown table), `media-convert.js` (audio/video incl. FLAC, WMV, FLV).
 
 ## Adding a converter
 
@@ -139,7 +153,15 @@ Ordinary pairs need no translation work: their titles, descriptions and copy com
 - PDF watermarks use PDF's built-in font, which cannot draw letters like ů, ě, ł, ą; those are folded to base letters
   and the user is told.
 - HEIC *encoding* needs Safari 17+ (no browser encoder exists elsewhere); the pages say so.
-- `assets/img/og-image.png` is referenced by every page's Open Graph tags but does not exist yet.
+- PDF → HTML/Markdown/Word/RTF rebuilds headings, paragraphs and lists from text positions; multi-column layouts, tables and scanned PDFs are not reconstructed (use the OCR tool first).
+- ODT/RTF conversions keep text, headings, lists, tables, links and basic formatting; page layout, headers/footers and text boxes are dropped.
+
+## Brand assets
+
+`favicon.svg`, `favicon-32.png`, `icons/` (apple-touch, 192/512, maskable), `manifest.webmanifest` and `assets/img/og-image.png` are
+hand-made from the same mark (blue rounded square + white document with swap arrows, built like the open-online.com logo).
+The inline SVG used in the header lives in `LOGO_MARK` in `build.js`. Colours, radii and type come from the tokens at the top of
+`assets/css/base.css`, which mirror open-online.com (primary `#2557d6`, Inter, 8/12/16 px radii).
 
 ## Deployment
 

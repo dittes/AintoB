@@ -27,12 +27,20 @@
   <meta name="twitter:title" content="Image Resizer – Resize Images Online, Free &amp; Private">
   <meta name="twitter:description" content="Resize JPG, PNG, WebP, and GIF images in your browser. Set exact pixel dimensions or scale by percentage — free, private, and no upload.">
 
+  <!-- Icons / PWA -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#2557d6">
+
   <!-- Preconnect -->
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
   <!-- Styles -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/inter@5.1.0/index.min.css">
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/site.css">
 
@@ -55,9 +63,9 @@
 </head>
 <body><a class="skip-link" href="#main-content">Skip to main content</a><nav class="navbar-aintob" aria-label="Main navigation">
   <div class="container navbar-inner" style="max-width:var(--max-width);">
-    <a href="/en/" class="navbar-logo" aria-label="AintoB home">🅰️➡️🅱️ <span style="font-size:1rem; font-weight:500; color:var(--color-text-muted);">AintoB</span></a>
+    <a href="/en/" class="navbar-logo" aria-label="AintoB home"><svg class="logo-mark" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8" fill="#2557D6"/><path d="M10.5 7.5h7.4l5.6 5.6v10.4a1.5 1.5 0 0 1-1.5 1.5H10.5A1.5 1.5 0 0 1 9 23.5v-14.5a1.5 1.5 0 0 1 1.5-1.5z" fill="#fff"/><path d="M17.9 7.5v4.1a1.5 1.5 0 0 0 1.5 1.5h4.1z" fill="#A9C0F2"/><g fill="none" stroke="#2557D6" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16.9h8.2M17.9 14.7l2.3 2.2-2.3 2.2"/><path d="M20 21.1h-8.2M14.1 18.9l-2.3 2.2 2.3 2.2" opacity=".55"/></g></svg><span class="logo-word">AintoB</span></a>
     <div class="navbar-actions">
-      <a href="https://open-online.com/" class="navbar-tools-link navbar-open" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <span class="nav-label">Open files</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+      <a href="https://open-online.com/en/" class="navbar-tools-link navbar-open" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <span class="nav-label">Open files</span><span class="visually-hidden"> (opens in a new tab)</span></a>
       <a href="/en/file-converter/" class="navbar-tools-link"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> <span class="nav-label">All Converters</span></a>
       <details class="lang-switch">
         <summary aria-label="Language"><i class="bi bi-translate" aria-hidden="true"></i> <span>EN</span></summary>
@@ -138,6 +146,7 @@
           <i class="bi bi-download me-2" aria-hidden="true"></i>Download Result
         </button>
         <button class="btn btn-outline-secondary w-100" id="convertAnotherBtn">Convert another file</button>
+        
       </div>
 
       <p class="mode-desc mt-2">
@@ -196,18 +205,21 @@
   <aside class="open-online" aria-label="open-online.com">
   <div class="container" style="max-width:800px;">
     <div class="open-online__inner">
-      <span class="open-online__icon" aria-hidden="true">📂</span>
+      <span class="open-online__icon" aria-hidden="true"><i class="bi bi-folder2-open"></i></span>
       <div class="open-online__text">
         <strong>Need to open a file instead of converting it?</strong>
         <p>open-online.com helps you open many different file types online — no need to convert them first.</p>
       </div>
-      <a class="btn btn-outline-secondary open-online__btn" href="https://open-online.com/" target="_blank" rel="noopener">Open files on open-online.com <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i><span class="visually-hidden"> (opens in a new tab)</span></a>
+      <div class="open-online__actions">
+        <a class="btn btn-outline-secondary open-online__btn" href="https://open-online.com/en/images" target="_blank" rel="noopener">Open files on open-online.com <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i><span class="visually-hidden"> (opens in a new tab)</span></a>
+        
+      </div>
     </div>
   </div>
 </aside>
   <div class="privacy-block">
   <div class="privacy-block__inner">
-    <span class="privacy-icon" aria-hidden="true">🔒</span>
+    <span class="privacy-icon" aria-hidden="true"><i class="bi bi-shield-lock-fill"></i></span>
     <div>
       <strong>100% Private &amp; Browser-Based</strong>
       <p>Your files never leave your device. All conversion happens locally in your browser — nothing is uploaded to any server. No sign-up required.</p>
@@ -287,7 +299,7 @@
   <div class="container" style="max-width:var(--max-width);">
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-4">
       <div>
-        <a href="/en/" class="footer-logo" aria-label="AintoB home">🅰️➡️🅱️ AintoB</a>
+        <a href="/en/" class="footer-logo" aria-label="AintoB home"><svg class="logo-mark" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8" fill="#2557D6"/><path d="M10.5 7.5h7.4l5.6 5.6v10.4a1.5 1.5 0 0 1-1.5 1.5H10.5A1.5 1.5 0 0 1 9 23.5v-14.5a1.5 1.5 0 0 1 1.5-1.5z" fill="#fff"/><path d="M17.9 7.5v4.1a1.5 1.5 0 0 0 1.5 1.5h4.1z" fill="#A9C0F2"/><g fill="none" stroke="#2557D6" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16.9h8.2M17.9 14.7l2.3 2.2-2.3 2.2"/><path d="M20 21.1h-8.2M14.1 18.9l-2.3 2.2 2.3 2.2" opacity=".55"/></g></svg><span class="logo-word">AintoB</span></a>
         <p class="footer-copy">© 2026 AintoB.com – All rights reserved.</p>
         <p class="footer-gdpr-badge"><i class="bi bi-shield-check" aria-hidden="true"></i> Privacy-first · Browser-only · No uploads</p>
         <p class="footer-langs"><span>Languages:</span> <a href="/en/image/resize-image/" hreflang="en" lang="en" data-lang="en" aria-current="true">English</a> · <a href="/de/image/resize-image/" hreflang="de" lang="de" data-lang="de">Deutsch</a> · <a href="/cs/image/resize-image/" hreflang="cs" lang="cs" data-lang="cs">Čeština</a> · <a href="/pl/image/resize-image/" hreflang="pl" lang="pl" data-lang="pl">Polski</a></p>
@@ -304,7 +316,7 @@
           <li><a href="/en/image-converter/">Image Converter</a></li>
           <li><a href="/en/privacy/">Privacy Policy</a></li>
           <li><a href="/en/imprint/">Imprint</a></li>
-          <li><a href="https://open-online.com/" target="_blank" rel="noopener">Open files online</a></li>
+          <li><a href="https://open-online.com/en/" target="_blank" rel="noopener">Open files online</a></li>
         </ul>
       </nav>
     </div>

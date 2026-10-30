@@ -21,9 +21,14 @@ const { LANGS, DEFAULT_LANG, loadLocale } = require('./i18n');
 
 const ROOT = __dirname;
 const DOMAIN = 'https://aintob.com';
-// Sister site for opening (not converting) files. Point this at a deeper URL
-// (e.g. per-format pages) once open-online.com has them.
-const OPEN_ONLINE_URL = 'https://open-online.com/';
+// Sister site for opening (not converting) files. It has one page per format
+// (/<lang>/<ext>) and one per category (/<lang>/documents, …) in the same four languages.
+const OPEN_ONLINE = 'https://open-online.com';
+// Format pages that exist on open-online.com (checked against https://open-online.com/en/formats).
+const OO_FORMATS = new Set(('pdf docx txt md rtf eml log tex srt ics vcf odt xlsx xls csv tsv ods pptx odp jpg png gif webp svg avif heic tiff psd bmp ' +
+  'pnm tga ico zip tar gz 7z epub cbz fb2 json xml yaml ipynb npy crt geojson sqlite parquet dbf html css js ts py java c cpp go rs php sql sh ini toml ' +
+  'ttf otf woff stl glb mp3 wav ogg m4a flac mp4 webm mov avi wmv flv mpeg wma').split(' '));
+const OO_CATEGORY = { image: 'images', document: 'documents', spreadsheet: 'spreadsheets', audio: 'media', video: 'media', data: 'data' };
 const YEAR = new Date().getFullYear();
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -43,6 +48,8 @@ function s(key, vars) {
 
 /** Language-prefixed internal URL for a language-neutral slug. */
 const u = slug => `/${LANG}${slug}`;
+/** open-online.com URL in the current language (`path` without leading slash; empty = its home page). */
+const ooUrl = path => `${OPEN_ONLINE}/${LANG}/${path || ''}`;
 /** Absolute URL for a slug in a given language. */
 const abs = (slug, lang) => `${DOMAIN}/${lang || LANG}${slug}`;
 
@@ -62,7 +69,9 @@ const HUB = {
   audio: '/audio-converter/', video: '/video-converter/', data: '/data-converter/',
 };
 const CATS = Object.keys(HUB);
-const ICON = { image: '🖼️', document: '📄', spreadsheet: '📊', audio: '🎵', video: '🎬', data: '🧰', all: '🔄' };
+const ICON_BI = { image: 'bi-image', document: 'bi-file-earmark-text', spreadsheet: 'bi-table', audio: 'bi-music-note-beamed', video: 'bi-camera-video', data: 'bi-braces', all: 'bi-arrow-left-right' };
+/** Coloured icon tile used for category cards (colour per family, same scheme as open-online.com). */
+const catIcon = c => `<span class="cat-icon cat-icon--${c}"><i class="bi ${ICON_BI[c]}"></i></span>`;
 const catBase = page => (page['Category'] || '').split('→')[0];
 const categoryHub = base => HUB[base] || '/file-converter/';
 
@@ -75,6 +84,13 @@ function fmtKey(name) {
 const fmtInfo = f => L.formats[fmtKey(f)] || {};
 /** Display name of a format (pseudo-formats like "Text" or "Image" are translated). */
 const fname = f => (L.fmtNames && L.fmtNames[f]) || f;
+/** open-online.com page that opens files of this format, or null when it has none (e.g. Base64, "Image"). */
+function ooFormatUrl(f) {
+  const info = fmtInfo(f);
+  const ext = (info.ext || '').split(',')[0].replace('.', '').toLowerCase();
+  if (!ext || (info.ext || '').includes(',') || info.category === 'data' && ext === 'txt' && f !== 'Text' && f !== 'TXT') return null;
+  return OO_FORMATS.has(ext) ? ooUrl(ext) : null;
+}
 
 /**
  * SEO text (name/title/meta/h1) of a page in the current language.
@@ -141,12 +157,20 @@ ${ogAlt}
   <meta name="twitter:title" content="${esc(og)}">
   <meta name="twitter:description" content="${esc(desc)}">
 
+  <!-- Icons / PWA -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#2557d6">
+
   <!-- Preconnect -->
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
   <!-- Styles -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/inter@5.1.0/index.min.css">
   <link rel="stylesheet" href="/assets/css/base.css">
   <link rel="stylesheet" href="/assets/css/site.css">
 ${extraHead || ''}
@@ -155,6 +179,9 @@ ${extraHead || ''}
 </head>
 <body>`;
 }
+
+/** Brand mark (inline SVG, same construction as the favicon and the open-online.com mark). */
+const LOGO_MARK = '<svg class="logo-mark" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8" fill="#2557D6"/><path d="M10.5 7.5h7.4l5.6 5.6v10.4a1.5 1.5 0 0 1-1.5 1.5H10.5A1.5 1.5 0 0 1 9 23.5v-14.5a1.5 1.5 0 0 1 1.5-1.5z" fill="#fff"/><path d="M17.9 7.5v4.1a1.5 1.5 0 0 0 1.5 1.5h4.1z" fill="#A9C0F2"/><g fill="none" stroke="#2557D6" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16.9h8.2M17.9 14.7l2.3 2.2-2.3 2.2"/><path d="M20 21.1h-8.2M14.1 18.9l-2.3 2.2 2.3 2.2" opacity=".55"/></g></svg>';
 
 const skipLink = () => `<a class="skip-link" href="#main-content">${esc(s('skip'))}</a>`;
 
@@ -169,9 +196,9 @@ function langSwitch(slug) {
 function navbar(slug) {
   return `<nav class="navbar-aintob" aria-label="${esc(s('navMain'))}">
   <div class="container navbar-inner" style="max-width:var(--max-width);">
-    <a href="${u('/')}" class="navbar-logo" aria-label="${esc(s('logoAria'))}">🅰️➡️🅱️ <span style="font-size:1rem; font-weight:500; color:var(--color-text-muted);">AintoB</span></a>
+    <a href="${u('/')}" class="navbar-logo" aria-label="${esc(s('logoAria'))}">${LOGO_MARK}<span class="logo-word">AintoB</span></a>
     <div class="navbar-actions">
-      <a href="${OPEN_ONLINE_URL}" class="navbar-tools-link navbar-open" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <span class="nav-label">${esc(s('openFiles'))}</span><span class="visually-hidden"> ${esc(s('newTab'))}</span></a>
+      <a href="${ooUrl()}" class="navbar-tools-link navbar-open" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> <span class="nav-label">${esc(s('openFiles'))}</span><span class="visually-hidden"> ${esc(s('newTab'))}</span></a>
       <a href="${u('/file-converter/')}" class="navbar-tools-link"><i class="bi bi-grid-3x3-gap" aria-hidden="true"></i> <span class="nav-label">${esc(s('allConverters'))}</span></a>
       ${langSwitch(slug)}
     </div>
@@ -203,7 +230,7 @@ function breadcrumbs(items) {
 function privacyBlock() {
   return `<div class="privacy-block">
   <div class="privacy-block__inner">
-    <span class="privacy-icon" aria-hidden="true">🔒</span>
+    <span class="privacy-icon" aria-hidden="true"><i class="bi bi-shield-lock-fill"></i></span>
     <div>
       <strong>${esc(s('privTitle'))}</strong>
       <p>${esc(s('privText'))}</p>
@@ -212,18 +239,32 @@ function privacyBlock() {
 </div>`;
 }
 
-/** Callout linking to open-online.com. `fmt` = a real file format, or null for the generic variant. */
-function openOnlineBox(fmt) {
-  const title = fmt ? s('ooTitleFmt', { fmt: esc(fmt) }) : s('ooTitleGeneric');
+/**
+ * Callout linking to open-online.com.
+ *   fmt  – a real format key (opens that format's page), or null
+ *   cat  – category key, used for the generic variant (opens /documents, /images, …)
+ *   to   – optional second format (the conversion target) that gets its own link
+ */
+function openOnlineBox(fmt, cat, to) {
+  const fmtUrl = fmt ? ooFormatUrl(fmt) : null;
+  const toUrl = to && to !== fmt ? ooFormatUrl(to) : null;
+  const catUrl = cat && OO_CATEGORY[cat] ? ooUrl(OO_CATEGORY[cat]) : null;
+  const title = fmtUrl ? s('ooTitleFmt', { fmt: esc(fname(fmt)) }) : s('ooTitleGeneric');
+  const main = fmtUrl || catUrl || ooUrl();
+  const mainLabel = fmtUrl ? s('ooButtonFmt', { fmt: esc(fname(fmt)) }) : s('ooButton');
+  const arrow = `<i class="bi bi-box-arrow-up-right" aria-hidden="true"></i><span class="visually-hidden"> ${esc(s('newTab'))}</span>`;
   return `<aside class="open-online" aria-label="open-online.com">
   <div class="container" style="max-width:800px;">
     <div class="open-online__inner">
-      <span class="open-online__icon" aria-hidden="true">📂</span>
+      <span class="open-online__icon" aria-hidden="true"><i class="bi bi-folder2-open"></i></span>
       <div class="open-online__text">
         <strong>${title}</strong>
         <p>${esc(s('ooText'))}</p>
       </div>
-      <a class="btn btn-outline-secondary open-online__btn" href="${OPEN_ONLINE_URL}" target="_blank" rel="noopener">${esc(s('ooButton'))} <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i><span class="visually-hidden"> ${esc(s('newTab'))}</span></a>
+      <div class="open-online__actions">
+        <a class="btn btn-outline-secondary open-online__btn" href="${main}" target="_blank" rel="noopener">${mainLabel} ${arrow}</a>
+        ${toUrl ? `<a class="open-online__link" href="${toUrl}" target="_blank" rel="noopener">${esc(s('ooButtonFmt', { fmt: esc(fname(to)) }))} ${arrow}</a>` : ''}
+      </div>
     </div>
   </div>
 </aside>`;
@@ -291,7 +332,7 @@ function footer(slug, extraLinks, extraScripts) {
     ...(extraLinks || []).map(l => ({ label: l.label, href: u(l.href) })),
     { label: s('privacyPolicy'), href: u('/privacy/') },
     { label: s('imprint'), href: u('/imprint/') },
-    { label: s('footerOpenOnline'), href: OPEN_ONLINE_URL, external: true },
+    { label: s('footerOpenOnline'), href: ooUrl(), external: true },
   ];
   const langLinks = LANGS.map(l => `<a href="/${l.code}${slug}" hreflang="${l.htmlLang}" lang="${l.htmlLang}" data-lang="${l.code}"${l.code === LANG ? ' aria-current="true"' : ''}>${l.name}</a>`).join(' · ');
   const dict = LANG === DEFAULT_LANG ? '' : `<script src="/assets/js/lang/${LANG}.js" defer></script>\n`;
@@ -299,7 +340,7 @@ function footer(slug, extraLinks, extraScripts) {
   <div class="container" style="max-width:var(--max-width);">
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-4">
       <div>
-        <a href="${u('/')}" class="footer-logo" aria-label="${esc(s('logoAria'))}">🅰️➡️🅱️ AintoB</a>
+        <a href="${u('/')}" class="footer-logo" aria-label="${esc(s('logoAria'))}">${LOGO_MARK}<span class="logo-word">AintoB</span></a>
         <p class="footer-copy">${esc(s('footerCopy', { year: YEAR }))}</p>
         <p class="footer-gdpr-badge"><i class="bi bi-shield-check" aria-hidden="true"></i> ${esc(s('footerBadge'))}</p>
         <p class="footer-langs"><span>${esc(s('langFooter'))}:</span> ${langLinks}</p>
@@ -340,6 +381,8 @@ function converterWidget(from, to, textMode, opts) {
   const F = esc(fname(from)), T = esc(fname(to));
   const sameFmt = from === to;
   const action = esc(opts.action || s('convertTo', { to: fname(to) }));
+  const toOO = !sameFmt ? ooFormatUrl(to) : null;
+  const resultOO = toOO ? `<a class="open-online__result" href="${toOO}" target="_blank" rel="noopener"><i class="bi bi-folder2-open" aria-hidden="true"></i> ${esc(s('ooResult', { to: fname(to) }))}<span class="visually-hidden"> ${esc(s('newTab'))}</span></a>` : '';
 
   const textPanel = textMode ? `
       <div id="panelPaste" class="converter-panel" hidden role="tabpanel" aria-labelledby="tabPaste">
@@ -437,6 +480,7 @@ function converterWidget(from, to, textMode, opts) {
           <i class="bi bi-download me-2" aria-hidden="true"></i>${esc(opts.action ? s('downloadResult') : s('downloadTo', { to: fname(to) }))}
         </button>
         <button class="btn btn-outline-secondary w-100" id="convertAnotherBtn">${esc(s('convertAnother'))}</button>
+        ${resultOO}
       </div>
 
       <p class="mode-desc mt-2">
@@ -522,7 +566,7 @@ function buildHomepage(allPages) {
       <div class="row g-4">
         ${CATS.map(c => `<div class="col-sm-6 col-lg-4">
           <a href="${u(HUB[c])}" class="category-card" aria-label="${esc(L.cat[c].converter)}">
-            <span class="category-card__icon" aria-hidden="true">${ICON[c]}</span>
+            <span class="category-card__icon" aria-hidden="true">${catIcon(c)}</span>
             <h3 class="category-card__title">${esc(L.cat[c].converter)}</h3>
             <p class="category-card__desc">${esc(L.cat[c].homeDesc)}</p>
             <span class="category-card__cta">${esc(s('browseTools'))} <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
@@ -530,7 +574,7 @@ function buildHomepage(allPages) {
         </div>`).join('\n        ')}
         <div class="col-sm-6 col-lg-4">
           <a href="${u('/file-converter/')}" class="category-card category-card--all" aria-label="${esc(s('allConverters'))}">
-            <span class="category-card__icon" aria-hidden="true">${ICON.all}</span>
+            <span class="category-card__icon" aria-hidden="true">${catIcon('all')}</span>
             <h3 class="category-card__title">${esc(s('allConverters'))}</h3>
             <p class="category-card__desc">${esc(s('allCardDesc', { n }))}</p>
             <span class="category-card__cta">${esc(s('viewAll'))} <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
@@ -638,7 +682,7 @@ function buildMasterHub(page, allPages) {
       <div class="row g-4">
         ${CATS.map(c => `<div class="col-sm-6 col-lg-4">
           <a href="${u(HUB[c])}" class="category-card">
-            <span class="category-card__icon" aria-hidden="true">${ICON[c]}</span>
+            <span class="category-card__icon" aria-hidden="true">${catIcon(c)}</span>
             <h3 class="category-card__title">${esc(L.cat[c].converters)}</h3>
             <p class="category-card__desc">${esc(s('catCount', { n: count(c) }))}</p>
             <span class="category-card__cta">${esc(s('browse'))} <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
@@ -681,7 +725,7 @@ function buildCategoryHub(page, allPages) {
 
   <section class="section-hero" aria-labelledby="cat-h1">
     <div class="container" style="max-width:800px; text-align:center;">
-      <span class="eyebrow">${ICON[cb]} ${esc(C.eyebrow)}</span>
+      <span class="eyebrow"><i class="bi ${ICON_BI[cb]}" aria-hidden="true"></i> ${esc(C.eyebrow)}</span>
       <h1 class="hero-title" id="cat-h1">${esc(txt.h1)}</h1>
       <p class="hero-subtitle mx-auto">${esc(C.desc)}</p>
     </div>
@@ -711,7 +755,7 @@ function buildCategoryHub(page, allPages) {
   ${pageGridSection('section-popular', 'popular-h2', C.popularTitle, C.popularSub, topPairs)}
   ${pageGridSection('section-more-pairs', 'more-pairs-h2', C.allTitle, '', morePairs)}
 
-  ${openOnlineBox(null)}
+  ${openOnlineBox(null, cb)}
   ${privacyBlock()}
   ${faqBlock(C.faqs)}
 
@@ -778,7 +822,7 @@ function buildFormatHub(page, allPages) {
   ${pageGridSection('section-from-to section-from-to--to', 'to-h2', s('convertToFmt', { fmt }), s('convertToSub', { fmt }), toPages)}
   ${pageGridSection('section-related', 'rel-hubs-h2', C.relatedFormats, '', relatedHubs)}
 
-  ${openOnlineBox(fmt)}
+  ${openOnlineBox(fmt, fmtInfo(fmt).category)}
   ${privacyBlock()}
   ${faqBlock(faqs)}
 
@@ -913,7 +957,7 @@ function buildPairPage(page, allPages) {
     </div>
   </section>
 
-  ${showOpenOnline ? openOnlineBox(from) : openOnlineBox(null)}
+  ${showOpenOnline ? openOnlineBox(from, cb, to) : openOnlineBox(null, cb)}
   ${privacyBlock()}
 
   ${relatedGrid(s('moreFrom', { from: fname(from) }), sameFrom)}
@@ -942,7 +986,7 @@ function firstTwoSentences(t) {
 
 function buildPairFAQs(from, to) {
   const F = fname(from), T = fname(to);
-  const lossless = ['PNG', 'TIFF', 'WAV', 'BMP', 'SVG'];
+  const lossless = ['PNG', 'TIFF', 'WAV', 'BMP', 'SVG', 'FLAC'];
   const lossy = ['JPG', 'JPEG', 'MP3', 'HEIC'];
   const quality = lossless.includes(to.toUpperCase()) && lossless.includes(from.toUpperCase())
     ? s('faqQualityLossless', { from: F, to: T })
@@ -1015,7 +1059,7 @@ function buildCustomPage(page, allPages) {
   };
   main = main.replace('<section class="section-faq"', `<script type="application/ld+json">${JSON.stringify(faqSchema)}</script>\n  <section class="section-faq"`);
   // open-online callout before the privacy block
-  main = main.replace('<div class="privacy-block">', `${openOnlineBox(null)}\n  <div class="privacy-block">`);
+  main = main.replace('<div class="privacy-block">', `${openOnlineBox('PDF', 'document')}\n  <div class="privacy-block">`);
 
   const schema = {
     '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: txt.name,
@@ -1093,7 +1137,7 @@ function buildRouterPage() {
   <meta name="description" content="${esc(LANGS.map(l => LOCALES[l.code].s.routerSub).join(' '))}">
   <link rel="canonical" href="${DOMAIN}/">
   <style>
-    :root{--accent:#3b5bdb;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--bg:#f9fafb}
+    :root{--accent:#2557d6;--text:#171b24;--muted:#646c7b;--border:#e4e7ec;--bg:#f8f9fb}
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;display:grid;place-items:center;padding:1.5rem 1rem;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.5}
     main{width:100%;max-width:30rem;background:#fff;border:1px solid var(--border);border-radius:1rem;padding:2rem 1.5rem;text-align:center}
@@ -1101,14 +1145,14 @@ function buildRouterPage() {
     p{margin:0 0 1.5rem;color:var(--muted)}
     ul{list-style:none;margin:0;padding:0;display:grid;gap:.75rem}
     a{display:block;padding:.9rem 1rem;border:1px solid var(--border);border-radius:.75rem;color:var(--text);text-decoration:none;font-weight:600;text-align:left}
-    a:hover,a:focus-visible{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px rgba(59,91,219,.15)}
+    a:hover,a:focus-visible{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px rgba(37,87,214,.15)}
     a small{display:block;font-weight:400;color:var(--muted)}
   </style>
   <script>${DETECT_JS}if(location.hash!=='#choose'){location.replace('/'+l+'/'+location.search)}</script>
 </head>
 <body>
   <main>
-    <div aria-hidden="true" style="font-size:2rem">🅰️➡️🅱️</div>
+    <div aria-hidden="true" style="width:56px;height:56px;margin:0 auto .5rem">${LOGO_MARK.replace('width="28" height="28"','width="56" height="56"')}</div>
     <h1>AintoB</h1>
     <p>${esc(names)}</p>
     <ul>
@@ -1223,7 +1267,8 @@ function build() {
 
   // Root router + redirect stubs for every pre-i18n URL (GitHub Pages cannot send real 301s)
   writeFile('index.html', buildRouterPage());
-  const oldSlugs = [...allPages.map(p => p['URL Slug']), '/privacy/', '/imprint/'];
+  // Rollout Stage "Phase 4" = pages added after the i18n launch; they never existed at a root URL, so they get no stub.
+  const oldSlugs = [...allPages.filter(p => p['Rollout Stage'] !== 'Phase 4').map(p => p['URL Slug']), '/privacy/', '/imprint/'];
   for (const slug of oldSlugs) writeFile(slugToPath(slug), buildRedirectStub(slug));
   // Same mapping as real 301s for hosts that support a _redirects file (Netlify, Cloudflare Pages)
   writeFile('_redirects', '# Generated by build.js — old (pre-i18n) URLs → English pages\n' +

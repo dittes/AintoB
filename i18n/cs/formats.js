@@ -222,4 +222,34 @@ module.exports = {
     limitation: 'Výstup prohlížeč zakóduje znovu, takže se nezachovají zvláštní metadata (EXIF, barevné profily).',
     compat: 'Funguje v každém moderním prohlížeči.',
   },
+  FLAC: {
+    description: 'FLAC komprimuje zvuk bez jakékoli ztráty informací: soubor FLAC se dekóduje na bitově shodnou kopii původní nahrávky a bývá přitom o 40–60 % menší než WAV. Je to preferovaný formát pro hudební archivy, hi-fi sbírky a bezeztrátová stahování.',
+    useCases: ['Archivace ripů z CD a studiových nahrávek beze ztráty kvality', 'Budování bezeztrátové hudební knihovny pro hi-fi přehrávače', 'Uchování mastru před vytvořením menších verzí MP3 nebo M4A'],
+    limitation: 'Soubory FLAC jsou stále mnohonásobně větší než MP3 nebo M4A a ne každý telefon, autorádio nebo starší přehrávač je přehraje.',
+    compat: 'Nativně se přehrává v Chrome, Firefoxu, Edge, Safari 11+, na Androidu a iOS 11+; podporuje ho většina hi-fi přehrávačů a hudebních programů.',
+  },
+  WMV: {
+    description: 'WMV je videoformát Windows Media Video, který Microsoft zavedl v roce 1999 pro streamování a přehrávání ve Windows. Ukládá video do kontejneru ASF a stále se objevuje ve starých záznamech z kamer, nahrávkách obrazovky a firemních archivech.',
+    useCases: ['Otevření starých nahrávek z Windows v telefonu, tabletu nebo na Macu', 'Převod starších firemních videí do MP4 pro sdílení', 'Vytvoření WMV pro starší programy pro Windows, které ho vyžadují'],
+    limitation: 'Prohlížeče a telefony WMV nativně nepřehrají a formát je považován za zastaralý. Soubory vytvořené zde používají klasický kodek WMV2 pro maximální kompatibilitu s Windows.',
+    compat: 'Windows Media Player, VLC a většina desktopových přehrávačů. Nepřehraje se v prohlížečích, na iPhonu ani ve většině galerií Androidu.',
+  },
+  FLV: {
+    description: 'FLV je kontejner Flash Video, který v době Adobe Flash Playeru pohánělo online video. Mnoho starých stažených videí, nahrávek obrazovky a streamovacích archivů ho stále používá.',
+    useCases: ['Záchrana videí z éry Flashe, aby se přehrála na moderních zařízeních', 'Převod stažených souborů FLV do MP4 pro telefony a televize', 'Vytvoření FLV pro starší přehrávače, které ho stále očekávají'],
+    limitation: 'Flash byl v roce 2020 ukončen a žádný prohlížeč už FLV nepřehraje. Pro běžné použití převeďte do MP4 nebo WebM.',
+    compat: 'VLC a další přehrávače založené na ffmpeg. Od konce Flashe žádná podpora v prohlížečích.',
+  },
+  ODT: {
+    description: 'ODT je textový formát standardu OpenDocument, který používají LibreOffice, OpenOffice a mnoho úřadů. Text, styly a obrázky ukládá do balíčku ZIP se soubory XML a jde o otevřenou normu ISO.',
+    useCases: ['Otevření dokumentů z LibreOffice bez LibreOffice', 'Úřední a dlouhodobé archivy vyžadující otevřené standardy', 'Sdílení upravitelného textu s lidmi, kteří nepoužívají Microsoft Word'],
+    limitation: 'Složité rozvržení, sledování změn a makra mohou v jiném programu vypadat jinak. Převody zde zachovají text, nadpisy, seznamy, tabulky a základní formátování.',
+    compat: 'Nativně v LibreOffice a Apache OpenOffice; otevře se v Microsoft Wordu 2010+, Dokumentech Google a Apple Pages.',
+  },
+  EPUB: {
+    description: 'EPUB je otevřený standard pro elektronické knihy. Soubor EPUB je balíček ZIP s kapitolami v XHTML, obrázky a obsahem, který se přizpůsobí jakékoli obrazovce, proto je výchozím formátem Apple Books, Kobo a většiny čteček.',
+    useCases: ['Čtení e-knihy jako PDF na zařízení bez aplikace čtečky', 'Získání textu knihy pro poznámky nebo vyhledávání', 'Převod e-knihy do HTML nebo Markdownu pro publikování'],
+    limitation: 'Soubory EPUB chráněné DRM nelze převést. Knihy s pevným rozvržením nebo bohatým stylováním o ně při převodu do jednoduchých formátů přijdou.',
+    compat: 'Apple Books, Kobo, Google Play Knihy, Calibre a většina čteček. Amazon Kindle vyžaduje předchozí převod.',
+  },
 };

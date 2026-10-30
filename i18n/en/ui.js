@@ -54,6 +54,8 @@ const s = {
   ooTitleGeneric: 'Need to open a file instead of converting it?',
   ooText: 'open-online.com helps you open many different file types online — no need to convert them first.',
   ooButton: 'Open files on open-online.com',
+  ooButtonFmt: 'Open {fmt} files on open-online.com',
+  ooResult: 'Preview the {to} file on open-online.com',
 
   // ── converter widget ────────────────────────────────────────────────────
   widgetHeading: 'Convert {from} to {to}',

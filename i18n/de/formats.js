@@ -223,4 +223,34 @@ module.exports = {
     limitation: 'Die Ausgabe wird vom Browser neu kodiert, daher bleiben besondere Metadaten (EXIF, Farbprofile) nicht erhalten.',
     compat: 'Funktioniert in jedem modernen Browser.',
   },
+  FLAC: {
+    description: 'FLAC komprimiert Audio ohne jeden Informationsverlust: Eine FLAC-Datei wird zu einer bitgenauen Kopie der Originalaufnahme dekodiert und ist dabei meist 40–60 % kleiner als WAV. Es ist das bevorzugte Format für Musikarchive, Hi-Fi-Sammlungen und verlustfreie Downloads.',
+    useCases: ['CD-Rips und Studioaufnahmen ohne Qualitätsverlust archivieren', 'Eine verlustfreie Musikbibliothek für Hi-Fi-Player aufbauen', 'Eine Masterkopie aufbewahren, bevor kleinere MP3- oder M4A-Versionen entstehen'],
+    limitation: 'FLAC-Dateien sind weiterhin um ein Vielfaches größer als MP3 oder M4A, und nicht jedes Handy, Autoradio oder ältere Gerät spielt sie ab.',
+    compat: 'Wird nativ in Chrome, Firefox, Edge, Safari 11+, Android und iOS 11+ abgespielt; die meisten Hi-Fi-Player und Musikprogramme unterstützen es.',
+  },
+  WMV: {
+    description: 'WMV ist das Videoformat Windows Media Video, das Microsoft 1999 für Streaming und Wiedergabe unter Windows eingeführt hat. Es speichert Video in einem ASF-Container und taucht noch in alten Kameraaufnahmen, Bildschirmaufzeichnungen und Firmenarchiven auf.',
+    useCases: ['Alte Windows-Aufnahmen auf Handy, Tablet oder Mac öffnen', 'Ältere Firmenvideos zum Teilen in MP4 umwandeln', 'WMV für ältere Windows-Programme erzeugen, die es verlangen'],
+    limitation: 'Browser und Smartphones spielen WMV nicht nativ ab, und das Format gilt als veraltet. Hier erzeugte Dateien nutzen den klassischen WMV2-Codec für maximale Windows-Kompatibilität.',
+    compat: 'Windows Media Player, VLC und die meisten Desktop-Player. Nicht abspielbar in Browsern, auf dem iPhone oder in den meisten Android-Galerien.',
+  },
+  FLV: {
+    description: 'FLV ist der Flash-Video-Container, der in der Zeit des Adobe Flash Players das Online-Video antrieb. Viele alte Video-Downloads, Bildschirmaufzeichnungen und Streaming-Archive verwenden ihn noch.',
+    useCases: ['Videos aus der Flash-Ära retten, damit sie auf modernen Geräten laufen', 'FLV-Downloads für Handys und Fernseher in MP4 umwandeln', 'FLV für ältere Player erzeugen, die es noch erwarten'],
+    limitation: 'Flash wurde 2020 eingestellt, und kein Browser spielt FLV noch ab. Für den Alltag in MP4 oder WebM umwandeln.',
+    compat: 'VLC und andere auf ffmpeg basierende Player. Seit dem Ende von Flash keine Browser-Unterstützung.',
+  },
+  ODT: {
+    description: 'ODT ist das Textverarbeitungsformat des OpenDocument-Standards und wird von LibreOffice, OpenOffice und vielen Behörden genutzt. Es speichert Text, Formatvorlagen und Bilder in einem ZIP-Paket aus XML-Dateien und ist ein offener ISO-Standard.',
+    useCases: ['LibreOffice-Dokumente ohne LibreOffice öffnen', 'Verwaltungs- und Langzeitarchive, die offene Standards verlangen', 'Bearbeitbaren Text mit Personen teilen, die kein Microsoft Word nutzen'],
+    limitation: 'Komplexe Layouts, Änderungsverfolgung und Makros können in einem anderen Programm anders aussehen. Die Umwandlungen hier behalten Text, Überschriften, Listen, Tabellen und einfache Formatierungen.',
+    compat: 'Nativ in LibreOffice und Apache OpenOffice; lässt sich in Microsoft Word 2010+, Google Docs und Apple Pages öffnen.',
+  },
+  EPUB: {
+    description: 'EPUB ist der offene Standard für E-Books. Eine EPUB-Datei ist ein ZIP-Paket aus XHTML-Kapiteln, Bildern und einem Inhaltsverzeichnis, das sich an jede Bildschirmgröße anpasst – deshalb ist es das Standardformat von Apple Books, Kobo und den meisten E-Readern.',
+    useCases: ['Ein E-Book als PDF auf einem Gerät ohne E-Reader-App lesen', 'Den Text eines Buchs für Notizen oder die Suche extrahieren', 'Ein E-Book für die Veröffentlichung in HTML oder Markdown umwandeln'],
+    limitation: 'Mit DRM geschützte EPUB-Dateien lassen sich nicht umwandeln. Bücher mit festem Layout oder aufwendiger Gestaltung verlieren diese beim Umwandeln in einfache Formate.',
+    compat: 'Apple Books, Kobo, Google Play Books, Calibre und die meisten E-Reader. Amazon Kindle braucht zuvor eine Umwandlung.',
+  },
 };

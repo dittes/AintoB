@@ -245,7 +245,7 @@
   gap: 1.25rem;
 }
 
-.privacy-icon { font-size: 2rem; flex-shrink: 0; line-height: 1; margin-top: .1rem; }
+.privacy-icon { font-size: 1.75rem; flex-shrink: 0; line-height: 1; margin-top: .1rem; color: var(--color-accent); }
 
 .privacy-block strong {
   display: block;
@@ -689,7 +689,7 @@
 .text-editor-area:focus {
   outline: none;
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+  box-shadow: 0 0 0 3px rgba(37,87,214,.12);
 }
 
 /* ── Visually hidden utility ────────────────────────────────── */
@@ -744,7 +744,7 @@
 }
 .lang-switch summary::-webkit-details-marker { display: none; }
 .lang-switch summary:hover,
-.lang-switch[open] summary { background: var(--color-bg); color: var(--color-text); border-color: #D1D5DB; }
+.lang-switch[open] summary { background: var(--color-bg); color: var(--color-text); border-color: var(--color-border-strong); }
 .lang-switch summary:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .lang-switch ul {
   position: absolute;
@@ -800,3 +800,56 @@
   overflow-wrap: break-word;
   hyphens: auto;
 }
+
+/* ── Brand: logo mark + word ────────────────────────────────── */
+.navbar-logo .logo-word { font-size: 1.0625rem; font-weight: 650; letter-spacing: -.02em; color: var(--color-text); }
+.footer-logo { display: inline-flex; align-items: center; gap: .6rem; font-weight: 650; letter-spacing: -.02em; text-decoration: none; color: var(--color-text); }
+.footer-logo svg { width: 24px; height: 24px; flex: none; }
+.footer-logo:hover { color: var(--color-text); opacity: .85; }
+
+/* ── Category icon tiles (colour per format family) ─────────── */
+.cat-icon {
+  --cat: var(--fmt-all);
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.75rem; height: 2.75rem;
+  border-radius: var(--radius-lg);
+  font-size: 1.35rem; line-height: 1;
+  color: var(--cat);
+  background: color-mix(in srgb, var(--cat) 11%, #fff);
+}
+.cat-icon--document    { --cat: var(--fmt-document); }
+.cat-icon--spreadsheet { --cat: var(--fmt-spreadsheet); }
+.cat-icon--image       { --cat: var(--fmt-image); }
+.cat-icon--audio,
+.cat-icon--video       { --cat: var(--fmt-audio); }
+.cat-icon--data        { --cat: var(--fmt-data); }
+.category-card--all .cat-icon { background: var(--color-accent); color: #fff; }
+.category-card:hover .cat-icon { background: var(--cat); color: #fff; }
+.eyebrow .bi { font-size: .95em; }
+
+/* ── open-online.com callout (refined) ──────────────────────── */
+.open-online__icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.75rem; height: 2.75rem; border-radius: var(--radius-lg);
+  background: var(--color-accent-light); color: var(--color-accent);
+  font-size: 1.35rem;
+}
+.open-online__actions { display: flex; flex-direction: column; align-items: flex-start; gap: .4rem; }
+.open-online__link { font-size: var(--text-sm); font-weight: 500; text-decoration: none; }
+.open-online__link:hover { text-decoration: underline; }
+.open-online__result {
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+  margin-top: .75rem; padding: .6rem 1rem;
+  font-size: var(--text-sm); font-weight: 600; text-decoration: none;
+  color: var(--color-accent); background: var(--color-accent-light);
+  border-radius: var(--radius-md);
+  transition: background var(--ease-fast);
+}
+.open-online__result:hover { background: var(--color-accent-mid); color: var(--color-accent-hover); }
+
+/* ── open-online look: calmer cards, 12px radii, thin borders ── */
+.converter-card { box-shadow: var(--shadow-md); }
+.drop-zone { border-radius: var(--radius-xl); }
+.btn-primary { box-shadow: none; }
+.btn-primary:hover, .btn-primary:focus-visible { box-shadow: var(--shadow-md); }
+.format-badge--from { background: var(--color-bg-muted, #F1F3F6); }

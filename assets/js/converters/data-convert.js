@@ -4,7 +4,8 @@
  * Tool is selected from the page URL:
  *   json-to-csv, csv-to-json, json-to-yaml, yaml-to-json, xml-to-json,
  *   json-formatter, base64-encode, base64-decode, url-encode, url-decode,
- *   case-converter
+ *   case-converter, json-to-xml, csv-to-xml, xml-to-csv, xml-to-yaml,
+ *   excel-to-json, json-to-excel
  *
  * YAML pages additionally load js-yaml from CDN (window.jsyaml).
  * All processing is local; input may be a File/Blob (upload) or a string (paste).
@@ -179,6 +180,155 @@
     return JSON.stringify(root, null, 2);
   }
 
+
+  // ── XML out ────────────────────────────────────────────────────────────────
+  function xmlName(name) {
+    var n = String(name).replace(/[^A-Za-z0-9_.\-]/g, '_');
+    if (!/^[A-Za-z_]/.test(n)) n = '_' + n;
+    return n;
+  }
+  function xmlEsc(v) {
+    return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function xmlAttr(v) { return xmlEsc(v).replace(/"/g, '&quot;'); }
+
+  function jsonValueToXml(name, val, indent) {
+    var pad = new Array(indent + 1).join('  ');
+    var tag = xmlName(name);
+    if (Array.isArray(val)) {
+      return val.map(function (v) { return jsonValueToXml(name, v, indent); }).join('\n');
+    }
+    if (val === null || val === undefined) return pad + '<' + tag + '/>';
+    if (typeof val !== 'object') return pad + '<' + tag + '>' + xmlEsc(val) + '</' + tag + '>';
+    var attrs = '', kids = [], text = '';
+    Object.keys(val).forEach(function (k) {
+      if (k.charAt(0) === '@') attrs += ' ' + xmlName(k.slice(1)) + '="' + xmlAttr(val[k]) + '"';
+      else if (k === '#text') text = xmlEsc(val[k]);
+      else kids.push(jsonValueToXml(k, val[k], indent + 1));
+    });
+    if (!kids.length) return pad + '<' + tag + attrs + (text ? '>' + text + '</' + tag + '>' : '/>');
+    return pad + '<' + tag + attrs + '>' + (text ? text : '') + '\n' + kids.join('\n') + '\n' + pad + '</' + tag + '>';
+  }
+
+  function jsonToXml(text) {
+    var data;
+    try { data = JSON.parse(text); }
+    catch (e) { throw new Error('Invalid JSON: ' + e.message); }
+    var body;
+    if (data && typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length === 1 &&
+        Object.keys(data)[0].charAt(0) !== '@' && Object.keys(data)[0] !== '#text' && !Array.isArray(data[Object.keys(data)[0]])) {
+      var k = Object.keys(data)[0];
+      body = jsonValueToXml(k, data[k], 0);
+    } else if (Array.isArray(data)) {
+      body = '<root>\n' + data.map(function (v) { return jsonValueToXml('item', v, 1); }).join('\n') + '\n</root>';
+    } else {
+      body = jsonValueToXml('root', data, 0);
+    }
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + body + '\n';
+  }
+
+  function csvToXml(text) {
+    var rows = parseCSV(text);
+    if (rows.length < 2) throw new Error('Need a header row plus at least one data row.');
+    var headers = rows[0].map(function (h, i) { return xmlName(h.trim() || 'column_' + (i + 1)); });
+    var out = ['<?xml version="1.0" encoding="UTF-8"?>', '<rows>'];
+    rows.slice(1).forEach(function (r) {
+      out.push('  <row>');
+      headers.forEach(function (h, i) { out.push('    <' + h + '>' + xmlEsc(r[i] == null ? '' : r[i]) + '</' + h + '>'); });
+      out.push('  </row>');
+    });
+    out.push('</rows>');
+    return out.join('\n') + '\n';
+  }
+
+  // ── XML in ─────────────────────────────────────────────────────────────────
+  function parseXml(text) {
+    var doc = new DOMParser().parseFromString(text, 'application/xml');
+    var err = doc.querySelector('parsererror');
+    if (err) throw new Error('Invalid XML: ' + err.textContent.split('\n')[0]);
+    return doc;
+  }
+
+  function flatten(val, prefix, out) {
+    if (val && typeof val === 'object' && !Array.isArray(val)) {
+      Object.keys(val).forEach(function (k) { flatten(val[k], prefix ? prefix + '.' + k : k, out); });
+    } else if (Array.isArray(val)) {
+      out[prefix] = val.map(function (v) { return typeof v === 'object' ? JSON.stringify(v) : v; }).join('; ');
+    } else {
+      out[prefix] = val;
+    }
+    return out;
+  }
+
+  function xmlToCsv(text) {
+    var doc = parseXml(text);
+    var root = xmlNodeToJson(doc.documentElement);
+    // Walk down to the first level that holds a repeated element: that is the list of rows.
+    var rows = null, node = root, guard = 0;
+    while (node && typeof node === 'object' && guard++ < 6) {
+      var keys = Object.keys(node).filter(function (k) { return k.charAt(0) !== '@' && k !== '#text'; });
+      var arrKey = keys.filter(function (k) { return Array.isArray(node[k]); })[0];
+      if (arrKey) { rows = node[arrKey]; break; }
+      if (keys.length === 1) { node = node[keys[0]]; continue; }
+      rows = keys.map(function (k) { return node[k]; });   // distinct siblings → one row each
+      break;
+    }
+    if (!rows || !rows.length) throw new Error('No repeating records were found in this XML.');
+    var flat = rows.map(function (r) { return typeof r === 'object' && r !== null ? flatten(r, '', {}) : { value: r }; });
+    return jsonToCsv(JSON.stringify(flat));
+  }
+
+  function xmlToYaml(text) {
+    var doc = parseXml(text);
+    var root = {};
+    root[doc.documentElement.nodeName] = xmlNodeToJson(doc.documentElement);
+    return needYaml().dump(root, { lineWidth: 120, noRefs: true });
+  }
+
+  // ── Excel ↔ JSON (SheetJS) ─────────────────────────────────────────────────
+  function needXlsx() {
+    if (!window.XLSX) throw new Error('Spreadsheet library not loaded. Reload the page and try again.');
+    return window.XLSX;
+  }
+
+  async function excelToJson(file) {
+    var X = needXlsx();
+    var wb = X.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
+    if (!wb.SheetNames.length) throw new Error('This workbook has no sheets.');
+    var out;
+    if (wb.SheetNames.length === 1) {
+      out = X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: null, raw: true });
+    } else {
+      out = {};
+      wb.SheetNames.forEach(function (n) { out[n] = X.utils.sheet_to_json(wb.Sheets[n], { defval: null, raw: true }); });
+    }
+    return JSON.stringify(out, null, 2);
+  }
+
+  function jsonToExcel(text) {
+    var X = needXlsx(), data;
+    try { data = JSON.parse(text); }
+    catch (e) { throw new Error('Invalid JSON: ' + e.message); }
+    var wb = X.utils.book_new();
+    function addSheet(name, rows) {
+      if (!Array.isArray(rows)) rows = [rows];
+      rows = rows.map(function (r) {
+        if (r === null || typeof r !== 'object' || Array.isArray(r)) return { value: r };
+        var o = {};
+        Object.keys(r).forEach(function (k) { var v = r[k]; o[k] = v !== null && typeof v === 'object' ? JSON.stringify(v) : v; });
+        return o;
+      });
+      X.utils.book_append_sheet(wb, X.utils.json_to_sheet(rows), name.slice(0, 31).replace(/[\\\/?*\[\]:]/g, '_') || 'Sheet1');
+    }
+    // { "Sheet A": [..], "Sheet B": [..] } → one sheet per key; anything else → one sheet
+    var isMulti = data && typeof data === 'object' && !Array.isArray(data) &&
+      Object.keys(data).length > 0 && Object.keys(data).every(function (k) { return Array.isArray(data[k]); });
+    if (isMulti) Object.keys(data).forEach(function (k) { addSheet(k, data[k]); });
+    else addSheet('Sheet1', data);
+    var buf = X.write(wb, { bookType: 'xlsx', type: 'array' });
+    return { blob: new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), filename: 'converted.xlsx' };
+  }
+
   // ── JSON formatter ─────────────────────────────────────────────────────────
   function jsonFormat(text, mode) {
     var data;
@@ -313,6 +463,10 @@
       return textResult(bytesToBase64(buf), baseName(input, 'encoded') + '.base64.txt');
     }
 
+    if (TOOL === 'excel-to-json') {
+      return textResult(await excelToJson(input), baseName(input, 'converted') + '.json', 'application/json');
+    }
+
     var text = await readText(input);
     if (!text.trim()) throw new Error('The input is empty.');
 
@@ -327,6 +481,16 @@
         return textResult(yamlToJson(text), baseName(input, 'converted') + '.json', 'application/json');
       case 'xml-to-json':
         return textResult(xmlToJson(text), baseName(input, 'converted') + '.json', 'application/json');
+      case 'json-to-xml':
+        return textResult(jsonToXml(text), baseName(input, 'converted') + '.xml', 'application/xml');
+      case 'csv-to-xml':
+        return textResult(csvToXml(text), baseName(input, 'converted') + '.xml', 'application/xml');
+      case 'xml-to-csv':
+        return textResult(xmlToCsv(text), baseName(input, 'converted') + '.csv', 'text/csv');
+      case 'xml-to-yaml':
+        return textResult(xmlToYaml(text), baseName(input, 'converted') + '.yaml', 'application/x-yaml');
+      case 'json-to-excel':
+        return jsonToExcel(text);
       case 'json-formatter':
         name = selectedOption('jsonMode', 'pretty') === 'minify' ? 'minified.json' : 'formatted.json';
         return textResult(jsonFormat(text, selectedOption('jsonMode', 'pretty')), name, 'application/json');

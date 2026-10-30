@@ -222,4 +222,34 @@ module.exports = {
     limitation: 'Wynik jest ponownie kodowany przez przeglądarkę, więc nietypowe metadane (EXIF, profile kolorów) nie są zachowywane.',
     compat: 'Działa w każdej nowoczesnej przeglądarce.',
   },
+  FLAC: {
+    description: 'FLAC kompresuje dźwięk bez utraty jakichkolwiek informacji: plik FLAC dekoduje się do bitowo identycznej kopii oryginalnego nagrania i zwykle jest o 40–60% mniejszy niż WAV. To preferowany format dla archiwów muzycznych, kolekcji hi-fi i pobrań bezstratnych.',
+    useCases: ['Archiwizacja zgrań z płyt CD i nagrań studyjnych bez utraty jakości', 'Budowanie bezstratnej biblioteki muzycznej dla odtwarzaczy hi-fi', 'Zachowanie kopii głównej przed utworzeniem mniejszych wersji MP3 lub M4A'],
+    limitation: 'Pliki FLAC są nadal wielokrotnie większe niż MP3 lub M4A, a nie każdy telefon, radio samochodowe czy starszy odtwarzacz je odtworzy.',
+    compat: 'Odtwarzany natywnie w Chrome, Firefox, Edge, Safari 11+, na Androidzie i iOS 11+; obsługuje go większość odtwarzaczy hi-fi i programów muzycznych.',
+  },
+  WMV: {
+    description: 'WMV to format wideo Windows Media Video, który Microsoft wprowadził w 1999 roku do strumieniowania i odtwarzania w systemie Windows. Przechowuje wideo w kontenerze ASF i wciąż pojawia się w starych nagraniach z kamer, nagraniach ekranu i archiwach firmowych.',
+    useCases: ['Otwieranie starych nagrań z Windows na telefonie, tablecie lub Macu', 'Konwersja starszych filmów firmowych do MP4 w celu udostępnienia', 'Tworzenie WMV dla starszych programów Windows, które tego wymagają'],
+    limitation: 'Przeglądarki i telefony nie odtwarzają WMV natywnie, a format uchodzi za przestarzały. Pliki tworzone tutaj używają klasycznego kodeka WMV2 dla maksymalnej zgodności z Windows.',
+    compat: 'Windows Media Player, VLC i większość odtwarzaczy na komputery. Nie odtworzy się w przeglądarkach, na iPhonie ani w większości galerii Androida.',
+  },
+  FLV: {
+    description: 'FLV to kontener Flash Video, który w czasach Adobe Flash Playera napędzał wideo online. Wiele starych pobranych filmów, nagrań ekranu i archiwów streamingowych nadal go używa.',
+    useCases: ['Ratowanie filmów z ery Flasha, aby działały na nowoczesnych urządzeniach', 'Konwersja pobranych plików FLV do MP4 dla telefonów i telewizorów', 'Tworzenie FLV dla starszych odtwarzaczy, które wciąż go oczekują'],
+    limitation: 'Flash wycofano w 2020 roku i żadna przeglądarka już nie odtwarza FLV. Na co dzień przekonwertuj do MP4 lub WebM.',
+    compat: 'VLC i inne odtwarzacze oparte na ffmpeg. Brak obsługi w przeglądarkach od końca Flasha.',
+  },
+  ODT: {
+    description: 'ODT to format edytora tekstu standardu OpenDocument, używany przez LibreOffice, OpenOffice i wiele urzędów. Przechowuje tekst, style i obrazy w pakiecie ZIP z plikami XML i jest otwartą normą ISO.',
+    useCases: ['Otwieranie dokumentów LibreOffice bez LibreOffice', 'Archiwa urzędowe i długoterminowe wymagające otwartych standardów', 'Udostępnianie edytowalnego tekstu osobom, które nie używają Microsoft Word'],
+    limitation: 'Złożone układy, śledzenie zmian i makra mogą wyglądać inaczej w innym programie. Konwersje tutaj zachowują tekst, nagłówki, listy, tabele i podstawowe formatowanie.',
+    compat: 'Natywnie w LibreOffice i Apache OpenOffice; otwiera się w Microsoft Word 2010+, Dokumentach Google i Apple Pages.',
+  },
+  EPUB: {
+    description: 'EPUB to otwarty standard e-booków. Plik EPUB to pakiet ZIP z rozdziałami w XHTML, obrazami i spisem treści, który dopasowuje się do każdego ekranu, dlatego jest domyślnym formatem Apple Books, Kobo i większości czytników.',
+    useCases: ['Czytanie e-booka jako PDF na urządzeniu bez aplikacji czytnika', 'Wyodrębnienie tekstu książki do notatek lub wyszukiwania', 'Zamiana e-booka na HTML lub Markdown do publikacji'],
+    limitation: 'Plików EPUB chronionych DRM nie można konwertować. Książki ze stałym układem lub bogatą stylizacją tracą ją po konwersji do prostych formatów.',
+    compat: 'Apple Books, Kobo, Książki Google Play, Calibre i większość czytników. Amazon Kindle wymaga wcześniejszej konwersji.',
+  },
 };

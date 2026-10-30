@@ -50,6 +50,8 @@ const s = {
   ooTitleGeneric: 'Potřebujete soubor jen otevřít, ne převádět?',
   ooText: 'Na open-online.com otevřete mnoho různých typů souborů online – bez předchozího převodu.',
   ooButton: 'Otevřít soubory na open-online.com',
+  ooButtonFmt: 'Otevřít soubory {fmt} na open-online.com',
+  ooResult: 'Zobrazit soubor {to} na open-online.com',
 
   // ── widget převodníku ───────────────────────────────────────────────────
   widgetHeading: 'Převod {from} na {to}',
@@ -436,6 +438,48 @@ const tools = {
     title: 'Prohledávatelné PDF – bezplatné OCR v prohlížeči',
     meta: 'Udělejte z naskenovaných PDF prohledávatelné pomocí bezplatného OCR v prohlížeči. Bez nahrávání a bez serveru – Tesseract OCR přidá textovou vrstvu přímo ve vašem prohlížeči.',
     h1: 'Prohledávatelné PDF (OCR)',
+  },
+  '/data/json-to-xml/': {
+    name: 'Převod JSON na XML',
+    title: 'Převod JSON na XML online – zdarma, soukromě, v prohlížeči',
+    meta: 'Převeďte JSON na XML přímo v prohlížeči: zdarma, soukromě a rychle. Z JSON vznikne přehledně odsazené, správně utvořené XML – bez nahrávání na server.',
+    h1: 'Převod JSON na XML',
+    value: 'Starší systémy, služby SOAP a mnoho firemních nástrojů stále očekává XML, zatímco moderní rozhraní API vracejí JSON. Tento převodník změní jakýkoli dokument JSON na správně utvořené, odsazené XML: klíče objektů se stanou elementy, pole opakovanými elementy a klíče začínající @ atributy.',
+  },
+  '/data/csv-to-xml/': {
+    name: 'Převod CSV na XML',
+    title: 'Převod CSV na XML online – zdarma, soukromě, v prohlížeči',
+    meta: 'Převeďte CSV na XML přímo v prohlížeči: zdarma, soukromě a rychle. Exporty tabulek se změní na XML pro feedy a importy – bez nahrávání na server.',
+    h1: 'Převod CSV na XML',
+    value: 'Exporty tabulek a výpisy z databází jsou ve formátu CSV, ale importní rozhraní, feedy a starší systémy často vyžadují XML. Každý řádek CSV se stane elementem &lt;row&gt;, jehož potomci jsou pojmenováni podle záhlaví; speciální znaky se ošetří automaticky.',
+  },
+  '/data/xml-to-csv/': {
+    name: 'Převod XML na CSV',
+    title: 'Převod XML na CSV online – zdarma, soukromě, v prohlížeči',
+    meta: 'Převeďte XML na CSV přímo v prohlížeči: zdarma, soukromě a rychle. Opakující se záznamy se změní na řádky tabulky – bez nahrávání na server.',
+    h1: 'Převod XML na CSV',
+    value: 'Exporty XML z ERP, účetních a katalogových systémů se v tabulkovém procesoru špatně čtou. Tento převodník najde v XML opakující se záznamy a pro každý zapíše jeden řádek CSV; vnořené elementy se zploští do sloupců jako address.city.',
+  },
+  '/data/xml-to-yaml/': {
+    name: 'Převod XML na YAML',
+    title: 'Převod XML na YAML online – zdarma, soukromě, v prohlížeči',
+    meta: 'Převeďte XML na YAML přímo v prohlížeči: zdarma, soukromě a rychle. Stejná struktura, mnohem čitelnější – bez nahrávání na server.',
+    h1: 'Převod XML na YAML',
+    value: 'Konfigurační a datové soubory XML jsou upovídané; YAML vyjádří stejnou strukturu s mnohem menším šumem. Atributy si ponesou předponu @ a smíšený text se uloží jako #text, takže se neztratí žádná informace.',
+  },
+  '/data/json-to-excel/': {
+    name: 'Převod JSON na Excel',
+    title: 'Převod JSON na Excel online – zdarma, soukromě, v prohlížeči',
+    meta: 'Převeďte JSON na Excel přímo v prohlížeči: zdarma, soukromě a rychle. Z polí JSON vznikne sešit XLSX – bez nahrávání na server.',
+    h1: 'Převod JSON na Excel',
+    value: 'Analytici pracují v Excelu, rozhraní API mluví JSON. Vložte pole objektů JSON a získáte sešit XLSX s jedním sloupcem na klíč; objekt, jehož hodnoty jsou pole, se změní na jeden list na klíč.',
+  },
+  '/data/excel-to-json/': {
+    name: 'Převod Excelu na JSON',
+    title: 'Převod Excelu na JSON online – zdarma, soukromě, v prohlížeči',
+    meta: 'Převeďte Excel na JSON přímo v prohlížeči: zdarma, soukromě a rychle. Z listů tabulky vzniknou objekty JSON – bez nahrávání na server.',
+    h1: 'Převod Excelu na JSON',
+    value: 'Změňte tabulku na JSON pro rozhraní API, skript nebo webovou aplikaci. První řádek poslouží jako klíče; sešit s více listy vytvoří objekt s jedním polem na list.',
   },
 };
 

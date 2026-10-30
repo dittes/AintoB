@@ -49,6 +49,8 @@ const s = {
   ooTitleGeneric: 'Sie möchten eine Datei nur öffnen, nicht umwandeln?',
   ooText: 'Auf open-online.com können Sie viele verschiedene Dateitypen online öffnen – ganz ohne vorherige Umwandlung.',
   ooButton: 'Dateien auf open-online.com öffnen',
+  ooButtonFmt: '{fmt}-Dateien auf open-online.com öffnen',
+  ooResult: '{to}-Datei auf open-online.com ansehen',
 
   // ── Konverter-Widget ────────────────────────────────────────────────────
   widgetHeading: '{from} in {to} umwandeln',
@@ -435,6 +437,48 @@ const tools = {
     title: 'PDF durchsuchbar machen – kostenlose OCR im Browser',
     meta: 'Gescannte PDFs mit kostenloser Browser-OCR durchsuchbar machen. Kein Upload, kein Server: Tesseract OCR läuft komplett in Ihrem Browser und ergänzt bildbasierte PDFs um eine Textebene.',
     h1: 'PDF durchsuchbar machen (OCR)',
+  },
+  '/data/json-to-xml/': {
+    name: 'JSON in XML umwandeln',
+    title: 'JSON in XML umwandeln – kostenlos, privat, im Browser',
+    meta: 'JSON in XML umwandeln direkt im Browser: kostenlos, privat und schnell. Aus JSON wird sauber eingerücktes, wohlgeformtes XML – ohne Upload.',
+    h1: 'JSON in XML umwandeln',
+    value: 'Ältere Systeme, SOAP-Dienste und viele Unternehmenswerkzeuge erwarten noch XML, während moderne APIs JSON liefern. Dieser Konverter macht aus jedem JSON-Dokument wohlgeformtes, eingerücktes XML: Objektschlüssel werden zu Elementen, Arrays zu wiederholten Elementen und Schlüssel mit vorangestelltem @ zu Attributen.',
+  },
+  '/data/csv-to-xml/': {
+    name: 'CSV in XML umwandeln',
+    title: 'CSV in XML umwandeln – kostenlos, privat, im Browser',
+    meta: 'CSV in XML umwandeln direkt im Browser: kostenlos, privat und schnell. Tabellenexporte werden zu XML für Feeds und Importe – ohne Upload.',
+    h1: 'CSV in XML umwandeln',
+    value: 'Tabellenexporte und Datenbank-Dumps liegen als CSV vor, Importschnittstellen, Feeds und ältere Systeme verlangen aber oft XML. Jede CSV-Zeile wird zu einem &lt;row&gt;-Element, dessen Unterelemente nach Ihrer Kopfzeile benannt sind; Sonderzeichen werden automatisch maskiert.',
+  },
+  '/data/xml-to-csv/': {
+    name: 'XML in CSV umwandeln',
+    title: 'XML in CSV umwandeln – kostenlos, privat, im Browser',
+    meta: 'XML in CSV umwandeln direkt im Browser: kostenlos, privat und schnell. Wiederkehrende Datensätze werden zu Tabellenzeilen – ohne Upload.',
+    h1: 'XML in CSV umwandeln',
+    value: 'XML-Exporte aus ERP-, Buchhaltungs- und Katalogsystemen lassen sich in Tabellenkalkulationen schlecht lesen. Dieser Konverter erkennt die sich wiederholenden Datensätze in Ihrem XML und schreibt pro Datensatz eine CSV-Zeile; verschachtelte Elemente werden zu Spalten wie address.city abgeflacht.',
+  },
+  '/data/xml-to-yaml/': {
+    name: 'XML in YAML umwandeln',
+    title: 'XML in YAML umwandeln – kostenlos, privat, im Browser',
+    meta: 'XML in YAML umwandeln direkt im Browser: kostenlos, privat und schnell. Dieselbe Struktur, deutlich besser lesbar – ohne Upload.',
+    h1: 'XML in YAML umwandeln',
+    value: 'XML-Konfigurations- und Datendateien sind weitschweifig; YAML drückt dieselbe Struktur mit viel weniger Ballast aus. Attribute behalten ein vorangestelltes @, gemischter Text wird zu #text – so geht keine Information verloren.',
+  },
+  '/data/json-to-excel/': {
+    name: 'JSON in Excel umwandeln',
+    title: 'JSON in Excel umwandeln – kostenlos, privat, im Browser',
+    meta: 'JSON in Excel umwandeln direkt im Browser: kostenlos, privat und schnell. Aus JSON-Arrays wird eine XLSX-Arbeitsmappe – ohne Upload.',
+    h1: 'JSON in Excel umwandeln',
+    value: 'Analysten arbeiten in Excel, APIs sprechen JSON. Legen Sie ein JSON-Array aus Objekten ab und erhalten Sie eine XLSX-Arbeitsmappe mit einer Spalte pro Schlüssel; ein Objekt, dessen Werte Arrays sind, wird zu einem Tabellenblatt pro Schlüssel.',
+  },
+  '/data/excel-to-json/': {
+    name: 'Excel in JSON umwandeln',
+    title: 'Excel in JSON umwandeln – kostenlos, privat, im Browser',
+    meta: 'Excel in JSON umwandeln direkt im Browser: kostenlos, privat und schnell. Aus Tabellenblättern werden JSON-Objekte – ohne Upload.',
+    h1: 'Excel in JSON umwandeln',
+    value: 'Machen Sie aus einer Tabelle JSON für eine API, ein Skript oder eine Web-App. Die erste Zeile liefert die Schlüssel; eine Arbeitsmappe mit mehreren Blättern ergibt ein Objekt mit einem Array pro Blatt.',
   },
 };
 

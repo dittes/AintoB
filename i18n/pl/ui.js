@@ -50,6 +50,8 @@ const s = {
   ooTitleGeneric: 'Chcesz tylko otworzyć plik, a nie go konwertować?',
   ooText: 'Na open-online.com otworzysz wiele różnych typów plików online – bez wcześniejszej konwersji.',
   ooButton: 'Otwórz pliki na open-online.com',
+  ooButtonFmt: 'Otwórz pliki {fmt} na open-online.com',
+  ooResult: 'Podejrzyj plik {to} na open-online.com',
 
   // ── widżet konwertera ───────────────────────────────────────────────────
   widgetHeading: 'Konwersja {from} na {to}',
@@ -436,6 +438,48 @@ const tools = {
     title: 'PDF z możliwością wyszukiwania – darmowy OCR w przeglądarce',
     meta: 'Zamień zeskanowane pliki PDF na przeszukiwalne za pomocą darmowego OCR w przeglądarce. Bez przesyłania i bez serwera – Tesseract OCR dodaje warstwę tekstową w Twojej przeglądarce.',
     h1: 'PDF z możliwością wyszukiwania (OCR)',
+  },
+  '/data/json-to-xml/': {
+    name: 'Konwerter JSON na XML',
+    title: 'Konwerter JSON na XML online – za darmo i prywatnie',
+    meta: 'Zamień JSON na XML bezpośrednio w przeglądarce: za darmo, prywatnie i szybko. Z JSON powstaje czytelnie wcięty, poprawnie zbudowany XML – bez wysyłania na serwer.',
+    h1: 'Konwerter JSON na XML',
+    value: 'Starsze systemy, usługi SOAP i wiele narzędzi firmowych nadal oczekuje XML, podczas gdy nowoczesne API zwracają JSON. Ten konwerter zamienia dowolny dokument JSON na poprawny, wcięty XML: klucze obiektów stają się elementami, tablice powtarzanymi elementami, a klucze zaczynające się od @ atrybutami.',
+  },
+  '/data/csv-to-xml/': {
+    name: 'Konwerter CSV na XML',
+    title: 'Konwerter CSV na XML online – za darmo i prywatnie',
+    meta: 'Zamień CSV na XML bezpośrednio w przeglądarce: za darmo, prywatnie i szybko. Eksporty z arkuszy stają się XML dla kanałów i importów – bez wysyłania na serwer.',
+    h1: 'Konwerter CSV na XML',
+    value: 'Eksporty z arkuszy i zrzuty baz danych to CSV, ale interfejsy importu, kanały i starsze systemy często wymagają XML. Każdy wiersz CSV staje się elementem &lt;row&gt;, którego podelementy są nazwane według wiersza nagłówka; znaki specjalne są zabezpieczane automatycznie.',
+  },
+  '/data/xml-to-csv/': {
+    name: 'Konwerter XML na CSV',
+    title: 'Konwerter XML na CSV online – za darmo i prywatnie',
+    meta: 'Zamień XML na CSV bezpośrednio w przeglądarce: za darmo, prywatnie i szybko. Powtarzające się rekordy stają się wierszami tabeli – bez wysyłania na serwer.',
+    h1: 'Konwerter XML na CSV',
+    value: 'Eksporty XML z systemów ERP, księgowych i katalogowych źle czyta się w arkuszu kalkulacyjnym. Ten konwerter znajduje w XML powtarzające się rekordy i zapisuje jeden wiersz CSV na rekord; zagnieżdżone elementy są spłaszczane do kolumn takich jak address.city.',
+  },
+  '/data/xml-to-yaml/': {
+    name: 'Konwerter XML na YAML',
+    title: 'Konwerter XML na YAML online – za darmo i prywatnie',
+    meta: 'Zamień XML na YAML bezpośrednio w przeglądarce: za darmo, prywatnie i szybko. Ta sama struktura, znacznie czytelniejsza – bez wysyłania na serwer.',
+    h1: 'Konwerter XML na YAML',
+    value: 'Pliki konfiguracyjne i danych XML są rozwlekłe; YAML wyraża tę samą strukturę z dużo mniejszym szumem. Atrybuty zachowują przedrostek @, a tekst mieszany trafia do #text, więc nic nie ginie.',
+  },
+  '/data/json-to-excel/': {
+    name: 'Konwerter JSON na Excel',
+    title: 'Konwerter JSON na Excel online – za darmo i prywatnie',
+    meta: 'Zamień JSON na Excel bezpośrednio w przeglądarce: za darmo, prywatnie i szybko. Z tablic JSON powstaje skoroszyt XLSX – bez wysyłania na serwer.',
+    h1: 'Konwerter JSON na Excel',
+    value: 'Analitycy pracują w Excelu, a API mówią w JSON. Wrzuć tablicę obiektów JSON, a otrzymasz skoroszyt XLSX z jedną kolumną na klucz; obiekt, którego wartościami są tablice, zamienia się w jeden arkusz na klucz.',
+  },
+  '/data/excel-to-json/': {
+    name: 'Konwerter Excela na JSON',
+    title: 'Konwerter Excela na JSON online – za darmo i prywatnie',
+    meta: 'Zamień Excela na JSON bezpośrednio w przeglądarce: za darmo, prywatnie i szybko. Z arkuszy powstają obiekty JSON – bez wysyłania na serwer.',
+    h1: 'Konwerter Excela na JSON',
+    value: 'Zamień arkusz na JSON dla API, skryptu lub aplikacji internetowej. Pierwszy wiersz staje się kluczami; skoroszyt z wieloma arkuszami daje obiekt z jedną tablicą na arkusz.',
   },
 };
 

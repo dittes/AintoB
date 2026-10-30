@@ -130,10 +130,11 @@ for (const l of LANGS) {
   }
 }
 
-// old URLs
+// old URLs (pages with Rollout Stage "Phase 4" were added after the i18n launch and have no legacy URL)
+const newPages = new Set(require('../lib/csv').parseCSV(read('page_map.csv')).filter(r => r['Rollout Stage'] === 'Phase 4').map(r => r['URL Slug']));
 const redirects = exists('_redirects') ? read('_redirects') : '';
 for (const slug of slugs.en) {
-  if (slug === '/') continue;
+  if (slug === '/' || newPages.has(slug)) continue;
   const rel = slug.slice(1) + 'index.html';
   if (!exists(rel)) { fail(`old URL ${slug}: no redirect stub`); continue; }
   const h = read(rel);
